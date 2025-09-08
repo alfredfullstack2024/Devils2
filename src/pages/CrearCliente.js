@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Alert } from "react-bootstrap";
-import { crearCliente, obtenerEquipos } from "../api/axios";
+import { crearCliente, obtenerEquipos } from "../api/axios"; // 👈 importar obtenerEquipos
 import { AuthContext } from "../context/AuthContext";
 
 const CrearCliente = () => {
@@ -23,28 +23,24 @@ const CrearCliente = () => {
     nombreResponsable: "",
     equipo: "", // 👈 nuevo campo
   });
+  const [equipos, setEquipos] = useState([]); // 👈 lista de equipos
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [equipos, setEquipos] = useState([]); // 👈 lista de equipos
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
-  // Cargar equipos desde backend
+  // cargar equipos al montar el componente
   useEffect(() => {
-    const fetchEquipos = async () => {
+    const cargarEquipos = async () => {
       try {
-        if (!user || !user.token) return;
-        const config = {
-          headers: { Authorization: `Bearer ${user.token}` },
-        };
-        const response = await obtenerEquipos(config);
-        setEquipos(response.data || []);
+        const response = await obtenerEquipos();
+        setEquipos(response.data);
       } catch (err) {
         console.error("Error al cargar equipos:", err);
       }
     };
-    fetchEquipos();
-  }, [user]);
+    cargarEquipos();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -87,6 +83,10 @@ const CrearCliente = () => {
       setError("La edad debe ser un número positivo.");
       return;
     }
+    if (!formData.equipo) {
+      setError("Debe seleccionar un equipo.");
+      return;
+    }
 
     if (!user || !user.token) {
       setError("Debes iniciar sesión para crear un cliente.");
@@ -117,7 +117,7 @@ const CrearCliente = () => {
         tallaTrenSuperior: "",
         tallaTrenInferior: "",
         nombreResponsable: "",
-        equipo: "",
+        equipo: "", // resetear
       });
       setTimeout(() => navigate("/clientes"), 2000);
     } catch (err) {
@@ -135,7 +135,7 @@ const CrearCliente = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
       <Form onSubmit={handleSubmit}>
-        {/* Campos anteriores... */}
+        {/* ...tus campos existentes... */}
 
         <Form.Group className="mb-3">
           <Form.Label>Equipo</Form.Label>
@@ -145,28 +145,15 @@ const CrearCliente = () => {
             onChange={handleChange}
             required
           >
-            <option value="">Selecciona un equipo</option>
-            {equipos.map((eq, index) => (
-              <option key={index} value={eq}>
+            <option value="">Seleccione un equipo</option>
+            {equipos.map((eq, idx) => (
+              <option key={idx} value={eq}>
                 {eq}
               </option>
             ))}
           </Form.Select>
         </Form.Group>
 
-        {/* Estado */}
-        <Form.Group className="mb-3">
-          <Form.Label>Estado</Form.Label>
-          <Form.Select
-            name="estado"
-            value={formData.estado}
-            onChange={handleChange}
-            required
-          >
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </Form.Select>
-        </Form.Group>
         <Button variant="primary" type="submit">
           Crear Cliente
         </Button>
