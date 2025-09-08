@@ -1,7 +1,7 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Alert } from "react-bootstrap";
-import { crearCliente } from "../api/axios";
+import { crearCliente, obtenerEquipos } from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 
 const CrearCliente = () => {
@@ -21,11 +21,30 @@ const CrearCliente = () => {
     tallaTrenSuperior: "",
     tallaTrenInferior: "",
     nombreResponsable: "",
+    equipo: "", // 👈 nuevo campo
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [equipos, setEquipos] = useState([]); // 👈 lista de equipos
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+
+  // Cargar equipos desde backend
+  useEffect(() => {
+    const fetchEquipos = async () => {
+      try {
+        if (!user || !user.token) return;
+        const config = {
+          headers: { Authorization: `Bearer ${user.token}` },
+        };
+        const response = await obtenerEquipos(config);
+        setEquipos(response.data || []);
+      } catch (err) {
+        console.error("Error al cargar equipos:", err);
+      }
+    };
+    fetchEquipos();
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -98,6 +117,7 @@ const CrearCliente = () => {
         tallaTrenSuperior: "",
         tallaTrenInferior: "",
         nombreResponsable: "",
+        equipo: "",
       });
       setTimeout(() => navigate("/clientes"), 2000);
     } catch (err) {
@@ -115,159 +135,26 @@ const CrearCliente = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
       <Form onSubmit={handleSubmit}>
+        {/* Campos anteriores... */}
+
         <Form.Group className="mb-3">
-          <Form.Label>Nombre</Form.Label>
-          <Form.Control
-            type="text"
-            name="nombre"
-            value={formData.nombre}
-            onChange={handleChange}
-            placeholder="Ingresa el nombre"
-            required
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Apellido</Form.Label>
-          <Form.Control
-            type="text"
-            name="apellido"
-            value={formData.apellido}
-            onChange={handleChange}
-            placeholder="Ingresa el apellido"
-            required
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Correo electrónico</Form.Label>
-          <Form.Control
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Ingresa el correo"
-            required
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Teléfono</Form.Label>
-          <Form.Control
-            type="tel"
-            name="telefono"
-            value={formData.telefono}
-            onChange={handleChange}
-            placeholder="Ingresa el teléfono (10 dígitos)"
-            required
-            pattern="\d{10}"
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Dirección</Form.Label>
-          <Form.Control
-            type="text"
-            name="direccion"
-            value={formData.direccion}
-            onChange={handleChange}
-            placeholder="Ingresa la dirección"
-            required
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Número de Identificación</Form.Label>
-          <Form.Control
-            type="text"
-            name="numeroIdentificacion"
-            value={formData.numeroIdentificacion}
-            onChange={handleChange}
-            placeholder="Ingresa el número de identificación"
-            required
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Fecha de Nacimiento</Form.Label>
-          <Form.Control
-            type="date"
-            name="fechaNacimiento"
-            value={formData.fechaNacimiento}
-            onChange={handleChange}
-            required
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Edad</Form.Label>
-          <Form.Control
-            type="number"
-            name="edad"
-            value={formData.edad}
-            onChange={handleChange}
-            placeholder="Ingresa la edad"
-            required
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Tipo de Documento</Form.Label>
-          <Form.Control
-            as="select"
-            name="tipoDocumento"
-            value={formData.tipoDocumento}
+          <Form.Label>Equipo</Form.Label>
+          <Form.Select
+            name="equipo"
+            value={formData.equipo}
             onChange={handleChange}
             required
           >
-            <option value="C.C">C.C</option>
-            <option value="T.I">T.I</option>
-            <option value="RC">RC</option>
-            <option value="PPT">PPT</option>
-          </Form.Control>
+            <option value="">Selecciona un equipo</option>
+            {equipos.map((eq, index) => (
+              <option key={index} value={eq}>
+                {eq}
+              </option>
+            ))}
+          </Form.Select>
         </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>RH</Form.Label>
-          <Form.Control
-            type="text"
-            name="rh"
-            value={formData.rh}
-            onChange={handleChange}
-            placeholder="Ingresa el RH (ej. A+, O-)"
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>EPS</Form.Label>
-          <Form.Control
-            type="text"
-            name="eps"
-            value={formData.eps}
-            onChange={handleChange}
-            placeholder="Ingresa la EPS"
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Talla Tren Superior</Form.Label>
-          <Form.Control
-            type="text"
-            name="tallaTrenSuperior"
-            value={formData.tallaTrenSuperior}
-            onChange={handleChange}
-            placeholder="Ingresa la talla (ej. S, M, L)"
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Talla Tren Inferior</Form.Label>
-          <Form.Control
-            type="text"
-            name="tallaTrenInferior"
-            value={formData.tallaTrenInferior}
-            onChange={handleChange}
-            placeholder="Ingresa la talla (ej. S, M, L)"
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Nombre Responsable</Form.Label>
-          <Form.Control
-            type="text"
-            name="nombreResponsable"
-            value={formData.nombreResponsable}
-            onChange={handleChange}
-            placeholder="Ingresa el nombre del responsable"
-          />
-        </Form.Group>
+
+        {/* Estado */}
         <Form.Group className="mb-3">
           <Form.Label>Estado</Form.Label>
           <Form.Select
