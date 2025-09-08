@@ -1,3 +1,4 @@
+// src/pages/pagos/Pagos.js
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, Button, Alert, Form, Row, Col, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -5,14 +6,32 @@ import api from "../../api/axios";
 
 const Pagos = () => {
   const [pagos, setPagos] = useState([]);
+  const [pagosFiltrados, setPagosFiltrados] = useState([]);
   const [filtroTipo, setFiltroTipo] = useState("mes");
   const [mes, setMes] = useState("");
   const [semana, setSemana] = useState("");
   const [busquedaNombre, setBusquedaNombre] = useState("");
-  const [pagosFiltrados, setPagosFiltrados] = useState([]);
+  const [filtroEquipo, setFiltroEquipo] = useState(""); // 👈 nuevo
+  const [equipos, setEquipos] = useState([]); // 👈 lista de equipos
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // 👉 Traer lista de equipos al cargar
+  useEffect(() => {
+    const fetchEquipos = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await api.get("/entrenadores/equipos", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setEquipos(res.data || []);
+      } catch (err) {
+        console.error("Error cargando equipos:", err);
+      }
+    };
+    fetchEquipos();
+  }, []);
 
   const fetchPagos = useCallback(async () => {
     setIsLoading(true);
@@ -40,9 +59,11 @@ const Pagos = () => {
         params.fechaFin = endDate.toISOString();
       }
 
-      console.log("Parámetros enviados a /pagos:", params);
+      if (filtroEquipo) {
+        params.equipo = filtroEquipo; // 👈 enviar equipo al backend
+      }
+
       const response = await api.get("/pagos", { params });
-      console.log("Respuesta completa del backend (/pagos):", response.data);
       const fetchedPagos = response.data.pagos || [];
       setPagos(fetchedPagos);
 
@@ -57,14 +78,13 @@ const Pagos = () => {
       setPagosFiltrados(pagosFiltrados);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message;
-      console.error("Error detallado en fetchPagos:", err.response?.data);
       setError("Error al cargar los pagos: " + errorMessage);
       setPagos([]);
       setPagosFiltrados([]);
     } finally {
       setIsLoading(false);
     }
-  }, [filtroTipo, mes, semana, busquedaNombre]);
+  }, [filtroTipo, mes, semana, filtroEquipo, busquedaNombre]);
 
   useEffect(() => {
     fetchPagos();
@@ -82,6 +102,7 @@ const Pagos = () => {
     setMes("");
     setSemana("");
     setBusquedaNombre("");
+    setFiltroEquipo(""); // 👈 limpiar equipo
     setPagos([]);
     setPagosFiltrados([]);
     await fetchPagos();
@@ -94,16 +115,7 @@ const Pagos = () => {
       await api.delete(`/pagos/${id}`);
       setPagos((prevPagos) => {
         const nuevosPagos = prevPagos.filter((pago) => pago._id !== id);
-        setPagosFiltrados(
-          busquedaNombre
-            ? nuevosPagos.filter((pago) => {
-                const nombreCliente = pago.cliente
-                  ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`.toLowerCase()
-                  : "";
-                return nombreCliente.includes(busquedaNombre.toLowerCase());
-              })
-            : nuevosPagos
-        );
+        setPagosFiltrados(nuevosPagos);
         return nuevosPagos;
       });
       setError("");
@@ -119,39 +131,7 @@ const Pagos = () => {
 
   const formatFecha = (fecha) => {
     const date = new Date(fecha);
-    return new Date(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate()
-    ).toLocaleDateString("es-ES");
-  };
-
-  const manejarCambioBusqueda = (e) => {
-    const valor = e.target.value;
-    setBusquedaNombre(valor);
-
-    const pagosFiltrados = valor
-      ? pagos.filter((pago) => {
-          const nombreCliente = pago.cliente
-            ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`.toLowerCase()
-            : "";
-          return nombreCliente.includes(valor.toLowerCase());
-        })
-      : pagos;
-    setPagosFiltrados(pagosFiltrados);
-  };
-
-  const esProximoVencimiento = (fecha, productoNombre) => {
-    if (!productoNombre || !productoNombre.toLowerCase().includes("mensualidad")) {
-      return false;
-    }
-
-    const fechaPago = new Date(fecha);
-    const vencimiento = new Date(fechaPago);
-    vencimiento.setDate(vencimiento.getDate() + 30);
-    const hoy = new Date();
-    const diferenciaDias = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-    return diferenciaDias <= 5 && diferenciaDias > 0;
+    return date.toLocaleDateString("es-ES");
   };
 
   return (
@@ -163,7 +143,7 @@ const Pagos = () => {
           <Card.Title>Filtrar y Buscar</Card.Title>
           <Form onSubmit={manejarFiltrar}>
             <Row>
-              <Col md={3}>
+              <Col md={2}>
                 <Form.Group controlId="filtroTipo">
                   <Form.Label>Tipo de Filtro</Form.Label>
                   <Form.Select
@@ -176,8 +156,9 @@ const Pagos = () => {
                   </Form.Select>
                 </Form.Group>
               </Col>
+
               {filtroTipo === "mes" ? (
-                <Col md={3}>
+                <Col md={2}>
                   <Form.Group controlId="mes">
                     <Form.Label>Mes</Form.Label>
                     <Form.Control
@@ -189,7 +170,7 @@ const Pagos = () => {
                   </Form.Group>
                 </Col>
               ) : (
-                <Col md={3}>
+                <Col md={2}>
                   <Form.Group controlId="semana">
                     <Form.Label>Semana</Form.Label>
                     <Form.Control
@@ -201,19 +182,40 @@ const Pagos = () => {
                   </Form.Group>
                 </Col>
               )}
+
               <Col md={3}>
                 <Form.Group controlId="busquedaNombre">
                   <Form.Label>Buscar por Nombre</Form.Label>
                   <Form.Control
                     type="text"
                     value={busquedaNombre}
-                    onChange={manejarCambioBusqueda}
+                    onChange={(e) => setBusquedaNombre(e.target.value)}
                     placeholder="Nombre completo del cliente"
                     disabled={isLoading}
                   />
                 </Form.Group>
               </Col>
-              <Col md={3} className="d-flex align-items-end">
+
+              {/* 👇 Nuevo filtro de equipo */}
+              <Col md={3}>
+                <Form.Group controlId="filtroEquipo">
+                  <Form.Label>Equipo</Form.Label>
+                  <Form.Select
+                    value={filtroEquipo}
+                    onChange={(e) => setFiltroEquipo(e.target.value)}
+                    disabled={isLoading}
+                  >
+                    <option value="">Todos</option>
+                    {equipos.map((eq, idx) => (
+                      <option key={idx} value={eq}>
+                        {eq}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              <Col md={2} className="d-flex align-items-end">
                 <Button
                   type="submit"
                   variant="primary"
@@ -234,6 +236,7 @@ const Pagos = () => {
           </Form>
         </Card.Body>
       </Card>
+
       <Button
         variant="primary"
         className="mb-3"
@@ -242,6 +245,7 @@ const Pagos = () => {
       >
         Crear pago
       </Button>
+
       {isLoading && <Alert variant="info">Cargando pagos...</Alert>}
       {!isLoading && pagosFiltrados.length === 0 && !error && (
         <Alert variant="info">No hay pagos para mostrar.</Alert>
@@ -251,6 +255,7 @@ const Pagos = () => {
           <thead>
             <tr>
               <th>Cliente</th>
+              <th>Equipo</th> {/* 👈 columna nueva */}
               <th>Monto</th>
               <th>Fecha</th>
               <th>Producto</th>
@@ -259,22 +264,13 @@ const Pagos = () => {
           </thead>
           <tbody>
             {pagosFiltrados.map((pago) => (
-              <tr
-                key={pago._id}
-                style={{
-                  backgroundColor: esProximoVencimiento(
-                    pago.fecha,
-                    pago.producto?.nombre
-                  )
-                    ? "#ffcccc"
-                    : "transparent",
-                }}
-              >
+              <tr key={pago._id}>
                 <td>
                   {pago.cliente
                     ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`
                     : "Cliente no encontrado"}
                 </td>
+                <td>{pago.cliente?.equipo || "No asignado"}</td>
                 <td>${pago.monto.toLocaleString()}</td>
                 <td>{formatFecha(pago.fecha)}</td>
                 <td>{pago.producto?.nombre || "Producto no especificado"}</td>
