@@ -1,3 +1,4 @@
+// src/pages/ListaClientes.js
 import React, { useState, useEffect, useMemo } from "react";
 import { Table, Button, Alert, Spinner, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -153,6 +154,7 @@ const ListaClientes = () => {
             <th>EPS</th>
             <th>Talla Superior</th>
             <th>Talla Inferior</th>
+            <th>Equipo</th> {/* 👈 Nuevo campo */}
             <th>Responsable</th>
             <th>Acciones</th>
           </tr>
@@ -175,6 +177,7 @@ const ListaClientes = () => {
                 <td>{cliente.eps || "No especificado"}</td>
                 <td>{cliente.tallaTrenSuperior || "No especificado"}</td>
                 <td>{cliente.tallaTrenInferior || "No especificado"}</td>
+                <td>{cliente.equipo || "No asignado"}</td> {/* 👈 Mostrar equipo */}
                 <td>{cliente.nombreResponsable || "No especificado"}</td>
                 <td>
                   <Link to={`/clientes/editar/${cliente._id}`}>
@@ -193,7 +196,7 @@ const ListaClientes = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="16" className="text-center">
+              <td colSpan="17" className="text-center">
                 No hay clientes que coincidan con la búsqueda
               </td>
             </tr>
