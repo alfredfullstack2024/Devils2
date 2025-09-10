@@ -21,7 +21,6 @@ const CrearCliente = () => {
     tallaTrenSuperior: "",
     tallaTrenInferior: "",
     nombreResponsable: "",
-    especialidad: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -69,10 +68,7 @@ const CrearCliente = () => {
       setError("La edad debe ser un número positivo.");
       return;
     }
-    if (!formData.especialidad) {
-      setError("La especialidad es obligatoria.");
-      return;
-    }
+
     if (!user || !user.token) {
       setError("Debes iniciar sesión para crear un cliente.");
       return;
@@ -102,15 +98,13 @@ const CrearCliente = () => {
         tallaTrenSuperior: "",
         tallaTrenInferior: "",
         nombreResponsable: "",
-        especialidad: "",
       });
       setTimeout(() => navigate("/clientes"), 2000);
     } catch (err) {
-      console.error("Error completo:", err);
-      console.error("Respuesta del servidor:", err.response?.data);
+      console.error("Error al crear cliente:", err);
       setError(
         "Error al crear el cliente: " +
-          (err.response?.data?.message || err.message || "Error desconocido")
+          (err.response?.data?.message || "Error desconocido")
       );
     }
   };
@@ -275,21 +269,6 @@ const CrearCliente = () => {
           />
         </Form.Group>
         <Form.Group className="mb-3">
-          <Form.Label>Especialidad</Form.Label>
-          <Form.Control
-            as="select"
-            name="especialidad"
-            value={formData.especialidad}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Selecciona una especialidad</option>
-            <option value="Cardiología">Cardiología</option>
-            <option value="Pediatría">Pediatría</option>
-            <option value="General">General</option>
-          </Form.Control>
-        </Form.Group>
-        <Form.Group className="mb-3">
           <Form.Label>Estado</Form.Label>
           <Form.Select
             name="estado"
@@ -308,5 +287,3 @@ const CrearCliente = () => {
     </div>
   );
 };
-
-export default CrearCliente;
