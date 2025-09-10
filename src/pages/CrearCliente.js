@@ -152,6 +152,9 @@ const CrearCliente = () => {
     }
   };
 
+  // Opciones de tallas válidas
+  const tallas = ["S", "M", "L", "XL"];
+
   return (
     <div className="container mt-4">
       <h2>Crear Cliente</h2>
@@ -281,21 +284,20 @@ const CrearCliente = () => {
             placeholder="Ingresa la EPS"
           />
         </Form.Group>
-        {/* CAMBIO A SELECT */}
         <Form.Group className="mb-3">
           <Form.Label>Talla Tren Superior</Form.Label>
           <Form.Control
             as="select"
             name="tallaTrenSuperior"
-            value={formData.tallaTrenSuperior}
+            value={tallas.includes(formData.tallaTrenSuperior) ? formData.tallaTrenSuperior : ""}
             onChange={handleChange}
-            required
           >
             <option value="">Selecciona una talla</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
+            {tallas.map((talla) => (
+              <option key={talla} value={talla}>
+                {talla}
+              </option>
+            ))}
           </Form.Control>
         </Form.Group>
         <Form.Group className="mb-3">
@@ -303,18 +305,17 @@ const CrearCliente = () => {
           <Form.Control
             as="select"
             name="tallaTrenInferior"
-            value={formData.tallaTrenInferior}
+            value={tallas.includes(formData.tallaTrenInferior) ? formData.tallaTrenInferior : ""}
             onChange={handleChange}
-            required
           >
             <option value="">Selecciona una talla</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
+            {tallas.map((talla) => (
+              <option key={talla} value={talla}>
+                {talla}
+              </option>
+            ))}
           </Form.Control>
         </Form.Group>
-        {/* FIN CAMBIO */}
         <Form.Group className="mb-3">
           <Form.Label>Nombre Responsable</Form.Label>
           <Form.Control
