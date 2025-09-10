@@ -24,28 +24,44 @@ const CrearCliente = () => {
     nombreResponsable: "",
     especialidad: "",
   });
-  const [especialidades, setEspecialidades] = useState([]); // listado dinámico
+
+  const [especialidades, setEspecialidades] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
-  // Cargar especialidades dinámicas desde backend
+  // Cargar especialidades desde backend
   useEffect(() => {
     const fetchEspecialidades = async () => {
       try {
         if (!user || !user.token) return;
+
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
         const response = await obtenerEquipos(config);
-        // Validamos que no vengan duplicados o vacíos
-        const lista = response.data
-          .map((item) => item.equipo)
-          .filter((eq) => eq && eq.trim() !== "");
+
+        console.log("Respuesta de /entrenadores/equipos:", response.data);
+
+        let lista = [];
+
+        if (Array.isArray(response.data)) {
+          if (typeof response.data[0] === "string") {
+            // Caso: ["Cardiología", "Pediatría"]
+            lista = response.data;
+          } else {
+            // Caso: [{equipo: "Cardiología"}, {equipo: "Pediatría"}]
+            lista = response.data
+              .map((item) => item.equipo || item.nombre || item.especialidad)
+              .filter((val) => val && val.trim() !== "");
+          }
+        }
+
         setEspecialidades(lista);
       } catch (err) {
         console.error("Error al obtener especialidades:", err);
       }
     };
+
     fetchEspecialidades();
   }, [user]);
 
@@ -100,7 +116,9 @@ const CrearCliente = () => {
     }
 
     try {
-      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const config = {
+        headers: { Authorization: `Bearer ${user.token}` },
+      };
       console.log("Datos enviados:", formData);
       const response = await crearCliente(formData, config);
       console.log("Respuesta del backend:", response.data);
@@ -140,7 +158,6 @@ const CrearCliente = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
       <Form onSubmit={handleSubmit}>
-        {/* === CAMPOS DEL FORMULARIO === */}
         <Form.Group className="mb-3">
           <Form.Label>Nombre</Form.Label>
           <Form.Control
@@ -294,7 +311,6 @@ const CrearCliente = () => {
             placeholder="Ingresa el nombre del responsable"
           />
         </Form.Group>
-        {/* === SELECT DE ESPECIALIDAD DINÁMICO === */}
         <Form.Group className="mb-3">
           <Form.Label>Especialidad</Form.Label>
           <Form.Control
@@ -305,8 +321,8 @@ const CrearCliente = () => {
             required
           >
             <option value="">Selecciona una especialidad</option>
-            {especialidades.map((esp, index) => (
-              <option key={index} value={esp}>
+            {especialidades.map((esp, idx) => (
+              <option key={idx} value={esp}>
                 {esp}
               </option>
             ))}
