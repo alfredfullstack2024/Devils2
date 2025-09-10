@@ -287,3 +287,8 @@ const CrearCliente = () => {
       </Form>
     </div>
   );
+};
+
+export default CrearCliente;
+
+
