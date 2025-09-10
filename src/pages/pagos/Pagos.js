@@ -10,9 +10,10 @@ const Pagos = () => {
   const [filtroTipo, setFiltroTipo] = useState("mes");
   const [mes, setMes] = useState("");
   const [semana, setSemana] = useState("");
+  const [dia, setDia] = useState(""); // 👈 nuevo estado
   const [busquedaNombre, setBusquedaNombre] = useState("");
-  const [filtroEquipo, setFiltroEquipo] = useState(""); // 👈 nuevo
-  const [equipos, setEquipos] = useState([]); // 👈 lista de equipos
+  const [filtroEquipo, setFiltroEquipo] = useState(""); 
+  const [equipos, setEquipos] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -39,7 +40,15 @@ const Pagos = () => {
 
     try {
       const params = {};
-      if (filtroTipo === "mes" && mes) {
+
+      if (filtroTipo === "dia" && dia) {
+        const startDate = new Date(dia);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(dia);
+        endDate.setHours(23, 59, 59, 999);
+        params.fechaInicio = startDate.toISOString();
+        params.fechaFin = endDate.toISOString();
+      } else if (filtroTipo === "mes" && mes) {
         const [year, month] = mes.split("-");
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0);
@@ -60,7 +69,7 @@ const Pagos = () => {
       }
 
       if (filtroEquipo) {
-        params.equipo = filtroEquipo; // 👈 enviar equipo al backend
+        params.equipo = filtroEquipo;
       }
 
       const response = await api.get("/pagos", { params });
@@ -84,7 +93,7 @@ const Pagos = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filtroTipo, mes, semana, filtroEquipo, busquedaNombre]);
+  }, [filtroTipo, dia, mes, semana, filtroEquipo, busquedaNombre]);
 
   useEffect(() => {
     fetchPagos();
@@ -99,10 +108,11 @@ const Pagos = () => {
 
   const limpiarFiltros = async () => {
     setFiltroTipo("mes");
+    setDia("");
     setMes("");
     setSemana("");
     setBusquedaNombre("");
-    setFiltroEquipo(""); // 👈 limpiar equipo
+    setFiltroEquipo("");
     setPagos([]);
     setPagosFiltrados([]);
     await fetchPagos();
@@ -151,13 +161,28 @@ const Pagos = () => {
                     onChange={(e) => setFiltroTipo(e.target.value)}
                     disabled={isLoading}
                   >
-                    <option value="mes">Mes</option>
+                    <option value="dia">Día</option>
                     <option value="semana">Semana</option>
+                    <option value="mes">Mes</option>
                   </Form.Select>
                 </Form.Group>
               </Col>
 
-              {filtroTipo === "mes" ? (
+              {filtroTipo === "dia" && (
+                <Col md={2}>
+                  <Form.Group controlId="dia">
+                    <Form.Label>Día</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={dia}
+                      onChange={(e) => setDia(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </Form.Group>
+                </Col>
+              )}
+
+              {filtroTipo === "mes" && (
                 <Col md={2}>
                   <Form.Group controlId="mes">
                     <Form.Label>Mes</Form.Label>
@@ -169,7 +194,9 @@ const Pagos = () => {
                     />
                   </Form.Group>
                 </Col>
-              ) : (
+              )}
+
+              {filtroTipo === "semana" && (
                 <Col md={2}>
                   <Form.Group controlId="semana">
                     <Form.Label>Semana</Form.Label>
@@ -196,7 +223,6 @@ const Pagos = () => {
                 </Form.Group>
               </Col>
 
-              {/* 👇 Nuevo filtro de equipo */}
               <Col md={3}>
                 <Form.Group controlId="filtroEquipo">
                   <Form.Label>Equipo</Form.Label>
@@ -255,7 +281,7 @@ const Pagos = () => {
           <thead>
             <tr>
               <th>Cliente</th>
-              <th>Equipo</th> {/* 👈 columna nueva */}
+              <th>Equipo</th>
               <th>Monto</th>
               <th>Fecha</th>
               <th>Producto</th>
