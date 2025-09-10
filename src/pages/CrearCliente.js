@@ -21,7 +21,7 @@ const CrearCliente = () => {
     tallaTrenSuperior: "",
     tallaTrenInferior: "",
     nombreResponsable: "",
-    especialidad: "", // Campo agregado
+    especialidad: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -69,7 +69,7 @@ const CrearCliente = () => {
       setError("La edad debe ser un número positivo.");
       return;
     }
-    if (!formData.especialidad.trim()) {
+    if (!formData.especialidad) {
       setError("La especialidad es obligatoria.");
       return;
     }
@@ -106,10 +106,11 @@ const CrearCliente = () => {
       });
       setTimeout(() => navigate("/clientes"), 2000);
     } catch (err) {
-      console.error("Error al crear cliente:", err.response?.data);
+      console.error("Error completo:", err);
+      console.error("Respuesta del servidor:", err.response?.data);
       setError(
         "Error al crear el cliente: " +
-          (err.response?.data?.message || "Error desconocido")
+          (err.response?.data?.message || err.message || "Error desconocido")
       );
     }
   };
@@ -276,13 +277,17 @@ const CrearCliente = () => {
         <Form.Group className="mb-3">
           <Form.Label>Especialidad</Form.Label>
           <Form.Control
-            type="text"
+            as="select"
             name="especialidad"
             value={formData.especialidad}
             onChange={handleChange}
-            placeholder="Ingresa la especialidad"
             required
-          />
+          >
+            <option value="">Selecciona una especialidad</option>
+            <option value="Cardiología">Cardiología</option>
+            <option value="Pediatría">Pediatría</option>
+            <option value="General">General</option>
+          </Form.Control>
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>Estado</Form.Label>
