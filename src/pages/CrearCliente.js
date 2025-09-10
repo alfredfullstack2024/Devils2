@@ -1,3 +1,4 @@
+// src/pages/CrearCliente.js
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Alert } from "react-bootstrap";
@@ -23,22 +24,24 @@ const CrearCliente = () => {
     nombreResponsable: "",
     especialidad: "",
   });
-  const [especialidades, setEspecialidades] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]); // listado dinámico
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
-  // 🔹 Cargar especialidades dinámicas desde entrenadores
+  // Cargar especialidades dinámicas desde backend
   useEffect(() => {
     const fetchEspecialidades = async () => {
       try {
         if (!user || !user.token) return;
-        const config = {
-          headers: { Authorization: `Bearer ${user.token}` },
-        };
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
         const response = await obtenerEquipos(config);
-        setEspecialidades(response.data);
+        // Validamos que no vengan duplicados o vacíos
+        const lista = response.data
+          .map((item) => item.equipo)
+          .filter((eq) => eq && eq.trim() !== "");
+        setEspecialidades(lista);
       } catch (err) {
         console.error("Error al obtener especialidades:", err);
       }
@@ -97,9 +100,7 @@ const CrearCliente = () => {
     }
 
     try {
-      const config = {
-        headers: { Authorization: `Bearer ${user.token}` },
-      };
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
       console.log("Datos enviados:", formData);
       const response = await crearCliente(formData, config);
       console.log("Respuesta del backend:", response.data);
@@ -139,8 +140,161 @@ const CrearCliente = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
       <Form onSubmit={handleSubmit}>
-        {/* ✅ Todos los demás campos permanecen igual */}
-        {/* Campo especialidad dinámico */}
+        {/* === CAMPOS DEL FORMULARIO === */}
+        <Form.Group className="mb-3">
+          <Form.Label>Nombre</Form.Label>
+          <Form.Control
+            type="text"
+            name="nombre"
+            value={formData.nombre}
+            onChange={handleChange}
+            placeholder="Ingresa el nombre"
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Apellido</Form.Label>
+          <Form.Control
+            type="text"
+            name="apellido"
+            value={formData.apellido}
+            onChange={handleChange}
+            placeholder="Ingresa el apellido"
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Correo electrónico</Form.Label>
+          <Form.Control
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Ingresa el correo"
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Teléfono</Form.Label>
+          <Form.Control
+            type="tel"
+            name="telefono"
+            value={formData.telefono}
+            onChange={handleChange}
+            placeholder="Ingresa el teléfono (10 dígitos)"
+            required
+            pattern="\d{10}"
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Dirección</Form.Label>
+          <Form.Control
+            type="text"
+            name="direccion"
+            value={formData.direccion}
+            onChange={handleChange}
+            placeholder="Ingresa la dirección"
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Número de Identificación</Form.Label>
+          <Form.Control
+            type="text"
+            name="numeroIdentificacion"
+            value={formData.numeroIdentificacion}
+            onChange={handleChange}
+            placeholder="Ingresa el número de identificación"
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Fecha de Nacimiento</Form.Label>
+          <Form.Control
+            type="date"
+            name="fechaNacimiento"
+            value={formData.fechaNacimiento}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Edad</Form.Label>
+          <Form.Control
+            type="number"
+            name="edad"
+            value={formData.edad}
+            onChange={handleChange}
+            placeholder="Ingresa la edad"
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Tipo de Documento</Form.Label>
+          <Form.Control
+            as="select"
+            name="tipoDocumento"
+            value={formData.tipoDocumento}
+            onChange={handleChange}
+            required
+          >
+            <option value="C.C">C.C</option>
+            <option value="T.I">T.I</option>
+            <option value="RC">RC</option>
+            <option value="PPT">PPT</option>
+          </Form.Control>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>RH</Form.Label>
+          <Form.Control
+            type="text"
+            name="rh"
+            value={formData.rh}
+            onChange={handleChange}
+            placeholder="Ingresa el RH (ej. A+, O-)"
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>EPS</Form.Label>
+          <Form.Control
+            type="text"
+            name="eps"
+            value={formData.eps}
+            onChange={handleChange}
+            placeholder="Ingresa la EPS"
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Talla Tren Superior</Form.Label>
+          <Form.Control
+            type="text"
+            name="tallaTrenSuperior"
+            value={formData.tallaTrenSuperior}
+            onChange={handleChange}
+            placeholder="Ingresa la talla (ej. S, M, L)"
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Talla Tren Inferior</Form.Label>
+          <Form.Control
+            type="text"
+            name="tallaTrenInferior"
+            value={formData.tallaTrenInferior}
+            onChange={handleChange}
+            placeholder="Ingresa la talla (ej. S, M, L)"
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Nombre Responsable</Form.Label>
+          <Form.Control
+            type="text"
+            name="nombreResponsable"
+            value={formData.nombreResponsable}
+            onChange={handleChange}
+            placeholder="Ingresa el nombre del responsable"
+          />
+        </Form.Group>
+        {/* === SELECT DE ESPECIALIDAD DINÁMICO === */}
         <Form.Group className="mb-3">
           <Form.Label>Especialidad</Form.Label>
           <Form.Control
@@ -158,7 +312,6 @@ const CrearCliente = () => {
             ))}
           </Form.Control>
         </Form.Group>
-
         <Form.Group className="mb-3">
           <Form.Label>Estado</Form.Label>
           <Form.Select
