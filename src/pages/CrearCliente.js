@@ -21,16 +21,15 @@ const CrearCliente = () => {
     tallaTrenSuperior: "",
     tallaTrenInferior: "",
     nombreResponsable: "",
-    especialidad: "", // 👈 CAMBIO: antes estaba equipo
+    especialidad: "", // 👈 antes era equipo
   });
 
-  const [equipos, setEquipos] = useState([]); 
+  const [equipos, setEquipos] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
-  // Cargar equipos (ahora son especialidades en el select)
   useEffect(() => {
     const fetchEquipos = async () => {
       try {
@@ -39,7 +38,7 @@ const CrearCliente = () => {
         const { data } = await obtenerEquipos(config);
         setEquipos(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Error cargando equipos:", err);
+        console.error("Error cargando equipos/especialidades:", err);
         setEquipos([]);
       }
     };
@@ -98,9 +97,8 @@ const CrearCliente = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      console.log("Datos enviados:", formData);
       const response = await crearCliente(formData, config);
-      console.log("Respuesta del backend:", response.data);
+      console.log("✅ Cliente creado:", response.data);
       setSuccess("Cliente creado con éxito!");
       setFormData({
         nombre: "",
@@ -135,10 +133,160 @@ const CrearCliente = () => {
       <h2>Crear Cliente</h2>
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
-      <Form onSubmit={handleSubmit}>
-        {/* ... campos anteriores ... */}
 
-        {/* 👇 CAMBIO: Especialidad en vez de Equipo */}
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>Nombre</Form.Label>
+          <Form.Control
+            type="text"
+            name="nombre"
+            value={formData.nombre}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Apellido</Form.Label>
+          <Form.Control
+            type="text"
+            name="apellido"
+            value={formData.apellido}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Email</Form.Label>
+          <Form.Control
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Teléfono</Form.Label>
+          <Form.Control
+            type="text"
+            name="telefono"
+            value={formData.telefono}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Dirección</Form.Label>
+          <Form.Control
+            type="text"
+            name="direccion"
+            value={formData.direccion}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Número de Identificación</Form.Label>
+          <Form.Control
+            type="text"
+            name="numeroIdentificacion"
+            value={formData.numeroIdentificacion}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Fecha de Nacimiento</Form.Label>
+          <Form.Control
+            type="date"
+            name="fechaNacimiento"
+            value={formData.fechaNacimiento}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Edad</Form.Label>
+          <Form.Control
+            type="number"
+            name="edad"
+            value={formData.edad}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Tipo Documento</Form.Label>
+          <Form.Select
+            name="tipoDocumento"
+            value={formData.tipoDocumento}
+            onChange={handleChange}
+          >
+            <option value="C.C">C.C</option>
+            <option value="T.I">T.I</option>
+            <option value="C.E">C.E</option>
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>RH</Form.Label>
+          <Form.Control
+            type="text"
+            name="rh"
+            value={formData.rh}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>EPS</Form.Label>
+          <Form.Control
+            type="text"
+            name="eps"
+            value={formData.eps}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Talla Tren Superior</Form.Label>
+          <Form.Control
+            type="text"
+            name="tallaTrenSuperior"
+            value={formData.tallaTrenSuperior}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Talla Tren Inferior</Form.Label>
+          <Form.Control
+            type="text"
+            name="tallaTrenInferior"
+            value={formData.tallaTrenInferior}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Nombre del Responsable</Form.Label>
+          <Form.Control
+            type="text"
+            name="nombreResponsable"
+            value={formData.nombreResponsable}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        {/* 👇 CAMBIO: Especialidad */}
         <Form.Group className="mb-3">
           <Form.Label>Especialidad</Form.Label>
           <Form.Select
