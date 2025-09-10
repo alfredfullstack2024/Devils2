@@ -281,26 +281,40 @@ const CrearCliente = () => {
             placeholder="Ingresa la EPS"
           />
         </Form.Group>
+        {/* CAMBIO A SELECT */}
         <Form.Group className="mb-3">
           <Form.Label>Talla Tren Superior</Form.Label>
           <Form.Control
-            type="text"
+            as="select"
             name="tallaTrenSuperior"
             value={formData.tallaTrenSuperior}
             onChange={handleChange}
-            placeholder="Ingresa la talla (ej. S, M, L)"
-          />
+            required
+          >
+            <option value="">Selecciona una talla</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+          </Form.Control>
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>Talla Tren Inferior</Form.Label>
           <Form.Control
-            type="text"
+            as="select"
             name="tallaTrenInferior"
             value={formData.tallaTrenInferior}
             onChange={handleChange}
-            placeholder="Ingresa la talla (ej. S, M, L)"
-          />
+            required
+          >
+            <option value="">Selecciona una talla</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+          </Form.Control>
         </Form.Group>
+        {/* FIN CAMBIO */}
         <Form.Group className="mb-3">
           <Form.Label>Nombre Responsable</Form.Label>
           <Form.Control
