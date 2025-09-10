@@ -223,7 +223,7 @@ export const editarEntrenador = (id, data, config) =>
   api.put(`/entrenadores/${id}`, data, config);
 export const eliminarEntrenador = (id, config) =>
   api.delete(`/entrenadores/${id}`, config);
-// 👇 Nuevo endpoint para traer equipos desde entrenadores
+// 👇 Endpoint para traer equipos (especialidades únicas)
 export const obtenerEquipos = (config) =>
   api.get("/entrenadores/equipos", config);
 
