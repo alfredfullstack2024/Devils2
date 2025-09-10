@@ -1,4 +1,3 @@
-
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Alert } from "react-bootstrap";
@@ -22,6 +21,7 @@ const CrearCliente = () => {
     tallaTrenSuperior: "",
     tallaTrenInferior: "",
     nombreResponsable: "",
+    especialidad: "", // Campo agregado
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -69,7 +69,10 @@ const CrearCliente = () => {
       setError("La edad debe ser un número positivo.");
       return;
     }
-
+    if (!formData.especialidad.trim()) {
+      setError("La especialidad es obligatoria.");
+      return;
+    }
     if (!user || !user.token) {
       setError("Debes iniciar sesión para crear un cliente.");
       return;
@@ -99,10 +102,11 @@ const CrearCliente = () => {
         tallaTrenSuperior: "",
         tallaTrenInferior: "",
         nombreResponsable: "",
+        especialidad: "",
       });
       setTimeout(() => navigate("/clientes"), 2000);
     } catch (err) {
-      console.error("Error al crear cliente:", err);
+      console.error("Error al crear cliente:", err.response?.data);
       setError(
         "Error al crear el cliente: " +
           (err.response?.data?.message || "Error desconocido")
@@ -270,6 +274,17 @@ const CrearCliente = () => {
           />
         </Form.Group>
         <Form.Group className="mb-3">
+          <Form.Label>Especialidad</Form.Label>
+          <Form.Control
+            type="text"
+            name="especialidad"
+            value={formData.especialidad}
+            onChange={handleChange}
+            placeholder="Ingresa la especialidad"
+            required
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
           <Form.Label>Estado</Form.Label>
           <Form.Select
             name="estado"
@@ -290,5 +305,3 @@ const CrearCliente = () => {
 };
 
 export default CrearCliente;
-
-
