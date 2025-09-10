@@ -87,7 +87,7 @@ const ListaClientes = () => {
   const formatearFecha = (fecha) => {
     if (!fecha) return "No especificado";
     const date = new Date(fecha);
-    if (isNaN(date)) return fecha; // si no es una fecha válida
+    if (isNaN(date)) return fecha;
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
@@ -154,7 +154,7 @@ const ListaClientes = () => {
             <th>EPS</th>
             <th>Talla Superior</th>
             <th>Talla Inferior</th>
-            <th>Equipo</th> {/* 👈 Nuevo campo */}
+            <th>Especialidad</th> {/* 👈 cambiado de Equipo a Especialidad */}
             <th>Responsable</th>
             <th>Acciones</th>
           </tr>
@@ -177,7 +177,7 @@ const ListaClientes = () => {
                 <td>{cliente.eps || "No especificado"}</td>
                 <td>{cliente.tallaTrenSuperior || "No especificado"}</td>
                 <td>{cliente.tallaTrenInferior || "No especificado"}</td>
-                <td>{cliente.equipo || "No asignado"}</td> {/* 👈 Mostrar equipo */}
+                <td>{cliente.especialidad || "No asignada"}</td> {/* 👈 corregido */}
                 <td>{cliente.nombreResponsable || "No especificado"}</td>
                 <td>
                   <Link to={`/clientes/editar/${cliente._id}`}>
