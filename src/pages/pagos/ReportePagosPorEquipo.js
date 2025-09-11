@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const ReportePagosPorEquipo = () => {
@@ -6,123 +6,128 @@ const ReportePagosPorEquipo = () => {
   const [equipo, setEquipo] = useState("Todos");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
-  const [pagos, setPagos] = useState([]);
-  const [error, setError] = useState("");
+  const [reporte, setReporte] = useState([]);
+  const [error, setError] = useState(null);
 
-  // 🔹 Cargar las especialidades desde la API
+  // 🔹 Cargar especialidades (equipos)
   useEffect(() => {
     const fetchEspecialidades = async () => {
       try {
         const { data } = await axios.get(
           `${process.env.REACT_APP_API_URL}/especialidades`
         );
-        setEspecialidades(data);
+
+        // Normalizar respuesta para que siempre sea array
+        if (Array.isArray(data)) {
+          setEspecialidades(data);
+        } else if (Array.isArray(data.data)) {
+          setEspecialidades(data.data);
+        } else {
+          setEspecialidades([]);
+        }
       } catch (err) {
         setError("Error al cargar las especialidades");
       }
     };
+
     fetchEspecialidades();
   }, []);
 
   // 🔹 Generar reporte
   const generarReporte = async () => {
     try {
-      const params = {};
-      if (equipo !== "Todos") params.especialidad = equipo;
-      if (fechaInicio) params.fechaInicio = fechaInicio;
-      if (fechaFin) params.fechaFin = fechaFin;
-
       const { data } = await axios.get(
-        `${process.env.REACT_APP_API_URL}/pagos/reporte`,
-        { params }
+        `${process.env.REACT_APP_API_URL}/pagos/reporte-por-equipo`,
+        {
+          params: {
+            equipo: equipo !== "Todos" ? equipo : undefined,
+            fechaInicio: fechaInicio || undefined,
+            fechaFin: fechaFin || undefined,
+          },
+        }
       );
-      setPagos(data);
+
+      // Normalizar respuesta
+      if (Array.isArray(data)) {
+        setReporte(data);
+      } else if (Array.isArray(data.data)) {
+        setReporte(data.data);
+      } else {
+        setReporte([]);
+      }
+      setError(null);
     } catch (err) {
-      setError("Error al generar el informe");
+      setError("Error al generar el reporte");
+      setReporte([]);
     }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Informe de pagos por equipo</h1>
+    <div style={{ padding: "20px" }}>
+      <h2>Informe de pagos por equipo</h2>
 
       {/* Filtros */}
-      <div className="flex gap-4 mb-4">
-        <div>
-          <label className="block">Equipo</label>
-          <select
-            value={equipo}
-            onChange={(e) => setEquipo(e.target.value)}
-            className="border p-2 rounded"
-          >
-            <option value="Todos">Todos</option>
-            {especialidades.map((esp) => (
-              <option key={esp._id} value={esp.nombre}>
-                {esp.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block">Fecha inicial</label>
-          <input
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => setFechaInicio(e.target.value)}
-            className="border p-2 rounded"
-          />
-        </div>
-        <div>
-          <label className="block">Fecha final</label>
-          <input
-            type="date"
-            value={fechaFin}
-            onChange={(e) => setFechaFin(e.target.value)}
-            className="border p-2 rounded"
-          />
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={generarReporte}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Generar Informe
-          </button>
-        </div>
+      <div style={{ marginBottom: "15px" }}>
+        <label>Equipo: </label>
+        <select value={equipo} onChange={(e) => setEquipo(e.target.value)}>
+          <option value="Todos">Todos</option>
+          {especialidades.map((esp) => (
+            <option key={esp._id} value={esp.nombre}>
+              {esp.nombre}
+            </option>
+          ))}
+        </select>
       </div>
 
+      <div style={{ marginBottom: "15px" }}>
+        <label>Fecha inicial: </label>
+        <input
+          type="date"
+          value={fechaInicio}
+          onChange={(e) => setFechaInicio(e.target.value)}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Fecha final: </label>
+        <input
+          type="date"
+          value={fechaFin}
+          onChange={(e) => setFechaFin(e.target.value)}
+        />
+      </div>
+
+      <button onClick={generarReporte}>Generar Informe</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
       {/* Tabla de resultados */}
-      {error && <p className="text-red-600">{error}</p>}
-      <table className="min-w-full border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-4 py-2">Cliente</th>
-            <th className="border px-4 py-2">Equipo</th>
-            <th className="border px-4 py-2">Monto</th>
-            <th className="border px-4 py-2">Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagos.length > 0 ? (
-            pagos.map((pago) => (
-              <tr key={pago._id}>
-                <td className="border px-4 py-2">{pago.cliente?.nombre}</td>
-                <td className="border px-4 py-2">{pago.cliente?.especialidad || "No asignado"}</td>
-                <td className="border px-4 py-2">${pago.monto}</td>
-                <td className="border px-4 py-2">
-                  {new Date(pago.fecha).toLocaleDateString()}
-                </td>
-              </tr>
-            ))
-          ) : (
+      {reporte.length > 0 && (
+        <table border="1" cellPadding="8" style={{ marginTop: "20px" }}>
+          <thead>
             <tr>
-              <td colSpan="4" className="text-center py-4">
-                No hay pagos disponibles
-              </td>
+              <th>Cliente</th>
+              <th>Equipo</th>
+              <th>Monto</th>
+              <th>Fecha de Pago</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {reporte.map((pago, index) => (
+              <tr key={index}>
+                <td>{pago.cliente?.nombre}</td>
+                <td>{pago.cliente?.especialidad || "No asignado"}</td>
+                <td>{pago.monto}</td>
+                <td>{new Date(pago.fechaPago).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {reporte.length === 0 && !error && (
+        <p style={{ marginTop: "20px" }}>No hay pagos para mostrar.</p>
+      )}
     </div>
   );
 };
