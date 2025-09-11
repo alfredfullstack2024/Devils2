@@ -5,7 +5,7 @@ import api from "../../api/axios";
 
 const ReportePagosPorEquipo = () => {
   const [especialidades, setEspecialidades] = useState([]);
-  const [equipoSeleccionado, setEquipoSeleccionado] = useState("todos");
+  const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("todos");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
   const [pagos, setPagos] = useState([]);
@@ -37,8 +37,8 @@ const ReportePagosPorEquipo = () => {
         endDate.setHours(23, 59, 59, 999);
         params.fechaFin = endDate.toISOString();
       }
-      if (equipoSeleccionado !== "todos") {
-        params.especialidad = equipoSeleccionado;
+      if (especialidadSeleccionada !== "todos") {
+        params.especialidad = especialidadSeleccionada; // aquí mandamos el string directamente
       }
 
       const response = await api.get("/pagos/reporte", { params });
@@ -57,7 +57,7 @@ const ReportePagosPorEquipo = () => {
 
   return (
     <div className="container mt-4">
-      <h2>Informe de pagos por equipo</h2>
+      <h2>Informe de pagos por especialidad</h2>
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Card className="mb-4">
@@ -65,15 +65,15 @@ const ReportePagosPorEquipo = () => {
           <Form>
             <Row>
               <Col md={3}>
-                <Form.Group controlId="equipoSeleccionado">
-                  <Form.Label>Equipo</Form.Label>
+                <Form.Group controlId="especialidadSeleccionada">
+                  <Form.Label>Especialidad</Form.Label>
                   <Form.Select
-                    value={equipoSeleccionado}
-                    onChange={(e) => setEquipoSeleccionado(e.target.value)}
+                    value={especialidadSeleccionada}
+                    onChange={(e) => setEspecialidadSeleccionada(e.target.value)}
                   >
-                    <option value="todos">Todos</option>
-                    {especialidades.map((esp) => (
-                      <option key={esp._id} value={esp._id}>
+                    <option value="todos">Todas</option>
+                    {especialidades.map((esp, i) => (
+                      <option key={i} value={esp.nombre}>
                         {esp.nombre}
                       </option>
                     ))}
@@ -126,7 +126,7 @@ const ReportePagosPorEquipo = () => {
           <thead>
             <tr>
               <th>Cliente</th>
-              <th>Equipo</th>
+              <th>Especialidad</th>
               <th>Monto</th>
               <th>Fecha</th>
               <th>Producto</th>
@@ -140,7 +140,7 @@ const ReportePagosPorEquipo = () => {
                     ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`
                     : "Cliente no encontrado"}
                 </td>
-                <td>{pago.especialidad?.nombre || "No asignado"}</td>
+                <td>{pago.especialidad || "No asignado"}</td>
                 <td>${pago.monto.toLocaleString()}</td>
                 <td>{formatFecha(pago.fecha)}</td>
                 <td>{pago.producto?.nombre || "No especificado"}</td>
