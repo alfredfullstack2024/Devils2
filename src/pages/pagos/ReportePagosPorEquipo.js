@@ -17,7 +17,6 @@ const ReportePagosPorEquipo = () => {
           `${process.env.REACT_APP_API_URL}/especialidades`
         );
 
-        // Normalizar respuesta para que siempre sea array
         if (Array.isArray(data)) {
           setEspecialidades(data);
         } else if (Array.isArray(data.data)) {
@@ -47,7 +46,6 @@ const ReportePagosPorEquipo = () => {
         }
       );
 
-      // Normalizar respuesta
       if (Array.isArray(data)) {
         setReporte(data);
       } else if (Array.isArray(data.data)) {
@@ -63,70 +61,104 @@ const ReportePagosPorEquipo = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Informe de pagos por equipo</h2>
+    <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        Informe de Pagos por Equipo
+      </h2>
 
       {/* Filtros */}
-      <div style={{ marginBottom: "15px" }}>
-        <label>Equipo: </label>
-        <select value={equipo} onChange={(e) => setEquipo(e.target.value)}>
-          <option value="Todos">Todos</option>
-          {especialidades.map((esp) => (
-            <option key={esp._id} value={esp.nombre}>
-              {esp.nombre}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div style={{ marginBottom: "15px" }}>
-        <label>Fecha inicial: </label>
-        <input
-          type="date"
-          value={fechaInicio}
-          onChange={(e) => setFechaInicio(e.target.value)}
-        />
-      </div>
-
-      <div style={{ marginBottom: "15px" }}>
-        <label>Fecha final: </label>
-        <input
-          type="date"
-          value={fechaFin}
-          onChange={(e) => setFechaFin(e.target.value)}
-        />
-      </div>
-
-      <button onClick={generarReporte}>Generar Informe</button>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      {/* Tabla de resultados */}
-      {reporte.length > 0 && (
-        <table border="1" cellPadding="8" style={{ marginTop: "20px" }}>
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Equipo</th>
-              <th>Monto</th>
-              <th>Fecha de Pago</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reporte.map((pago, index) => (
-              <tr key={index}>
-                <td>{pago.cliente?.nombre}</td>
-                <td>{pago.cliente?.especialidad || "No asignado"}</td>
-                <td>{pago.monto}</td>
-                <td>{new Date(pago.fechaPago).toLocaleDateString()}</td>
-              </tr>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div>
+          <label className="block text-gray-700 font-medium mb-1">Equipo</label>
+          <select
+            value={equipo}
+            onChange={(e) => setEquipo(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          >
+            <option value="Todos">Todos</option>
+            {especialidades.map((esp) => (
+              <option key={esp._id} value={esp.nombre}>
+                {esp.nombre}
+              </option>
             ))}
-          </tbody>
-        </table>
-      )}
+          </select>
+        </div>
 
-      {reporte.length === 0 && !error && (
-        <p style={{ marginTop: "20px" }}>No hay pagos para mostrar.</p>
+        <div>
+          <label className="block text-gray-700 font-medium mb-1">
+            Fecha inicial
+          </label>
+          <input
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => setFechaInicio(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        <div>
+          <label className="block text-gray-700 font-medium mb-1">
+            Fecha final
+          </label>
+          <input
+            type="date"
+            value={fechaFin}
+            onChange={(e) => setFechaFin(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+      </div>
+
+      <div className="text-center mb-6">
+        <button
+          onClick={generarReporte}
+          className="bg-blue-600 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700 transition"
+        >
+          Generar Informe
+        </button>
+      </div>
+
+      {error && <p className="text-red-600 text-center mb-4">{error}</p>}
+
+      {/* Tabla */}
+      {reporte.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full border border-gray-300 rounded-md shadow-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-3 text-left border-b">Cliente</th>
+                <th className="p-3 text-left border-b">Equipo</th>
+                <th className="p-3 text-left border-b">Monto</th>
+                <th className="p-3 text-left border-b">Fecha de Pago</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reporte.map((pago, index) => (
+                <tr
+                  key={index}
+                  className="hover:bg-gray-50 transition duration-200"
+                >
+                  <td className="p-3 border-b">
+                    {pago.cliente?.nombre || "Sin nombre"}
+                  </td>
+                  <td className="p-3 border-b">
+                    {pago.cliente?.especialidad || "No asignado"}
+                  </td>
+                  <td className="p-3 border-b">${pago.monto}</td>
+                  <td className="p-3 border-b">
+                    {new Date(pago.fechaPago).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        !error && (
+          <p className="text-gray-600 text-center mt-6">
+            No hay pagos para mostrar.
+          </p>
+        )
       )}
     </div>
   );
