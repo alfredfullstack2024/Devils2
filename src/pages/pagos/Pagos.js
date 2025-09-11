@@ -17,12 +17,12 @@ const Pagos = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Cargar especialidades desde clientes (no solo entrenadores)
+  // Cargar especialidades desde entrenadores (lo que ya funcionaba en tu app)
   useEffect(() => {
     const fetchEspecialidades = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await api.get("/clientes/especialidades", {
+        const res = await api.get("/entrenadores/especialidades", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setEspecialidades(res.data || []);
@@ -49,10 +49,9 @@ const Pagos = () => {
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
       } else if (filtroTipo === "semana" && semana) {
-        // "2025-W37" → separar año y semana
         const [year, week] = semana.split("-W");
         const startDate = new Date(year, 0, 1);
-        const day = startDate.getDay(); // domingo=0
+        const day = startDate.getDay();
         const diff = (week - 1) * 7 + (day <= 4 ? 1 - day : 8 - day);
         startDate.setDate(startDate.getDate() + diff);
         const endDate = new Date(startDate);
@@ -62,9 +61,8 @@ const Pagos = () => {
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
       } else if (filtroTipo === "dia" && dia) {
-        const startDate = new Date(dia);
-        const endDate = new Date(dia);
-        endDate.setHours(23, 59, 59, 999);
+        const startDate = new Date(dia + "T00:00:00"); // aseguramos fecha completa
+        const endDate = new Date(dia + "T23:59:59");
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
       }
