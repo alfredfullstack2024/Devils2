@@ -17,12 +17,12 @@ const Pagos = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Cargar especialidades al iniciar
+  // Cargar especialidades desde clientes (no solo entrenadores)
   useEffect(() => {
     const fetchEspecialidades = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await api.get("/entrenadores/especialidades", {
+        const res = await api.get("/clientes/especialidades", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setEspecialidades(res.data || []);
@@ -49,14 +49,16 @@ const Pagos = () => {
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
       } else if (filtroTipo === "semana" && semana) {
+        // "2025-W37" → separar año y semana
         const [year, week] = semana.split("-W");
         const startDate = new Date(year, 0, 1);
-        startDate.setDate(
-          startDate.getDate() + (week - 1) * 7 - startDate.getDay() + 1
-        );
+        const day = startDate.getDay(); // domingo=0
+        const diff = (week - 1) * 7 + (day <= 4 ? 1 - day : 8 - day);
+        startDate.setDate(startDate.getDate() + diff);
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 6);
+        endDate.setDate(startDate.getDate() + 6);
         endDate.setHours(23, 59, 59, 999);
+
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
       } else if (filtroTipo === "dia" && dia) {
@@ -69,6 +71,10 @@ const Pagos = () => {
 
       if (filtroEspecialidad) {
         params.especialidad = filtroEspecialidad;
+      }
+
+      if (busquedaNombre) {
+        params.nombreCliente = busquedaNombre;
       }
 
       const response = await api.get("/pagos", { params });
@@ -100,8 +106,6 @@ const Pagos = () => {
 
   const manejarFiltrar = async (e) => {
     e.preventDefault();
-    setPagos([]);
-    setPagosFiltrados([]);
     await fetchPagos();
   };
 
@@ -112,8 +116,6 @@ const Pagos = () => {
     setDia("");
     setBusquedaNombre("");
     setFiltroEspecialidad("");
-    setPagos([]);
-    setPagosFiltrados([]);
     await fetchPagos();
   };
 
