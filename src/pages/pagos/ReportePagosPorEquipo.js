@@ -1,164 +1,153 @@
+// src/pages/pagos/ReportePagosPorEquipo.js
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { Table, Button, Alert, Form, Row, Col, Card } from "react-bootstrap";
+import api from "../../api/axios";
 
 const ReportePagosPorEquipo = () => {
   const [especialidades, setEspecialidades] = useState([]);
-  const [equipo, setEquipo] = useState("Todos");
+  const [equipoSeleccionado, setEquipoSeleccionado] = useState("todos");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
-  const [reporte, setReporte] = useState([]);
-  const [error, setError] = useState(null);
+  const [pagos, setPagos] = useState([]);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 🔹 Cargar especialidades (equipos)
+  // Cargar especialidades desde el backend
   useEffect(() => {
     const fetchEspecialidades = async () => {
       try {
-        const { data } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/especialidades`
-        );
-
-        if (Array.isArray(data)) {
-          setEspecialidades(data);
-        } else if (Array.isArray(data.data)) {
-          setEspecialidades(data.data);
-        } else {
-          setEspecialidades([]);
-        }
+        const response = await api.get("/especialidades");
+        setEspecialidades(response.data || []);
       } catch (err) {
         setError("Error al cargar las especialidades");
       }
     };
-
     fetchEspecialidades();
   }, []);
 
-  // 🔹 Generar reporte
+  // Generar el reporte
   const generarReporte = async () => {
+    setIsLoading(true);
+    setError("");
     try {
-      const { data } = await axios.get(
-        `${process.env.REACT_APP_API_URL}/pagos/reporte-por-equipo`,
-        {
-          params: {
-            equipo: equipo !== "Todos" ? equipo : undefined,
-            fechaInicio: fechaInicio || undefined,
-            fechaFin: fechaFin || undefined,
-          },
-        }
-      );
-
-      if (Array.isArray(data)) {
-        setReporte(data);
-      } else if (Array.isArray(data.data)) {
-        setReporte(data.data);
-      } else {
-        setReporte([]);
+      const params = {};
+      if (fechaInicio) params.fechaInicio = new Date(fechaInicio).toISOString();
+      if (fechaFin) {
+        const endDate = new Date(fechaFin);
+        endDate.setHours(23, 59, 59, 999);
+        params.fechaFin = endDate.toISOString();
       }
-      setError(null);
+      if (equipoSeleccionado !== "todos") {
+        params.especialidad = equipoSeleccionado;
+      }
+
+      const response = await api.get("/pagos/reporte", { params });
+      setPagos(response.data || []);
     } catch (err) {
-      setError("Error al generar el reporte");
-      setReporte([]);
+      setError("Error al generar el informe: " + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const formatFecha = (fecha) => {
+    const date = new Date(fecha);
+    return date.toLocaleDateString("es-ES");
+  };
+
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-        Informe de Pagos por Equipo
-      </h2>
+    <div className="container mt-4">
+      <h2>Informe de pagos por equipo</h2>
+      {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* Filtros */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">Equipo</label>
-          <select
-            value={equipo}
-            onChange={(e) => setEquipo(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          >
-            <option value="Todos">Todos</option>
-            {especialidades.map((esp) => (
-              <option key={esp._id} value={esp.nombre}>
-                {esp.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+      <Card className="mb-4">
+        <Card.Body>
+          <Form>
+            <Row>
+              <Col md={3}>
+                <Form.Group controlId="equipoSeleccionado">
+                  <Form.Label>Equipo</Form.Label>
+                  <Form.Select
+                    value={equipoSeleccionado}
+                    onChange={(e) => setEquipoSeleccionado(e.target.value)}
+                  >
+                    <option value="todos">Todos</option>
+                    {especialidades.map((esp) => (
+                      <option key={esp._id} value={esp._id}>
+                        {esp.nombre}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
 
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Fecha inicial
-          </label>
-          <input
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => setFechaInicio(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </div>
+              <Col md={3}>
+                <Form.Group controlId="fechaInicio">
+                  <Form.Label>Fecha inicial</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
 
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Fecha final
-          </label>
-          <input
-            type="date"
-            value={fechaFin}
-            onChange={(e) => setFechaFin(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </div>
-      </div>
+              <Col md={3}>
+                <Form.Group controlId="fechaFin">
+                  <Form.Label>Fecha final</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
 
-      <div className="text-center mb-6">
-        <button
-          onClick={generarReporte}
-          className="bg-blue-600 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700 transition"
-        >
-          Generar Informe
-        </button>
-      </div>
-
-      {error && <p className="text-red-600 text-center mb-4">{error}</p>}
-
-      {/* Tabla */}
-      {reporte.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 rounded-md shadow-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3 text-left border-b">Cliente</th>
-                <th className="p-3 text-left border-b">Equipo</th>
-                <th className="p-3 text-left border-b">Monto</th>
-                <th className="p-3 text-left border-b">Fecha de Pago</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reporte.map((pago, index) => (
-                <tr
-                  key={index}
-                  className="hover:bg-gray-50 transition duration-200"
+              <Col md={3} className="d-flex align-items-end">
+                <Button
+                  variant="primary"
+                  onClick={generarReporte}
+                  disabled={isLoading}
                 >
-                  <td className="p-3 border-b">
-                    {pago.cliente?.nombre || "Sin nombre"}
-                  </td>
-                  <td className="p-3 border-b">
-                    {pago.cliente?.especialidad || "No asignado"}
-                  </td>
-                  <td className="p-3 border-b">${pago.monto}</td>
-                  <td className="p-3 border-b">
-                    {new Date(pago.fechaPago).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        !error && (
-          <p className="text-gray-600 text-center mt-6">
-            No hay pagos para mostrar.
-          </p>
-        )
+                  {isLoading ? "Generando..." : "Generar Informe"}
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </Card.Body>
+      </Card>
+
+      {!isLoading && pagos.length === 0 && (
+        <Alert variant="info">No hay pagos para mostrar.</Alert>
+      )}
+
+      {pagos.length > 0 && (
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Equipo</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+              <th>Producto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagos.map((pago) => (
+              <tr key={pago._id}>
+                <td>
+                  {pago.cliente
+                    ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`
+                    : "Cliente no encontrado"}
+                </td>
+                <td>{pago.especialidad?.nombre || "No asignado"}</td>
+                <td>${pago.monto.toLocaleString()}</td>
+                <td>{formatFecha(pago.fecha)}</td>
+                <td>{pago.producto?.nombre || "No especificado"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       )}
     </div>
   );
