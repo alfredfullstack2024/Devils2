@@ -1,4 +1,3 @@
-// src/pages/pagos/Pagos.js
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, Button, Alert, Form, Row, Col, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -10,28 +9,28 @@ const Pagos = () => {
   const [filtroTipo, setFiltroTipo] = useState("mes");
   const [mes, setMes] = useState("");
   const [semana, setSemana] = useState("");
-  const [dia, setDia] = useState(""); // 👈 nuevo estado
+  const [dia, setDia] = useState("");
   const [busquedaNombre, setBusquedaNombre] = useState("");
-  const [filtroEquipo, setFiltroEquipo] = useState(""); 
-  const [equipos, setEquipos] = useState([]);
+  const [filtroEspecialidad, setFiltroEspecialidad] = useState("");
+  const [especialidades, setEspecialidades] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // 👉 Traer lista de equipos al cargar
+  // Cargar especialidades al iniciar
   useEffect(() => {
-    const fetchEquipos = async () => {
+    const fetchEspecialidades = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await api.get("/entrenadores/equipos", {
+        const res = await api.get("/entrenadores/especialidades", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setEquipos(res.data || []);
+        setEspecialidades(res.data || []);
       } catch (err) {
-        console.error("Error cargando equipos:", err);
+        console.error("Error cargando especialidades:", err);
       }
     };
-    fetchEquipos();
+    fetchEspecialidades();
   }, []);
 
   const fetchPagos = useCallback(async () => {
@@ -41,14 +40,8 @@ const Pagos = () => {
     try {
       const params = {};
 
-      if (filtroTipo === "dia" && dia) {
-        const startDate = new Date(dia);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(dia);
-        endDate.setHours(23, 59, 59, 999);
-        params.fechaInicio = startDate.toISOString();
-        params.fechaFin = endDate.toISOString();
-      } else if (filtroTipo === "mes" && mes) {
+      // Filtro por fecha
+      if (filtroTipo === "mes" && mes) {
         const [year, month] = mes.split("-");
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0);
@@ -66,10 +59,16 @@ const Pagos = () => {
         endDate.setHours(23, 59, 59, 999);
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
+      } else if (filtroTipo === "dia" && dia) {
+        const startDate = new Date(dia);
+        const endDate = new Date(dia);
+        endDate.setHours(23, 59, 59, 999);
+        params.fechaInicio = startDate.toISOString();
+        params.fechaFin = endDate.toISOString();
       }
 
-      if (filtroEquipo) {
-        params.equipo = filtroEquipo;
+      if (filtroEspecialidad) {
+        params.especialidad = filtroEspecialidad;
       }
 
       const response = await api.get("/pagos", { params });
@@ -93,7 +92,7 @@ const Pagos = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filtroTipo, dia, mes, semana, filtroEquipo, busquedaNombre]);
+  }, [filtroTipo, mes, semana, dia, filtroEspecialidad, busquedaNombre]);
 
   useEffect(() => {
     fetchPagos();
@@ -108,11 +107,11 @@ const Pagos = () => {
 
   const limpiarFiltros = async () => {
     setFiltroTipo("mes");
-    setDia("");
     setMes("");
     setSemana("");
+    setDia("");
     setBusquedaNombre("");
-    setFiltroEquipo("");
+    setFiltroEspecialidad("");
     setPagos([]);
     setPagosFiltrados([]);
     await fetchPagos();
@@ -168,20 +167,6 @@ const Pagos = () => {
                 </Form.Group>
               </Col>
 
-              {filtroTipo === "dia" && (
-                <Col md={2}>
-                  <Form.Group controlId="dia">
-                    <Form.Label>Día</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={dia}
-                      onChange={(e) => setDia(e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </Form.Group>
-                </Col>
-              )}
-
               {filtroTipo === "mes" && (
                 <Col md={2}>
                   <Form.Group controlId="mes">
@@ -210,6 +195,20 @@ const Pagos = () => {
                 </Col>
               )}
 
+              {filtroTipo === "dia" && (
+                <Col md={2}>
+                  <Form.Group controlId="dia">
+                    <Form.Label>Día</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={dia}
+                      onChange={(e) => setDia(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </Form.Group>
+                </Col>
+              )}
+
               <Col md={3}>
                 <Form.Group controlId="busquedaNombre">
                   <Form.Label>Buscar por Nombre</Form.Label>
@@ -224,17 +223,17 @@ const Pagos = () => {
               </Col>
 
               <Col md={3}>
-                <Form.Group controlId="filtroEquipo">
-                  <Form.Label>Equipo</Form.Label>
+                <Form.Group controlId="filtroEspecialidad">
+                  <Form.Label>Especialidad</Form.Label>
                   <Form.Select
-                    value={filtroEquipo}
-                    onChange={(e) => setFiltroEquipo(e.target.value)}
+                    value={filtroEspecialidad}
+                    onChange={(e) => setFiltroEspecialidad(e.target.value)}
                     disabled={isLoading}
                   >
-                    <option value="">Todos</option>
-                    {equipos.map((eq, idx) => (
-                      <option key={idx} value={eq}>
-                        {eq}
+                    <option value="">Todas</option>
+                    {especialidades.map((esp, idx) => (
+                      <option key={idx} value={esp}>
+                        {esp}
                       </option>
                     ))}
                   </Form.Select>
@@ -281,7 +280,7 @@ const Pagos = () => {
           <thead>
             <tr>
               <th>Cliente</th>
-              <th>Equipo</th>
+              <th>Especialidad</th>
               <th>Monto</th>
               <th>Fecha</th>
               <th>Producto</th>
@@ -296,7 +295,7 @@ const Pagos = () => {
                     ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`
                     : "Cliente no encontrado"}
                 </td>
-                <td>{pago.cliente?.equipo || "No asignado"}</td>
+                <td>{pago.cliente?.especialidad || "No asignada"}</td>
                 <td>${pago.monto.toLocaleString()}</td>
                 <td>{formatFecha(pago.fecha)}</td>
                 <td>{pago.producto?.nombre || "Producto no especificado"}</td>
