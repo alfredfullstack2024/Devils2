@@ -1,3 +1,4 @@
+// src/pages/pagos/Pagos.js
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, Button, Alert, Form, Row, Col, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -17,15 +18,19 @@ const Pagos = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Cargar especialidades desde entrenadores (lo que ya funcionaba en tu app)
+  // ✅ Cargar especialidades desde clientes
   useEffect(() => {
     const fetchEspecialidades = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await api.get("/entrenadores/especialidades", {
+        const res = await api.get("/clientes", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setEspecialidades(res.data || []);
+        const clientes = res.data || [];
+        const especialidadesUnicas = [
+          ...new Set(clientes.map((c) => c.especialidad).filter(Boolean)),
+        ];
+        setEspecialidades(especialidadesUnicas);
       } catch (err) {
         console.error("Error cargando especialidades:", err);
       }
@@ -40,7 +45,7 @@ const Pagos = () => {
     try {
       const params = {};
 
-      // Filtro por fecha
+      // ✅ Filtro por fecha
       if (filtroTipo === "mes" && mes) {
         const [year, month] = mes.split("-");
         const startDate = new Date(year, month - 1, 1);
@@ -51,28 +56,24 @@ const Pagos = () => {
       } else if (filtroTipo === "semana" && semana) {
         const [year, week] = semana.split("-W");
         const startDate = new Date(year, 0, 1);
-        const day = startDate.getDay();
-        const diff = (week - 1) * 7 + (day <= 4 ? 1 - day : 8 - day);
-        startDate.setDate(startDate.getDate() + diff);
+        startDate.setDate(
+          startDate.getDate() + (week - 1) * 7 - startDate.getDay() + 1
+        );
         const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
+        endDate.setDate(endDate.getDate() + 6);
         endDate.setHours(23, 59, 59, 999);
-
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
       } else if (filtroTipo === "dia" && dia) {
-        const startDate = new Date(dia + "T00:00:00"); // aseguramos fecha completa
-        const endDate = new Date(dia + "T23:59:59");
+        const startDate = new Date(dia);
+        const endDate = new Date(dia);
+        endDate.setHours(23, 59, 59, 999);
         params.fechaInicio = startDate.toISOString();
         params.fechaFin = endDate.toISOString();
       }
 
       if (filtroEspecialidad) {
         params.especialidad = filtroEspecialidad;
-      }
-
-      if (busquedaNombre) {
-        params.nombreCliente = busquedaNombre;
       }
 
       const response = await api.get("/pagos", { params });
@@ -104,6 +105,8 @@ const Pagos = () => {
 
   const manejarFiltrar = async (e) => {
     e.preventDefault();
+    setPagos([]);
+    setPagosFiltrados([]);
     await fetchPagos();
   };
 
@@ -114,6 +117,8 @@ const Pagos = () => {
     setDia("");
     setBusquedaNombre("");
     setFiltroEspecialidad("");
+    setPagos([]);
+    setPagosFiltrados([]);
     await fetchPagos();
   };
 
