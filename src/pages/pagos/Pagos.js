@@ -12,31 +12,9 @@ const Pagos = () => {
   const [semana, setSemana] = useState("");
   const [dia, setDia] = useState("");
   const [busquedaNombre, setBusquedaNombre] = useState("");
-  const [filtroEspecialidad, setFiltroEspecialidad] = useState("");
-  const [especialidades, setEspecialidades] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  // ✅ Cargar especialidades desde clientes
-  useEffect(() => {
-    const fetchEspecialidades = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await api.get("/clientes", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const clientes = res.data || [];
-        const especialidadesUnicas = [
-          ...new Set(clientes.map((c) => c.especialidad).filter(Boolean)),
-        ];
-        setEspecialidades(especialidadesUnicas);
-      } catch (err) {
-        console.error("Error cargando especialidades:", err);
-      }
-    };
-    fetchEspecialidades();
-  }, []);
 
   const fetchPagos = useCallback(async () => {
     setIsLoading(true);
@@ -45,7 +23,7 @@ const Pagos = () => {
     try {
       const params = {};
 
-      // ✅ Filtro por fecha
+      // Filtro por fecha
       if (filtroTipo === "mes" && mes) {
         const [year, month] = mes.split("-");
         const startDate = new Date(year, month - 1, 1);
@@ -72,10 +50,6 @@ const Pagos = () => {
         params.fechaFin = endDate.toISOString();
       }
 
-      if (filtroEspecialidad) {
-        params.especialidad = filtroEspecialidad;
-      }
-
       const response = await api.get("/pagos", { params });
       const fetchedPagos = response.data.pagos || [];
       setPagos(fetchedPagos);
@@ -97,7 +71,7 @@ const Pagos = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filtroTipo, mes, semana, dia, filtroEspecialidad, busquedaNombre]);
+  }, [filtroTipo, mes, semana, dia, busquedaNombre]);
 
   useEffect(() => {
     fetchPagos();
@@ -116,7 +90,6 @@ const Pagos = () => {
     setSemana("");
     setDia("");
     setBusquedaNombre("");
-    setFiltroEspecialidad("");
     setPagos([]);
     setPagosFiltrados([]);
     await fetchPagos();
@@ -227,25 +200,7 @@ const Pagos = () => {
                 </Form.Group>
               </Col>
 
-              <Col md={3}>
-                <Form.Group controlId="filtroEspecialidad">
-                  <Form.Label>Especialidad</Form.Label>
-                  <Form.Select
-                    value={filtroEspecialidad}
-                    onChange={(e) => setFiltroEspecialidad(e.target.value)}
-                    disabled={isLoading}
-                  >
-                    <option value="">Todas</option>
-                    {especialidades.map((esp, idx) => (
-                      <option key={idx} value={esp}>
-                        {esp}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-
-              <Col md={2} className="d-flex align-items-end">
+              <Col md={3} className="d-flex align-items-end">
                 <Button
                   type="submit"
                   variant="primary"
@@ -258,8 +213,16 @@ const Pagos = () => {
                   variant="secondary"
                   onClick={limpiarFiltros}
                   disabled={isLoading}
+                  className="me-2"
                 >
                   Limpiar
+                </Button>
+                {/* Botón para ir al reporte */}
+                <Button
+                  variant="success"
+                  onClick={() => navigate("/pagos/reporte")}
+                >
+                  Ver Reporte por Equipos
                 </Button>
               </Col>
             </Row>
@@ -285,7 +248,6 @@ const Pagos = () => {
           <thead>
             <tr>
               <th>Cliente</th>
-              <th>Especialidad</th>
               <th>Monto</th>
               <th>Fecha</th>
               <th>Producto</th>
@@ -300,7 +262,6 @@ const Pagos = () => {
                     ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`
                     : "Cliente no encontrado"}
                 </td>
-                <td>{pago.cliente?.especialidad || "No asignada"}</td>
                 <td>${pago.monto.toLocaleString()}</td>
                 <td>{formatFecha(pago.fecha)}</td>
                 <td>{pago.producto?.nombre || "Producto no especificado"}</td>
