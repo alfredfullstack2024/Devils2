@@ -16,6 +16,7 @@ const Pagos = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  // --- 1. fetchPagos solo depende de los filtros de fecha ---
   const fetchPagos = useCallback(async () => {
     setIsLoading(true);
     setError("");
@@ -53,16 +54,7 @@ const Pagos = () => {
       const response = await api.get("/pagos", { params });
       const fetchedPagos = response.data.pagos || [];
       setPagos(fetchedPagos);
-
-      const pagosFiltrados = busquedaNombre
-        ? fetchedPagos.filter((pago) => {
-            const nombreCliente = pago.cliente
-              ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`.toLowerCase()
-              : "";
-            return nombreCliente.includes(busquedaNombre.toLowerCase());
-          })
-        : fetchedPagos;
-      setPagosFiltrados(pagosFiltrados);
+      setPagosFiltrados(fetchedPagos);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message;
       setError("Error al cargar los pagos: " + errorMessage);
@@ -71,16 +63,30 @@ const Pagos = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filtroTipo, mes, semana, dia, busquedaNombre]);
+  }, [filtroTipo, mes, semana, dia]);
 
+  // --- 2. Carga inicial y cuando cambian filtros de fecha ---
   useEffect(() => {
     fetchPagos();
   }, [fetchPagos]);
 
+  // --- 3. Filtro local por nombre ---
+  useEffect(() => {
+    if (!busquedaNombre) {
+      setPagosFiltrados(pagos);
+    } else {
+      const filtrados = pagos.filter((pago) => {
+        const nombreCliente = pago.cliente
+          ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`.toLowerCase()
+          : "";
+        return nombreCliente.includes(busquedaNombre.toLowerCase());
+      });
+      setPagosFiltrados(filtrados);
+    }
+  }, [busquedaNombre, pagos]);
+
   const manejarFiltrar = async (e) => {
     e.preventDefault();
-    setPagos([]);
-    setPagosFiltrados([]);
     await fetchPagos();
   };
 
@@ -125,6 +131,7 @@ const Pagos = () => {
     <div className="container mt-4">
       <h2>Pagos</h2>
       {error && <Alert variant="danger">{error}</Alert>}
+
       <Card className="mb-4">
         <Card.Body>
           <Card.Title>Filtrar y Buscar</Card.Title>
@@ -187,6 +194,7 @@ const Pagos = () => {
                 </Col>
               )}
 
+              {/* --- Campo de búsqueda separado --- */}
               <Col md={3}>
                 <Form.Group controlId="busquedaNombre">
                   <Form.Label>Buscar por Nombre</Form.Label>
@@ -195,7 +203,6 @@ const Pagos = () => {
                     value={busquedaNombre}
                     onChange={(e) => setBusquedaNombre(e.target.value)}
                     placeholder="Nombre completo del cliente"
-                    disabled={isLoading}
                   />
                 </Form.Group>
               </Col>
@@ -217,7 +224,6 @@ const Pagos = () => {
                 >
                   Limpiar
                 </Button>
-                {/* Botón para ir al reporte */}
                 <Button
                   variant="success"
                   onClick={() => navigate("/pagos/reporte")}
