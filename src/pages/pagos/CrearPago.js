@@ -17,10 +17,8 @@ const CrearPago = () => {
   const [searchCliente, setSearchCliente] = useState("");
   const [error, setError] = useState("");
   const [showTiquete, setShowTiquete] = useState(false);
-  const [mensajeInfo, setMensajeInfo] = useState(""); // 👈 nuevo estado para el aviso
   const navigate = useNavigate();
 
-  // Configuración del tiquete
   const tiqueteConfig = {
     nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS",
     direccion: "CALLE 2 B No. 69D-58 BOGOTÁ",
@@ -28,13 +26,11 @@ const CrearPago = () => {
     nit: "000000000-0",
   };
 
-  // Control del número de tiquete
   const [ticketNumber, setTicketNumber] = useState(() => {
     const saved = localStorage.getItem("lastTicketNumber");
     return saved ? parseInt(saved, 10) + 1 : 1;
   });
 
-  // Cargar clientes y productos
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -58,7 +54,6 @@ const CrearPago = () => {
     fetchData();
   }, [navigate]);
 
-  // Actualizar monto según producto y cantidad
   useEffect(() => {
     const productoSeleccionado = productos.find(
       (p) => p._id === formData.producto
@@ -80,7 +75,6 @@ const CrearPago = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setMensajeInfo(""); // 👈 limpia el mensaje anterior
 
     if (!formData.cliente) {
       setError("Por favor selecciona un cliente válido.");
@@ -90,7 +84,6 @@ const CrearPago = () => {
     try {
       await crearPago(formData);
       setShowTiquete(true);
-      setMensajeInfo("💡 Imprima el tiquete para terminar de registrar el pago. ¡Gracias!"); // 👈 mensaje que pediste
     } catch (err) {
       console.error(err);
       setError("Error al registrar el pago. Intenta nuevamente.");
@@ -137,17 +130,10 @@ const CrearPago = () => {
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* 👇 nuevo mensaje informativo al registrar */}
-      {mensajeInfo && (
-        <Alert variant="info" className="mt-2">
-          {mensajeInfo}
-        </Alert>
-      )}
-
       <Card>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
-            {/* CLIENTE con búsqueda */}
+            {/* CLIENTE */}
             <Form.Group className="mb-3" controlId="cliente">
               <Form.Label>Cliente</Form.Label>
               <Form.Control
@@ -263,6 +249,18 @@ const CrearPago = () => {
           {/* TIQUETE */}
           {showTiquete && (
             <div>
+              {/* 🔴 MENSAJE EN ROJO */}
+              <div
+                style={{
+                  color: "red",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  marginTop: "20px",
+                }}
+              >
+                ⚠️ Imprima el tiquete para terminar de registrar el pago. ¡Gracias!
+              </div>
+
               <div
                 id="tiquete"
                 style={{
