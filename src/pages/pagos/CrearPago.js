@@ -90,7 +90,7 @@ const CrearPago = () => {
     try {
       await crearPago(formData);
       setShowTiquete(true);
-      setMensajeInfo("💡 Imprima el tiquete para terminar de registrar el pago. ¡Gracias!"); // 👈 mensaje que pediste
+      setMensajeInfo("💡 Imprima el tiquete para terminar de registrar el pago, dirigiendose al final de esta pagina y dando Click en Imprimir Tiquete . ¡Gracias!"); // 👈 mensaje que pediste
     } catch (err) {
       console.error(err);
       setError("Error al registrar el pago. Intenta nuevamente.");
@@ -325,3 +325,4 @@ const CrearPago = () => {
 };
 
 export default CrearPago;
+
