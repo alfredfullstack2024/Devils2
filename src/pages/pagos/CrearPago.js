@@ -1,3 +1,5 @@
+src/pages/pagos/CrearPago.js
+
 import React, { useState, useEffect } from "react";
 import { Form, Button, Alert, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -118,13 +120,8 @@ const CrearPago = () => {
     printWindow.document.close();
     printWindow.print();
     printWindow.close();
-
-    // ✅ NUEVO: pedir confirmación antes de ocultar el tiquete
-    const confirmacion = window.confirm("¿Deseas cerrar el tiquete y volver a la lista de pagos?");
-    if (confirmacion) {
-      setShowTiquete(false);
-      navigate("/pagos");
-    }
+    setShowTiquete(false); // Ocultar tras imprimir
+    navigate("/pagos"); // Redirigir después de imprimir
   };
 
   const fechaFinal = new Date(formData.fecha);
