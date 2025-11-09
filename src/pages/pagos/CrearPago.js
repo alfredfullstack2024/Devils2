@@ -152,13 +152,11 @@ const CrearPago = () => {
                 onChange={(e) => {
                   const valor = e.target.value;
                   setSearchCliente(valor);
-
                   const seleccionado = clientes.find(
                     (c) =>
                       `${c.nombre} ${c.apellido}`.toLowerCase() ===
                       valor.toLowerCase()
                   );
-
                   if (seleccionado) {
                     setFormData((prev) => ({
                       ...prev,
@@ -258,7 +256,6 @@ const CrearPago = () => {
           {/* TIQUETE */}
           {showTiquete && (
             <div>
-              {/* BOTÓN IMPRIMIR ARRIBA */}
               <div className="mt-3 mb-2">
                 <Button variant="primary" onClick={imprimirTiquete}>
                   Imprimir Tiquete
@@ -329,3 +326,5 @@ const CrearPago = () => {
 };
 
 export default CrearPago;
+
+
