@@ -14,20 +14,19 @@ const CrearPago = () => {
     fecha: "",
     metodoPago: "Efectivo",
   });
-  const [searchCliente, setSearchCliente] = useState(""); // búsqueda por nombre
+  const [searchCliente, setSearchCliente] = useState("");
   const [error, setError] = useState("");
   const [showTiquete, setShowTiquete] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
 
-  // Configuración del tiquete
   const tiqueteConfig = {
-    nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS ",
-    direccion: "CALLE 2 B No. 69D-58 BOGOTA",
+    nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS",
+    direccion: "CALLE 2 B No. 69D-58 BOGOTÁ",
     telefonos: "3176696551",
     nit: "000000000-0",
   };
 
-  // Obtener y actualizar el contador del tiquete desde localStorage
   const [ticketNumber, setTicketNumber] = useState(() => {
     const savedTicketNumber = localStorage.getItem("lastTicketNumber");
     return savedTicketNumber ? parseInt(savedTicketNumber, 10) + 1 : 1;
@@ -42,14 +41,11 @@ const CrearPago = () => {
         ]);
         setClientes(clientesResponse.data);
         setProductos(productosResponse.data);
-
         const today = new Date().toISOString().split("T")[0];
         setFormData((prev) => ({ ...prev, fecha: today }));
       } catch (err) {
         setError("Error al cargar los datos: " + err.message);
-        if (err.message.includes("Sesión expirada")) {
-          navigate("/login");
-        }
+        if (err.message.includes("Sesión expirada")) navigate("/login");
       }
     };
     fetchData();
@@ -84,17 +80,15 @@ const CrearPago = () => {
 
     try {
       await crearPago(formData);
-      setShowTiquete(true); // Mostrar tiquete tras registrar
+      setShowConfirm(true); // Mostrar alerta de confirmación
+      setShowTiquete(true); // Mostrar tiquete
     } catch (err) {
       setError("Error al registrar el pago: " + err.message);
-      if (err.message.includes("Sesión expirada")) {
-        navigate("/login");
-      }
+      if (err.message.includes("Sesión expirada")) navigate("/login");
     }
   };
 
   const imprimirTiquete = () => {
-    // Incrementar y guardar el nuevo número de tiquete
     const newTicketNumber = ticketNumber;
     localStorage.setItem("lastTicketNumber", newTicketNumber);
     setTicketNumber(newTicketNumber + 1);
@@ -118,8 +112,8 @@ const CrearPago = () => {
     printWindow.document.close();
     printWindow.print();
     printWindow.close();
-    setShowTiquete(false); // Ocultar tras imprimir
-    navigate("/pagos"); // Redirigir después de imprimir
+    setShowTiquete(false);
+    navigate("/pagos");
   };
 
   const fechaFinal = new Date(formData.fecha);
@@ -131,10 +125,25 @@ const CrearPago = () => {
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Card>
+      {showConfirm && (
+        <Alert variant="info" className="mt-3">
+          <p>
+            <strong>El pago se ha registrado correctamente.</strong>
+            <br />
+            Por favor, imprima el recibo generado antes de continuar.
+          </p>
+          <div className="d-flex justify-content-end">
+            <Button variant="primary" onClick={() => setShowConfirm(false)}>
+              Aceptar
+            </Button>
+          </div>
+        </Alert>
+      )}
+
+      <Card className="mt-3">
         <Card.Body>
           <Form onSubmit={handleSubmit}>
-            {/* CLIENTE con búsqueda */}
+            {/* CLIENTE */}
             <Form.Group className="mb-3" controlId="cliente">
               <Form.Label>Cliente</Form.Label>
               <Form.Control
@@ -144,22 +153,15 @@ const CrearPago = () => {
                 onChange={(e) => {
                   const valor = e.target.value;
                   setSearchCliente(valor);
-
-                  // Validar coincidencia exacta
                   const seleccionado = clientes.find(
                     (c) =>
                       `${c.nombre} ${c.apellido}`.toLowerCase() ===
                       valor.toLowerCase()
                   );
-
-                  if (seleccionado) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      cliente: seleccionado._id,
-                    }));
-                  } else {
-                    setFormData((prev) => ({ ...prev, cliente: "" }));
-                  }
+                  setFormData((prev) => ({
+                    ...prev,
+                    cliente: seleccionado ? seleccionado._id : "",
+                  }));
                 }}
                 list="clientes-list"
               />
@@ -236,7 +238,11 @@ const CrearPago = () => {
               </Form.Control>
             </Form.Group>
 
-            <Button variant="primary" type="submit">
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={showConfirm} // 🔒 deshabilitado si hay confirmación
+            >
               Registrar Pago
             </Button>
             <Button
@@ -249,7 +255,15 @@ const CrearPago = () => {
           </Form>
 
           {showTiquete && (
-            <div>
+            <div className="mt-4">
+              <Button
+                variant="success"
+                className="mb-2"
+                onClick={imprimirTiquete}
+              >
+                Imprimir Tiquete
+              </Button>
+
               <div
                 id="tiquete"
                 style={{
@@ -257,7 +271,6 @@ const CrearPago = () => {
                   fontFamily: "Arial, sans-serif",
                   padding: "10px",
                   border: "1px solid #000",
-                  marginTop: "20px",
                 }}
               >
                 <h1 style={{ textAlign: "center" }}>
@@ -286,25 +299,11 @@ const CrearPago = () => {
                 </p>
                 <p>Saldo: 0.00</p>
                 <p>Forma Pago: {formData.metodoPago}</p>
-                <p style={{ fontSize: "8px" }}>
+                <p className="small-text">
                   Mensualidad Intransferible, No Congelable, No Se Hace
                   Devolución de Dinero
                 </p>
               </div>
-              <Button
-                variant="primary"
-                className="mt-2"
-                onClick={imprimirTiquete}
-              >
-                Imprimir Tiquete
-              </Button>
-              <Button
-                variant="secondary"
-                className="ms-2 mt-2"
-                onClick={() => setShowTiquete(false)}
-              >
-                Cancelar
-              </Button>
             </div>
           )}
         </Card.Body>
