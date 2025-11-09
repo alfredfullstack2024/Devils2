@@ -1,330 +1,237 @@
+// src/pages/pagos/CrearPago.js
 import React, { useState, useEffect } from "react";
-import { Form, Button, Alert, Card, Modal } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { obtenerClientes, obtenerProductos, crearPago } from "../../api/axios";
+import axios from "axios";
+import moment from "moment";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const CrearPago = () => {
   const [clientes, setClientes] = useState([]);
   const [productos, setProductos] = useState([]);
-  const [formData, setFormData] = useState({
+  const [pago, setPago] = useState({
     cliente: "",
     producto: "",
     cantidad: 1,
-    monto: 0,
-    fecha: "",
-    metodoPago: "Efectivo",
+    monto: "",
+    fecha: moment().format("YYYY-MM-DD"),
+    metodoPago: "",
   });
-  const [searchCliente, setSearchCliente] = useState("");
-  const [error, setError] = useState("");
-  const [showTiquete, setShowTiquete] = useState(false);
-  const [showAviso, setShowAviso] = useState(false);
-  const [botonDeshabilitado, setBotonDeshabilitado] = useState(false);
-  const navigate = useNavigate();
+  const [ticket, setTicket] = useState(null);
+  const [mensaje, setMensaje] = useState("");
 
-  const tiqueteConfig = {
-    nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS",
-    direccion: "CALLE 2 B No. 69D-58 BOGOTÁ",
-    telefonos: "3176696551",
-    nit: "000000000-0",
-  };
-
-  const [ticketNumber, setTicketNumber] = useState(() => {
-    const saved = localStorage.getItem("lastTicketNumber");
-    return saved ? parseInt(saved, 10) + 1 : 1;
-  });
+  const API_URL = "https://backendiconic.onrender.com";
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [clientesResponse, productosResponse] = await Promise.all([
-          obtenerClientes(),
-          obtenerProductos(),
+        const [clientesRes, productosRes] = await Promise.all([
+          axios.get(`${API_URL}/clientes`),
+          axios.get(`${API_URL}/productos`),
         ]);
-        setClientes(clientesResponse.data);
-        setProductos(productosResponse.data);
-
-        const today = new Date().toISOString().split("T")[0];
-        setFormData((prev) => ({ ...prev, fecha: today }));
-      } catch (err) {
-        console.error(err);
-        setError("Error al cargar datos. Verifica la conexión o sesión.");
-        if (err.message.includes("Sesión expirada")) {
-          navigate("/login");
-        }
+        setClientes(clientesRes.data);
+        setProductos(productosRes.data);
+      } catch (error) {
+        console.error("Error cargando datos:", error);
       }
     };
     fetchData();
-  }, [navigate]);
-
-  useEffect(() => {
-    const productoSeleccionado = productos.find(
-      (p) => p._id === formData.producto
-    );
-    if (productoSeleccionado) {
-      const monto = productoSeleccionado.precio * formData.cantidad;
-      setFormData((prev) => ({ ...prev, monto }));
-    }
-  }, [formData.producto, formData.cantidad, productos]);
+  }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "cantidad" ? parseInt(value) || 1 : value,
-    }));
+    setPago({ ...pago, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-
-    if (!formData.cliente) {
-      setError("Por favor selecciona un cliente válido.");
-      return;
-    }
-
     try {
-      await crearPago(formData);
-      setShowAviso(true);
-      setBotonDeshabilitado(true);
-    } catch (err) {
-      console.error(err);
-      setError("Error al registrar el pago. Intenta nuevamente.");
-      if (err.message.includes("Sesión expirada")) {
-        navigate("/login");
-      }
+      const response = await axios.post(`${API_URL}/pagos`, pago);
+      setTicket(response.data);
+      setMensaje("✅ Pago registrado correctamente");
+      setTimeout(() => setMensaje(""), 3000);
+      // limpiar formulario
+      setPago({
+        cliente: "",
+        producto: "",
+        cantidad: 1,
+        monto: "",
+        fecha: moment().format("YYYY-MM-DD"),
+        metodoPago: "",
+      });
+    } catch (error) {
+      console.error("Error registrando pago:", error);
+      setMensaje("❌ Error registrando pago");
+      setTimeout(() => setMensaje(""), 3000);
     }
   };
 
-  const cerrarAviso = () => {
-    setShowAviso(false);
-    setShowTiquete(true);
+  const handlePrint = () => {
+    const contenido = document.getElementById("ticket");
+    const ventana = window.open("", "", "width=400,height=600");
+    ventana.document.write("<html><head><title>Recibo</title></head><body>");
+    ventana.document.write(contenido.innerHTML);
+    ventana.document.write("</body></html>");
+    ventana.document.close();
+    ventana.print();
   };
-
-  const imprimirTiquete = () => {
-    const newTicketNumber = ticketNumber;
-    localStorage.setItem("lastTicketNumber", newTicketNumber);
-    setTicketNumber(newTicketNumber + 1);
-
-    const printContent = document.getElementById("tiquete").innerHTML;
-    const printWindow = window.open("", "", "height=500,width=300");
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Tiquete de Pago</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 10px; font-size: 12px; }
-            h1 { text-align: center; font-size: 14px; margin: 5px 0; }
-            p { margin: 2px 0; }
-          </style>
-        </head>
-        <body>${printContent}</body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-    printWindow.close();
-
-    setShowTiquete(false);
-    setBotonDeshabilitado(false);
-    navigate("/pagos");
-  };
-
-  const fechaFinal = new Date(formData.fecha);
-  fechaFinal.setMonth(fechaFinal.getMonth() + 1);
 
   return (
-    <div className="container mt-4">
-      <h2>Registrar Pago</h2>
+    <div className="container mt-3 mb-5">
+      <h6>Registrar Pago</h6>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      {mensaje && (
+        <div
+          className={`alert ${
+            mensaje.includes("✅") ? "alert-success" : "alert-danger"
+          }`}
+          role="alert"
+        >
+          {mensaje}
+        </div>
+      )}
 
-      <Card>
-        <Card.Body>
-          <Form onSubmit={handleSubmit}>
-            {/* CLIENTE */}
-            <Form.Group className="mb-3" controlId="cliente">
-              <Form.Label>Cliente</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Buscar cliente por nombre o apellido"
-                value={searchCliente}
-                onChange={(e) => {
-                  const valor = e.target.value;
-                  setSearchCliente(valor);
-                  const seleccionado = clientes.find(
-                    (c) =>
-                      `${c.nombre} ${c.apellido}`.toLowerCase() ===
-                      valor.toLowerCase()
-                  );
-                  if (seleccionado) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      cliente: seleccionado._id,
-                    }));
-                  } else {
-                    setFormData((prev) => ({ ...prev, cliente: "" }));
-                  }
-                }}
-                list="clientes-list"
-              />
-              <datalist id="clientes-list">
-                {clientes.map((cliente) => (
-                  <option
-                    key={cliente._id}
-                    value={`${cliente.nombre} ${cliente.apellido}`}
-                  />
-                ))}
-              </datalist>
-            </Form.Group>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-2">
+          <label className="form-label">Cliente</label>
+          <select
+            className="form-select"
+            name="cliente"
+            value={pago.cliente}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Seleccione cliente</option>
+            {clientes.map((c) => (
+              <option key={c._id} value={c.nombre}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            {/* PRODUCTO */}
-            <Form.Group className="mb-3" controlId="producto">
-              <Form.Label>Producto (opcional)</Form.Label>
-              <Form.Control
-                as="select"
-                name="producto"
-                value={formData.producto}
-                onChange={handleChange}
-              >
-                <option value="">Seleccione un producto</option>
-                {productos.map((producto) => (
-                  <option key={producto._id} value={producto._id}>
-                    {producto.nombre} - ${producto.precio} ({producto.stock} en stock)
-                  </option>
-                ))}
-              </Form.Control>
-            </Form.Group>
+        <div className="mb-2">
+          <label className="form-label">Producto</label>
+          <select
+            className="form-select"
+            name="producto"
+            value={pago.producto}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Seleccione producto</option>
+            {productos.map((p) => (
+              <option key={p._id} value={p.nombre}>
+                {p.nombre} - ${p.precio}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            {/* CANTIDAD */}
-            <Form.Group className="mb-3" controlId="cantidad">
-              <Form.Label>Cantidad</Form.Label>
-              <Form.Control
-                type="number"
-                name="cantidad"
-                value={formData.cantidad}
-                onChange={handleChange}
-                min="1"
-              />
-            </Form.Group>
+        <div className="row">
+          <div className="col-md-4 mb-2">
+            <label className="form-label">Cantidad</label>
+            <input
+              type="number"
+              className="form-control"
+              name="cantidad"
+              value={pago.cantidad}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            {/* MONTO */}
-            <Form.Group className="mb-3" controlId="monto">
-              <Form.Label>Monto</Form.Label>
-              <Form.Control type="number" value={formData.monto} readOnly />
-            </Form.Group>
+          <div className="col-md-4 mb-2">
+            <label className="form-label">Monto</label>
+            <input
+              type="number"
+              className="form-control"
+              name="monto"
+              value={pago.monto}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            {/* FECHA */}
-            <Form.Group className="mb-3" controlId="fecha">
-              <Form.Label>Fecha</Form.Label>
-              <Form.Control
-                type="date"
-                name="fecha"
-                value={formData.fecha}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+          <div className="col-md-4 mb-2">
+            <label className="form-label">Fecha</label>
+            <input
+              type="date"
+              className="form-control"
+              name="fecha"
+              value={pago.fecha}
+              onChange={handleChange}
+              required
+            />
+          </div>
+        </div>
 
-            {/* MÉTODO DE PAGO */}
-            <Form.Group className="mb-3" controlId="metodoPago">
-              <Form.Label>Método de pago</Form.Label>
-              <Form.Control
-                as="select"
-                name="metodoPago"
-                value={formData.metodoPago}
-                onChange={handleChange}
-              >
-                <option value="Efectivo">Efectivo</option>
-                <option value="Tarjeta">Tarjeta</option>
-                <option value="Transferencia">Transferencia</option>
-              </Form.Control>
-            </Form.Group>
+        <div className="mb-2">
+          <label className="form-label">Método de pago</label>
+          <select
+            className="form-select"
+            name="metodoPago"
+            value={pago.metodoPago}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Seleccione método</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Tarjeta">Tarjeta</option>
+          </select>
+        </div>
 
-            <Button variant="primary" type="submit" disabled={botonDeshabilitado}>
-              Registrar Pago
-            </Button>
-            <Button
-              variant="secondary"
-              className="ms-2"
-              onClick={() => navigate("/pagos")}
-            >
-              Cancelar
-            </Button>
-          </Form>
+        <button type="submit" className="btn btn-primary me-2">
+          Registrar Pago
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() =>
+            setPago({
+              cliente: "",
+              producto: "",
+              cantidad: 1,
+              monto: "",
+              fecha: moment().format("YYYY-MM-DD"),
+              metodoPago: "",
+            })
+          }
+        >
+          Cancelar
+        </button>
+      </form>
 
-          {/* TIQUETE */}
-          {showTiquete && (
-            <div>
-              <div className="mt-3 mb-2">
-                <Button variant="primary" onClick={imprimirTiquete}>
-                  Imprimir Tiquete
-                </Button>
-              </div>
-
-              <div
-                id="tiquete"
-                style={{
-                  width: "280px",
-                  padding: "10px",
-                  border: "1px solid #000",
-                }}
-              >
-                <h1>{tiqueteConfig.nombreEstablecimiento}</h1>
-                <p style={{ textAlign: "center" }}>{tiqueteConfig.direccion}</p>
-                <p style={{ textAlign: "center" }}>
-                  Tel: {tiqueteConfig.telefonos} | NIT: {tiqueteConfig.nit}
-                </p>
-                <p>Fecha: {new Date().toLocaleDateString("es-CO")}</p>
-                <p>Recibo #: {ticketNumber}</p>
-                <p>
-                  Cliente:{" "}
-                  {clientes.find((c) => c._id === formData.cliente)?.nombre ||
-                    "No especificado"}
-                </p>
-                <h4>Mensualidad Gym 2025</h4>
-                <p>Inicio: {formData.fecha}</p>
-                <p>Final: {fechaFinal.toLocaleDateString("es-CO")}</p>
-                <p>
-                  Pago:{" "}
-                  {formData.monto.toLocaleString("es-CO", {
-                    style: "currency",
-                    currency: "COP",
-                  })}
-                </p>
-                <p>Saldo: $0</p>
-                <p>Método: {formData.metodoPago}</p>
-                <p style={{ fontSize: "8px" }}>
-                  Mensualidad intransferible, no congelable, sin devolución de
-                  dinero.
-                </p>
-              </div>
-
-              <Button
-                variant="secondary"
-                className="ms-2 mt-3"
-                onClick={() => setShowTiquete(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
-
-      {/* MODAL DE AVISO */}
-      <Modal show={showAviso} centered>
-        <Modal.Body className="text-center">
-          <h5>⚠️ Recuerde que debe imprimir el tiquete para que el pago quede registrado.</h5>
-          <Button variant="primary" className="mt-3" onClick={cerrarAviso}>
-            Cerrar
-          </Button>
-        </Modal.Body>
-      </Modal>
+      {ticket && (
+        <div
+          className="card mt-4 shadow-sm"
+          style={{ maxWidth: "300px", margin: "0 auto" }}
+        >
+          <div className="card-body" id="ticket">
+            <h6 className="text-center fw-bold">CLUB DEPORTIVO ICONIC ALL STARS</h6>
+            <p className="text-center small mb-1">
+              CALLE F 25 No. 68D-60 BOGOTÁ<br />
+              Tel: 3108886661 | NIT: 800000000-0
+            </p>
+            <hr />
+            <p className="small mb-1">Fecha: {moment().format("DD/MM/YYYY")}</p>
+            <p className="small mb-1">Cliente: {ticket.cliente}</p>
+            <p className="small mb-1">Producto: {ticket.producto}</p>
+            <p className="small mb-1">Cantidad: {ticket.cantidad}</p>
+            <p className="small mb-1">Monto: ${ticket.monto}</p>
+            <p className="small mb-1">Método: {ticket.metodoPago}</p>
+            <hr />
+            <p className="text-center small mb-0">
+              ¡Gracias por su pago! 💪
+            </p>
+          </div>
+          <div className="card-footer text-center">
+            <button onClick={handlePrint} className="btn btn-sm btn-primary">
+              Imprimir Ticket
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default CrearPago;
-
-
