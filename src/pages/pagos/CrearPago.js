@@ -14,25 +14,26 @@ const CrearPago = () => {
     fecha: "",
     metodoPago: "Efectivo",
   });
-  const [searchCliente, setSearchCliente] = useState(""); // búsqueda por nombre
+  const [searchCliente, setSearchCliente] = useState("");
   const [error, setError] = useState("");
   const [showTiquete, setShowTiquete] = useState(false);
   const navigate = useNavigate();
 
   // Configuración del tiquete
   const tiqueteConfig = {
-    nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS ",
-    direccion: "CALLE 2 B No. 69D-58 BOGOTA",
+    nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS",
+    direccion: "CALLE 2 B No. 69D-58 BOGOTÁ",
     telefonos: "3176696551",
     nit: "000000000-0",
   };
 
-  // Obtener y actualizar el contador del tiquete desde localStorage
+  // Control del número de tiquete
   const [ticketNumber, setTicketNumber] = useState(() => {
-    const savedTicketNumber = localStorage.getItem("lastTicketNumber");
-    return savedTicketNumber ? parseInt(savedTicketNumber, 10) + 1 : 1;
+    const saved = localStorage.getItem("lastTicketNumber");
+    return saved ? parseInt(saved, 10) + 1 : 1;
   });
 
+  // Cargar clientes y productos
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -46,7 +47,8 @@ const CrearPago = () => {
         const today = new Date().toISOString().split("T")[0];
         setFormData((prev) => ({ ...prev, fecha: today }));
       } catch (err) {
-        setError("Error al cargar los datos: " + err.message);
+        console.error(err);
+        setError("Error al cargar datos. Verifica la conexión o sesión.");
         if (err.message.includes("Sesión expirada")) {
           navigate("/login");
         }
@@ -55,6 +57,7 @@ const CrearPago = () => {
     fetchData();
   }, [navigate]);
 
+  // Actualizar monto según producto y cantidad
   useEffect(() => {
     const productoSeleccionado = productos.find(
       (p) => p._id === formData.producto
@@ -78,15 +81,16 @@ const CrearPago = () => {
     setError("");
 
     if (!formData.cliente) {
-      setError("Por favor seleccione un cliente válido.");
+      setError("Por favor selecciona un cliente válido.");
       return;
     }
 
     try {
       await crearPago(formData);
-      setShowTiquete(true); // Mostrar tiquete tras registrar
+      setShowTiquete(true);
     } catch (err) {
-      setError("Error al registrar el pago: " + err.message);
+      console.error(err);
+      setError("Error al registrar el pago. Intenta nuevamente.");
       if (err.message.includes("Sesión expirada")) {
         navigate("/login");
       }
@@ -94,7 +98,6 @@ const CrearPago = () => {
   };
 
   const imprimirTiquete = () => {
-    // Incrementar y guardar el nuevo número de tiquete
     const newTicketNumber = ticketNumber;
     localStorage.setItem("lastTicketNumber", newTicketNumber);
     setTicketNumber(newTicketNumber + 1);
@@ -106,10 +109,9 @@ const CrearPago = () => {
         <head>
           <title>Tiquete de Pago</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 10px; }
-            h1 { text-align: center; }
-            p { margin: 0; }
-            .small-text { font-size: 8px; }
+            body { font-family: Arial, sans-serif; padding: 10px; font-size: 12px; }
+            h1 { text-align: center; font-size: 14px; margin: 5px 0; }
+            p { margin: 2px 0; }
           </style>
         </head>
         <body>${printContent}</body>
@@ -118,8 +120,9 @@ const CrearPago = () => {
     printWindow.document.close();
     printWindow.print();
     printWindow.close();
-    setShowTiquete(false); // Ocultar tras imprimir
-    navigate("/pagos"); // Redirigir después de imprimir
+
+    setShowTiquete(false);
+    navigate("/pagos");
   };
 
   const fechaFinal = new Date(formData.fecha);
@@ -145,7 +148,6 @@ const CrearPago = () => {
                   const valor = e.target.value;
                   setSearchCliente(valor);
 
-                  // Validar coincidencia exacta
                   const seleccionado = clientes.find(
                     (c) =>
                       `${c.nombre} ${c.apellido}`.toLowerCase() ===
@@ -248,21 +250,19 @@ const CrearPago = () => {
             </Button>
           </Form>
 
+          {/* TIQUETE */}
           {showTiquete && (
             <div>
               <div
                 id="tiquete"
                 style={{
-                  width: "300px",
-                  fontFamily: "Arial, sans-serif",
+                  width: "280px",
                   padding: "10px",
                   border: "1px solid #000",
                   marginTop: "20px",
                 }}
               >
-                <h1 style={{ textAlign: "center" }}>
-                  {tiqueteConfig.nombreEstablecimiento}
-                </h1>
+                <h1>{tiqueteConfig.nombreEstablecimiento}</h1>
                 <p style={{ textAlign: "center" }}>{tiqueteConfig.direccion}</p>
                 <p style={{ textAlign: "center" }}>
                   Tel: {tiqueteConfig.telefonos} | NIT: {tiqueteConfig.nit}
@@ -274,9 +274,9 @@ const CrearPago = () => {
                   {clientes.find((c) => c._id === formData.cliente)?.nombre ||
                     "No especificado"}
                 </p>
-                <h3>Mensualidad Gym 2025</h3>
-                <p>Fecha Inicio: {formData.fecha}</p>
-                <p>Fecha Final: {fechaFinal.toLocaleDateString("es-CO")}</p>
+                <h4>Mensualidad Gym 2025</h4>
+                <p>Inicio: {formData.fecha}</p>
+                <p>Final: {fechaFinal.toLocaleDateString("es-CO")}</p>
                 <p>
                   Pago:{" "}
                   {formData.monto.toLocaleString("es-CO", {
@@ -284,13 +284,14 @@ const CrearPago = () => {
                     currency: "COP",
                   })}
                 </p>
-                <p>Saldo: 0.00</p>
-                <p>Forma Pago: {formData.metodoPago}</p>
+                <p>Saldo: $0</p>
+                <p>Método: {formData.metodoPago}</p>
                 <p style={{ fontSize: "8px" }}>
-                  Mensualidad Intransferible, No Congelable, No Se Hace
-                  Devolución de Dinero
+                  Mensualidad intransferible, no congelable, sin devolución de
+                  dinero.
                 </p>
               </div>
+
               <Button
                 variant="primary"
                 className="mt-2"
