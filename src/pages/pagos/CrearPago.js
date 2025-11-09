@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Button, Alert, Card } from "react-bootstrap";
+import { Form, Button, Alert, Card, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { obtenerClientes, obtenerProductos, crearPago } from "../../api/axios";
 
@@ -17,9 +17,10 @@ const CrearPago = () => {
   const [searchCliente, setSearchCliente] = useState("");
   const [error, setError] = useState("");
   const [showTiquete, setShowTiquete] = useState(false);
+  const [showAviso, setShowAviso] = useState(false);
+  const [botonDeshabilitado, setBotonDeshabilitado] = useState(false);
   const navigate = useNavigate();
 
-  // Configuración del tiquete
   const tiqueteConfig = {
     nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS",
     direccion: "CALLE 2 B No. 69D-58 BOGOTÁ",
@@ -27,13 +28,11 @@ const CrearPago = () => {
     nit: "000000000-0",
   };
 
-  // Control del número de tiquete
   const [ticketNumber, setTicketNumber] = useState(() => {
     const saved = localStorage.getItem("lastTicketNumber");
     return saved ? parseInt(saved, 10) + 1 : 1;
   });
 
-  // Cargar clientes y productos
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -57,7 +56,6 @@ const CrearPago = () => {
     fetchData();
   }, [navigate]);
 
-  // Actualizar monto según producto y cantidad
   useEffect(() => {
     const productoSeleccionado = productos.find(
       (p) => p._id === formData.producto
@@ -87,7 +85,8 @@ const CrearPago = () => {
 
     try {
       await crearPago(formData);
-      setShowTiquete(true);
+      setShowAviso(true);
+      setBotonDeshabilitado(true);
     } catch (err) {
       console.error(err);
       setError("Error al registrar el pago. Intenta nuevamente.");
@@ -95,6 +94,11 @@ const CrearPago = () => {
         navigate("/login");
       }
     }
+  };
+
+  const cerrarAviso = () => {
+    setShowAviso(false);
+    setShowTiquete(true);
   };
 
   const imprimirTiquete = () => {
@@ -122,6 +126,7 @@ const CrearPago = () => {
     printWindow.close();
 
     setShowTiquete(false);
+    setBotonDeshabilitado(false);
     navigate("/pagos");
   };
 
@@ -137,7 +142,7 @@ const CrearPago = () => {
       <Card>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
-            {/* CLIENTE con búsqueda */}
+            {/* CLIENTE */}
             <Form.Group className="mb-3" controlId="cliente">
               <Form.Label>Cliente</Form.Label>
               <Form.Control
@@ -238,7 +243,7 @@ const CrearPago = () => {
               </Form.Control>
             </Form.Group>
 
-            <Button variant="primary" type="submit">
+            <Button variant="primary" type="submit" disabled={botonDeshabilitado}>
               Registrar Pago
             </Button>
             <Button
@@ -253,13 +258,19 @@ const CrearPago = () => {
           {/* TIQUETE */}
           {showTiquete && (
             <div>
+              {/* BOTÓN IMPRIMIR ARRIBA */}
+              <div className="mt-3 mb-2">
+                <Button variant="primary" onClick={imprimirTiquete}>
+                  Imprimir Tiquete
+                </Button>
+              </div>
+
               <div
                 id="tiquete"
                 style={{
                   width: "280px",
                   padding: "10px",
                   border: "1px solid #000",
-                  marginTop: "20px",
                 }}
               >
                 <h1>{tiqueteConfig.nombreEstablecimiento}</h1>
@@ -293,15 +304,8 @@ const CrearPago = () => {
               </div>
 
               <Button
-                variant="primary"
-                className="mt-2"
-                onClick={imprimirTiquete}
-              >
-                Imprimir Tiquete
-              </Button>
-              <Button
                 variant="secondary"
-                className="ms-2 mt-2"
+                className="ms-2 mt-3"
                 onClick={() => setShowTiquete(false)}
               >
                 Cancelar
@@ -310,6 +314,16 @@ const CrearPago = () => {
           )}
         </Card.Body>
       </Card>
+
+      {/* MODAL DE AVISO */}
+      <Modal show={showAviso} centered>
+        <Modal.Body className="text-center">
+          <h5>⚠️ Recuerde que debe imprimir el tiquete para que el pago quede registrado.</h5>
+          <Button variant="primary" className="mt-3" onClick={cerrarAviso}>
+            Cerrar
+          </Button>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
