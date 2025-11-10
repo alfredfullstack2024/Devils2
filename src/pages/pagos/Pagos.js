@@ -223,13 +223,14 @@ const Pagos = () => {
                   className="me-2"
                 >
                   Limpiar
-                </Button>
-                <Button
-                  variant="success"
-                  onClick={() => navigate("/pagos/reporte")}
-                >
-                  Ver Reporte por Equipos
-                </Button>
+                {/* Botón reemplazado: Resumen método de pago */}
+<Button
+  variant="warning"
+  onClick={() => navigate("/pagos/resumen")}
+>
+  Resumen método de pago
+</Button>
+
               </Col>
             </Row>
           </Form>
@@ -300,3 +301,4 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
