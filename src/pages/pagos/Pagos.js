@@ -194,7 +194,6 @@ const Pagos = () => {
                 </Col>
               )}
 
-              {/* --- Campo de búsqueda separado --- */}
               <Col md={3}>
                 <Form.Group controlId="busquedaNombre">
                   <Form.Label>Buscar por Nombre</Form.Label>
@@ -223,14 +222,14 @@ const Pagos = () => {
                   className="me-2"
                 >
                   Limpiar
-                {/* Botón reemplazado: Resumen método de pago */}
-<Button
-  variant="warning"
-  onClick={() => navigate("/pagos/resumen")}
->
-  Resumen método de pago
-</Button>
-
+                </Button>
+                <Button
+                  variant="warning"
+                  onClick={() => navigate("/pagos/resumen")}
+                  disabled={isLoading}
+                >
+                  Resumen método de pago
+                </Button>
               </Col>
             </Row>
           </Form>
@@ -301,4 +300,3 @@ const Pagos = () => {
 };
 
 export default Pagos;
-
