@@ -149,6 +149,11 @@ const Pagos = () => {
     }
   };
 
+  // === NUEVO: Botón para navegar a Pagos Ligas ===
+  const irAPagosLigas = () => {
+    navigate("/pagos/ligas");
+  };
+
   return (
     <div className="container mt-4">
       <h2>Pagos</h2>
@@ -157,12 +162,20 @@ const Pagos = () => {
       <Card className="mb-4">
         <Card.Body>
           <Card.Title>Filtrar y Buscar</Card.Title>
-          <Form onSubmit={(e) => { e.preventDefault(); fetchPagos(); }}>
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault();
+              fetchPagos();
+            }}
+          >
             <Row>
               <Col md={2}>
                 <Form.Group>
                   <Form.Label>Tipo de Filtro</Form.Label>
-                  <Form.Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+                  <Form.Select
+                    value={filtroTipo}
+                    onChange={(e) => setFiltroTipo(e.target.value)}
+                  >
                     <option value="dia">Día</option>
                     <option value="semana">Semana</option>
                     <option value="mes">Mes</option>
@@ -174,7 +187,11 @@ const Pagos = () => {
                 <Col md={2}>
                   <Form.Group>
                     <Form.Label>Mes</Form.Label>
-                    <Form.Control type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+                    <Form.Control
+                      type="month"
+                      value={mes}
+                      onChange={(e) => setMes(e.target.value)}
+                    />
                   </Form.Group>
                 </Col>
               )}
@@ -183,7 +200,11 @@ const Pagos = () => {
                 <Col md={2}>
                   <Form.Group>
                     <Form.Label>Semana</Form.Label>
-                    <Form.Control type="week" value={semana} onChange={(e) => setSemana(e.target.value)} />
+                    <Form.Control
+                      type="week"
+                      value={semana}
+                      onChange={(e) => setSemana(e.target.value)}
+                    />
                   </Form.Group>
                 </Col>
               )}
@@ -192,7 +213,11 @@ const Pagos = () => {
                 <Col md={2}>
                   <Form.Group>
                     <Form.Label>Día</Form.Label>
-                    <Form.Control type="date" value={dia} onChange={(e) => setDia(e.target.value)} />
+                    <Form.Control
+                      type="date"
+                      value={dia}
+                      onChange={(e) => setDia(e.target.value)}
+                    />
                   </Form.Group>
                 </Col>
               )}
@@ -210,22 +235,38 @@ const Pagos = () => {
               </Col>
 
               <Col md={3} className="d-flex align-items-end">
-                <Button type="submit" variant="primary" className="me-2">Filtrar</Button>
-                <Button variant="secondary" onClick={limpiarFiltros} className="me-2">Limpiar</Button>
-                <Button variant="warning" onClick={abrirResumen}>Resumen método de pago</Button>
+                <Button type="submit" variant="primary" className="me-2">
+                  Filtrar
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={limpiarFiltros}
+                  className="me-2"
+                >
+                  Limpiar
+                </Button>
+                <Button variant="warning" onClick={abrirResumen}>
+                  Resumen método de pago
+                </Button>
               </Col>
             </Row>
           </Form>
         </Card.Body>
       </Card>
 
-      <Button
-        variant="primary"
-        className="mb-3"
-        onClick={() => navigate("/pagos/crear")}
-      >
-        Crear pago
-      </Button>
+      {/* Botones principales */}
+      <div className="mb-3">
+        <Button
+          variant="primary"
+          className="me-2"
+          onClick={() => navigate("/pagos/crear")}
+        >
+          Crear pago
+        </Button>
+        <Button variant="success" onClick={irAPagosLigas}>
+          Pagos Ligas
+        </Button>
+      </div>
 
       {isLoading && <Alert variant="info">Cargando pagos...</Alert>}
       {!isLoading && pagosFiltrados.length === 0 && !error && (
@@ -245,15 +286,28 @@ const Pagos = () => {
           <tbody>
             {pagosFiltrados.map((pago) => (
               <tr key={pago._id}>
-                <td>{pago.cliente ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}` : "Sin cliente"}</td>
+                <td>
+                  {pago.cliente
+                    ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`
+                    : "Sin cliente"}
+                </td>
                 <td>${pago.monto.toLocaleString()}</td>
                 <td>{formatFecha(pago.fecha)}</td>
                 <td>{pago.producto?.nombre || "No especificado"}</td>
                 <td>
-                  <Button variant="warning" size="sm" className="me-2" onClick={() => navigate(`/pagos/editar/${pago._id}`)}>
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => navigate(`/pagos/editar/${pago._id}`)}
+                  >
                     Editar
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => eliminarPago(pago._id)}>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => eliminarPago(pago._id)}
+                  >
                     Eliminar
                   </Button>
                 </td>
