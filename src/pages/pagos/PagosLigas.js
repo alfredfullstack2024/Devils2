@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
 import axios from "axios";
+import { format } from "date-fns";
 
+// Si no tienes los componentes UI personalizados, usamos HTML estándar con estilos básicos
 const PagosLigas = () => {
   const [meses, setMeses] = useState([]);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
@@ -9,10 +10,11 @@ const PagosLigas = () => {
   const [valorDiario, setValorDiario] = useState(8000);
   const [pagos, setPagos] = useState([]);
 
+  // ✅ Variable de backend compatible con Create React App o cualquier entorno no Vite
   const backendURL =
-    import.meta.env.VITE_API_URL || "https://backendiconic.vercel.app/api";
+    process.env.REACT_APP_API_URL || "https://backendiconic.vercel.app/api";
 
-  // 🔹 Cargar meses y pagos al inicio
+  // 🔹 Cargar meses y pagos al iniciar
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -29,6 +31,7 @@ const PagosLigas = () => {
         console.error("Error al cargar los meses:", error);
       }
     };
+
     fetchData();
   }, []);
 
@@ -62,7 +65,7 @@ const PagosLigas = () => {
     }
   };
 
-  // 🔹 Actualizar valor diario global
+  // 🔹 Actualizar valor diario
   const actualizarValorDiario = async () => {
     try {
       await axios.put(
@@ -97,39 +100,80 @@ const PagosLigas = () => {
   const totalRecaudado = totalPagos * valorDiario;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="bg-white shadow-md rounded-xl p-6">
-        <h2 className="text-2xl font-bold text-center mb-4 text-gray-800">
+    <div style={{ padding: "2rem" }}>
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "1rem",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          padding: "2rem",
+          maxWidth: "900px",
+          margin: "0 auto",
+        }}
+      >
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            marginBottom: "1.5rem",
+          }}
+        >
           🏆 Control de Pagos de Ligas
         </h2>
 
-        {/* Crear nuevo mes */}
-        <div className="flex flex-wrap items-center gap-3 justify-between mb-4">
-          <div className="flex items-center gap-2">
+        {/* Crear mes */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "1rem",
+            justifyContent: "space-between",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <div>
             <input
               type="text"
               placeholder="Ejemplo: Noviembre 2025"
               value={nuevoMes}
               onChange={(e) => setNuevoMes(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2"
+              style={{
+                padding: "0.5rem",
+                borderRadius: "0.5rem",
+                border: "1px solid #ccc",
+                marginRight: "0.5rem",
+              }}
             />
             <button
               onClick={crearMes}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              style={{
+                background: "#4f46e5",
+                color: "white",
+                padding: "0.5rem 1rem",
+                borderRadius: "0.5rem",
+                border: "none",
+                cursor: "pointer",
+              }}
             >
               Crear Mes
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="font-medium">Seleccionar mes:</label>
+          {/* Selector de mes */}
+          <div>
+            <label style={{ marginRight: "0.5rem" }}>Seleccionar mes:</label>
             <select
               value={mesSeleccionado}
               onChange={(e) => {
                 setMesSeleccionado(e.target.value);
                 cargarPagos(e.target.value);
               }}
-              className="border border-gray-300 rounded-lg px-3 py-2"
+              style={{
+                padding: "0.5rem",
+                borderRadius: "0.5rem",
+                border: "1px solid #ccc",
+              }}
             >
               {meses.map((m) => (
                 <option key={m._id} value={m.nombre}>
@@ -141,55 +185,92 @@ const PagosLigas = () => {
         </div>
 
         {/* Valor diario */}
-        <div className="flex items-center gap-3 mb-6">
-          <label className="font-medium">💰 Valor diario:</label>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <label>💰 Valor diario:</label>
           <input
             type="number"
             value={valorDiario}
             onChange={(e) => setValorDiario(Number(e.target.value))}
-            className="border border-gray-300 rounded-lg px-3 py-2 w-32"
+            style={{
+              width: "120px",
+              padding: "0.5rem",
+              borderRadius: "0.5rem",
+              border: "1px solid #ccc",
+            }}
           />
           <button
             onClick={actualizarValorDiario}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+            style={{
+              background: "#22c55e",
+              color: "white",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.5rem",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Actualizar
           </button>
         </div>
 
-        <hr className="my-4" />
+        <hr style={{ margin: "1.5rem 0" }} />
 
-        {/* Botón de registrar pago */}
-        <div className="flex flex-col items-center gap-3">
+        {/* Registrar pago */}
+        <div style={{ textAlign: "center" }}>
           <button
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition w-full md:w-1/2"
             onClick={registrarPago}
+            style={{
+              background: "#2563eb",
+              color: "white",
+              padding: "0.75rem 2rem",
+              borderRadius: "0.75rem",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "1rem",
+              fontWeight: "bold",
+            }}
           >
             Registrar pago de hoy
           </button>
+        </div>
 
-          {/* Resumen de pagos */}
-          <div className="bg-gray-50 border rounded-xl p-4 w-full md:w-2/3 mt-4 shadow-sm">
-            <h3 className="text-lg font-semibold text-center mb-3 text-gray-800">
-              Resumen de Pagos del Mes
-            </h3>
-            <p>
-              <strong>Total días pagados:</strong> {totalPagos}
-            </p>
-            <p>
-              <strong>Total recaudado:</strong> ${totalRecaudado.toLocaleString()}
-            </p>
+        {/* Resumen */}
+        <div
+          style={{
+            marginTop: "2rem",
+            background: "#f9fafb",
+            borderRadius: "1rem",
+            padding: "1.5rem",
+          }}
+        >
+          <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>
+            📋 Resumen de Pagos del Mes
+          </h3>
+          <p>
+            <strong>Total días pagados:</strong> {totalPagos}
+          </p>
+          <p>
+            <strong>Total recaudado:</strong>{" "}
+            ${totalRecaudado.toLocaleString("es-CO")}
+          </p>
 
-            <hr className="my-3" />
-            <h4 className="font-semibold mb-2">Detalle de pagos:</h4>
-            <ul className="list-disc pl-5 text-gray-700">
-              {pagos.map((pago) => (
-                <li key={pago._id}>
-                  {format(new Date(pago.fecha), "dd/MM/yyyy")}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <hr style={{ margin: "1rem 0" }} />
+
+          <h4>🗓️ Detalle de días pagados:</h4>
+          <ul style={{ listStyleType: "disc", paddingLeft: "1.5rem" }}>
+            {pagos.map((pago) => (
+              <li key={pago._id}>
+                {format(new Date(pago.fecha), "dd/MM/yyyy")}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>
