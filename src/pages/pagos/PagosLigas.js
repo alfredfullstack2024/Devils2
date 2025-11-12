@@ -4,10 +4,10 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Select } from "../../components/ui/select";
 import { format } from "date-fns";
 import axios from "axios";
 
@@ -18,7 +18,8 @@ const PagosLigas = () => {
   const [valorDiario, setValorDiario] = useState(8000);
   const [pagos, setPagos] = useState([]);
 
-  const backendURL = import.meta.env.VITE_API_URL || "https://backendiconic.vercel.app/api";
+  const backendURL =
+    import.meta.env.VITE_API_URL || "https://backendiconic.vercel.app/api";
 
   // 🔹 Cargar meses y pagos
   useEffect(() => {
