@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Select } from "../../components/ui/select";
 import { format } from "date-fns";
 import axios from "axios";
 
 const PagosLigas = () => {
-  const [meses, setMeses] = useState([]); // lista de meses creados
+  const [meses, setMeses] = useState([]);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
   const [nuevoMes, setNuevoMes] = useState("");
   const [valorDiario, setValorDiario] = useState(8000);
@@ -21,7 +12,7 @@ const PagosLigas = () => {
   const backendURL =
     import.meta.env.VITE_API_URL || "https://backendiconic.vercel.app/api";
 
-  // 🔹 Cargar meses y pagos
+  // 🔹 Cargar meses y pagos al inicio
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -38,7 +29,6 @@ const PagosLigas = () => {
         console.error("Error al cargar los meses:", error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -54,7 +44,7 @@ const PagosLigas = () => {
     }
   };
 
-  // 🔹 Crear un nuevo mes
+  // 🔹 Crear nuevo mes
   const crearMes = async () => {
     if (!nuevoMes.trim()) return alert("Ingresa un nombre para el mes");
     try {
@@ -72,7 +62,7 @@ const PagosLigas = () => {
     }
   };
 
-  // 🔹 Guardar nuevo valor diario
+  // 🔹 Actualizar valor diario global
   const actualizarValorDiario = async () => {
     try {
       await axios.put(
@@ -108,84 +98,100 @@ const PagosLigas = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-center">
-            🏆 Control de Pagos de Ligas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Ejemplo: Noviembre 2025"
-                value={nuevoMes}
-                onChange={(e) => setNuevoMes(e.target.value)}
-              />
-              <Button onClick={crearMes}>Crear Mes</Button>
-            </div>
+      <div className="bg-white shadow-md rounded-xl p-6">
+        <h2 className="text-2xl font-bold text-center mb-4 text-gray-800">
+          🏆 Control de Pagos de Ligas
+        </h2>
 
-            <div className="flex items-center gap-2">
-              <label>Seleccionar mes:</label>
-              <select
-                value={mesSeleccionado}
-                onChange={(e) => {
-                  setMesSeleccionado(e.target.value);
-                  cargarPagos(e.target.value);
-                }}
-                className="border rounded p-2"
-              >
-                {meses.map((m) => (
-                  <option key={m._id} value={m.nombre}>
-                    {m.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 mt-4">
-            <label>💰 Valor diario:</label>
-            <Input
-              type="number"
-              value={valorDiario}
-              onChange={(e) => setValorDiario(Number(e.target.value))}
-              className="w-32"
+        {/* Crear nuevo mes */}
+        <div className="flex flex-wrap items-center gap-3 justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Ejemplo: Noviembre 2025"
+              value={nuevoMes}
+              onChange={(e) => setNuevoMes(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2"
             />
-            <Button onClick={actualizarValorDiario}>Actualizar</Button>
+            <button
+              onClick={crearMes}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Crear Mes
+            </button>
           </div>
 
-          <hr className="my-4" />
-
-          <div className="flex flex-col items-center gap-3">
-            <Button className="w-full md:w-1/3" onClick={registrarPago}>
-              Registrar pago de hoy
-            </Button>
-
-            <Card className="w-full md:w-2/3 mt-4 p-4">
-              <h3 className="text-lg font-semibold text-center mb-3">
-                Resumen de Pagos del Mes
-              </h3>
-              <p>
-                <strong>Total días pagados:</strong> {totalPagos}
-              </p>
-              <p>
-                <strong>Total recaudado:</strong> $
-                {totalRecaudado.toLocaleString()}
-              </p>
-              <hr className="my-3" />
-              <h4 className="font-semibold">Detalle:</h4>
-              <ul className="list-disc pl-5">
-                {pagos.map((pago) => (
-                  <li key={pago._id}>
-                    {format(new Date(pago.fecha), "dd/MM/yyyy")}
-                  </li>
-                ))}
-              </ul>
-            </Card>
+          <div className="flex items-center gap-2">
+            <label className="font-medium">Seleccionar mes:</label>
+            <select
+              value={mesSeleccionado}
+              onChange={(e) => {
+                setMesSeleccionado(e.target.value);
+                cargarPagos(e.target.value);
+              }}
+              className="border border-gray-300 rounded-lg px-3 py-2"
+            >
+              {meses.map((m) => (
+                <option key={m._id} value={m.nombre}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Valor diario */}
+        <div className="flex items-center gap-3 mb-6">
+          <label className="font-medium">💰 Valor diario:</label>
+          <input
+            type="number"
+            value={valorDiario}
+            onChange={(e) => setValorDiario(Number(e.target.value))}
+            className="border border-gray-300 rounded-lg px-3 py-2 w-32"
+          />
+          <button
+            onClick={actualizarValorDiario}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+          >
+            Actualizar
+          </button>
+        </div>
+
+        <hr className="my-4" />
+
+        {/* Botón de registrar pago */}
+        <div className="flex flex-col items-center gap-3">
+          <button
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition w-full md:w-1/2"
+            onClick={registrarPago}
+          >
+            Registrar pago de hoy
+          </button>
+
+          {/* Resumen de pagos */}
+          <div className="bg-gray-50 border rounded-xl p-4 w-full md:w-2/3 mt-4 shadow-sm">
+            <h3 className="text-lg font-semibold text-center mb-3 text-gray-800">
+              Resumen de Pagos del Mes
+            </h3>
+            <p>
+              <strong>Total días pagados:</strong> {totalPagos}
+            </p>
+            <p>
+              <strong>Total recaudado:</strong> ${totalRecaudado.toLocaleString()}
+            </p>
+
+            <hr className="my-3" />
+            <h4 className="font-semibold mb-2">Detalle de pagos:</h4>
+            <ul className="list-disc pl-5 text-gray-700">
+              {pagos.map((pago) => (
+                <li key={pago._id}>
+                  {format(new Date(pago.fecha), "dd/MM/yyyy")}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
