@@ -27,10 +27,10 @@ const EditarPago = () => {
 
   // Configuración del tiquete
   const tiqueteConfig = {
-    nombreEstablecimiento: "GoldenGym Studio",
-    direccion: "Carrera 123 # 45 67",
-    telefonos: "350 000 0000 - 350 111 1111",
-    nit: "123456789",
+    nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS",
+    direccion: "CALLE 2 B No. 69D-58 BOGOTÁ",
+    telefonos: "3176696551",
+    nit: "000000000-0",
   };
 
   // Obtener y actualizar el contador del tiquete desde localStorage
@@ -358,3 +358,4 @@ const EditarPago = () => {
 };
 
 export default EditarPago;
+
