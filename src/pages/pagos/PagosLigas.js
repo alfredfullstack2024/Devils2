@@ -1,7 +1,6 @@
 // src/pages/pagos/PagosLigas.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { format } from "date-fns";
 
 const PagosLigas = () => {
   const [meses, setMeses] = useState([]);
@@ -12,8 +11,9 @@ const PagosLigas = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ nombre: "", equipo: "", diasAsistidos: 1 });
 
+  // URL CORREGIDA: incluye /api
   const backendURL =
-    process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com";  // Cambia a tu URL de Render
+    process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
 
   const token = localStorage.getItem("token");
 
@@ -31,7 +31,10 @@ const PagosLigas = () => {
         }
       } catch (error) {
         console.error("Error al cargar meses:", error);
-        alert("Error al cargar meses: " + (error.response?.data?.message || error.message));
+        alert(
+          "Error al cargar meses: " +
+            (error.response?.data?.message || error.message)
+        );
       }
     };
     fetchMeses();
@@ -46,7 +49,10 @@ const PagosLigas = () => {
       setPagos(res.data);
     } catch (error) {
       console.error("Error al cargar pagos:", error);
-      alert("Error al cargar pagos: " + (error.response?.data?.message || error.message));
+      alert(
+        "Error al cargar pagos: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -67,7 +73,10 @@ const PagosLigas = () => {
       setMeses(res.data);
     } catch (error) {
       console.error("Error al crear mes:", error);
-      alert("Error al crear mes: " + (error.response?.data?.message || error.message));
+      alert(
+        "Error al crear mes: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -82,7 +91,10 @@ const PagosLigas = () => {
       alert("Valor diario actualizado");
     } catch (error) {
       console.error("Error al actualizar valor diario:", error);
-      alert("Error al actualizar valor diario: " + (error.response?.data?.message || error.message));
+      alert(
+        "Error al actualizar valor diario: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -104,7 +116,10 @@ const PagosLigas = () => {
       cargarPagos(mesSeleccionado);
     } catch (error) {
       console.error("Error al registrar pago:", error);
-      alert("Error al registrar pago: " + (error.response?.data?.message || error.message));
+      alert(
+        "Error al registrar pago: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -119,7 +134,10 @@ const PagosLigas = () => {
       cargarPagos(mesSeleccionado);
     } catch (error) {
       console.error("Error al eliminar pago:", error);
-      alert("Error al eliminar pago: " + (error.response?.data?.message || error.message));
+      alert(
+        "Error al eliminar pago: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -283,7 +301,7 @@ const PagosLigas = () => {
   );
 };
 
-// Estilos
+// Estilos (sin cambios)
 const inputStyle = {
   padding: "0.5rem",
   borderRadius: "0.5rem",
