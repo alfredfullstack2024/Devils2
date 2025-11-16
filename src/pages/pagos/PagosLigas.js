@@ -13,7 +13,7 @@ const PagosLigas = () => {
   const [form, setForm] = useState({ nombre: "", equipo: "", diasAsistidos: 1 });
 
   const backendURL =
-    process.env.REACT_APP_API_URL || "https://backendiconic.onrender.com/api";  // Cambia a tu URL de Render
+    process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com";  // Cambia a tu URL de Render
 
   const token = localStorage.getItem("token");
 
