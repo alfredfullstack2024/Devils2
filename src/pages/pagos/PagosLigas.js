@@ -1,46 +1,47 @@
 // src/pages/pagos/PagosLigas.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { obtenerClientes } from "../../api/axios"; // Reutilizamos la API
 
 const PagosLigas = () => {
   const [meses, setMeses] = useState([]);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
   const [nuevoMes, setNuevoMes] = useState("");
   const [valorDiario, setValorDiario] = useState(8000);
+  const [clientes, setClientes] = useState([]);
+  const [searchCliente, setSearchCliente] = useState("");
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [diasSeleccionados, setDiasSeleccionados] = useState([]);
   const [pagos, setPagos] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ nombre: "", equipo: "", diasAsistidos: 1 });
 
-  // URL CORREGIDA: incluye /api
   const backendURL =
     process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
-
   const token = localStorage.getItem("token");
 
-  // Cargar meses al iniciar
+  // Cargar meses y clientes
   useEffect(() => {
-    const fetchMeses = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(`${backendURL}/pagos-ligas/meses`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setMeses(res.data);
-        if (res.data.length > 0) {
-          setMesSeleccionado(res.data[0].nombre);
-          cargarPagos(res.data[0].nombre);
+        const [mesesRes, clientesRes] = await Promise.all([
+          axios.get(`${backendURL}/pagos-ligas/meses`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          obtenerClientes(),
+        ]);
+        setMeses(mesesRes.data);
+        setClientes(clientesRes.data);
+        if (mesesRes.data.length > 0) {
+          setMesSeleccionado(mesesRes.data[0].nombre);
+          cargarPagos(mesesRes.data[0].nombre);
         }
       } catch (error) {
-        console.error("Error al cargar meses:", error);
-        alert(
-          "Error al cargar meses: " +
-            (error.response?.data?.message || error.message)
-        );
+        console.error("Error al cargar datos:", error);
       }
     };
-    fetchMeses();
+    fetchData();
   }, [token]);
 
-  // Cargar pagos del mes seleccionado
+  // Cargar pagos del mes
   const cargarPagos = async (mes) => {
     try {
       const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mes}`, {
@@ -49,10 +50,6 @@ const PagosLigas = () => {
       setPagos(res.data);
     } catch (error) {
       console.error("Error al cargar pagos:", error);
-      alert(
-        "Error al cargar pagos: " +
-          (error.response?.data?.message || error.message)
-      );
     }
   };
 
@@ -65,18 +62,14 @@ const PagosLigas = () => {
         { nombre: nuevoMes },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Mes creado correctamente");
+      alert("Mes creado");
       setNuevoMes("");
       const res = await axios.get(`${backendURL}/pagos-ligas/meses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMeses(res.data);
     } catch (error) {
-      console.error("Error al crear mes:", error);
-      alert(
-        "Error al crear mes: " +
-          (error.response?.data?.message || error.message)
-      );
+      alert("Error al crear mes");
     }
   };
 
@@ -90,56 +83,51 @@ const PagosLigas = () => {
       );
       alert("Valor diario actualizado");
     } catch (error) {
-      console.error("Error al actualizar valor diario:", error);
-      alert(
-        "Error al actualizar valor diario: " +
-          (error.response?.data?.message || error.message)
-      );
+      alert("Error al actualizar valor diario");
     }
+  };
+
+  // Toggle día
+  const toggleDia = (dia) => {
+    setDiasSeleccionados((prev) =>
+      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
+    );
   };
 
   // Registrar pago
-  const handleSubmitPago = async (e) => {
-    e.preventDefault();
-    if (!form.nombre || !form.equipo || form.diasAsistidos < 1) {
-      return alert("Completa todos los campos");
-    }
+  const handleRegistrarPago = async () => {
+    if (!clienteSeleccionado) return alert("Selecciona un cliente");
+    if (diasSeleccionados.length === 0) return alert("Selecciona al menos un día");
+
+    const total = diasSeleccionados.length * valorDiario;
+
     try {
       await axios.post(
         `${backendURL}/pagos-ligas/pagos`,
-        { ...form, mes: mesSeleccionado },
+        {
+          nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`,
+          equipo: clienteSeleccionado.equipo || "Ligas",
+          mes: mesSeleccionado,
+          diasAsistidos: diasSeleccionados.length,
+          total,
+          valorDiarioUsado: valorDiario,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Pago registrado");
-      setForm({ nombre: "", equipo: "", diasAsistidos: 1 });
-      setShowForm(false);
+      setSearchCliente("");
+      setClienteSeleccionado(null);
+      setDiasSeleccionados([]);
       cargarPagos(mesSeleccionado);
     } catch (error) {
-      console.error("Error al registrar pago:", error);
-      alert(
-        "Error al registrar pago: " +
-          (error.response?.data?.message || error.message)
-      );
+      alert("Error al registrar pago");
     }
   };
 
-  // Eliminar pago
-  const eliminarPago = async (id) => {
-    if (!window.confirm("¿Eliminar este pago?")) return;
-    try {
-      await axios.delete(`${backendURL}/pagos-ligas/pagos/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      alert("Pago eliminado");
-      cargarPagos(mesSeleccionado);
-    } catch (error) {
-      console.error("Error al eliminar pago:", error);
-      alert(
-        "Error al eliminar pago: " +
-          (error.response?.data?.message || error.message)
-      );
-    }
-  };
+  // Filtrar clientes
+  const clientesFiltrados = clientes.filter((c) =>
+    `${c.nombre} ${c.apellido}`.toLowerCase().includes(searchCliente.toLowerCase())
+  );
 
   // Cálculos
   const totalDias = pagos.reduce((sum, p) => sum + p.diasAsistidos, 0);
@@ -153,7 +141,7 @@ const PagosLigas = () => {
           borderRadius: "1rem",
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           padding: "2rem",
-          maxWidth: "1000px",
+          maxWidth: "1100px",
           margin: "0 auto",
         }}
       >
@@ -184,9 +172,7 @@ const PagosLigas = () => {
               style={selectStyle}
             >
               {meses.map((m) => (
-                <option key={m._id} value={m.nombre}>
-                  {m.nombre}
-                </option>
+                <option key={m._id} value={m.nombre}>{m.nombre}</option>
               ))}
             </select>
           </div>
@@ -208,50 +194,62 @@ const PagosLigas = () => {
 
         <hr style={{ margin: "1.5rem 0" }} />
 
-        {/* Botón registrar pago */}
-        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <button onClick={() => setShowForm(true)} style={btnLarge}>
-            + Registrar Pago
-          </button>
+        {/* Búsqueda de cliente */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <label>Buscar cliente:</label>
+          <input
+            type="text"
+            placeholder="Escribe nombre o apellido..."
+            value={searchCliente}
+            onChange={(e) => {
+              setSearchCliente(e.target.value);
+              setClienteSeleccionado(null);
+              setDiasSeleccionados([]);
+            }}
+            style={inputStyle}
+            list="clientes-datalist"
+          />
+          <datalist id="clientes-datalist">
+            {clientesFiltrados.map((c) => (
+              <option
+                key={c._id}
+                value={`${c.nombre} ${c.apellido}`}
+              />
+            ))}
+          </datalist>
         </div>
 
-        {/* Formulario de registro */}
-        {showForm && (
-          <div style={{ border: "1px solid #ddd", borderRadius: "0.5rem", padding: "1rem", marginBottom: "1.5rem" }}>
-            <h4>Registrar Pago - {mesSeleccionado}</h4>
-            <form onSubmit={handleSubmitPago} style={{ display: "grid", gap: "0.75rem" }}>
-              <input
-                type="text"
-                placeholder="Nombre del jugador"
-                value={form.nombre}
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                style={inputStyle}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Equipo"
-                value={form.equipo}
-                onChange={(e) => setForm({ ...form, equipo: e.target.value })}
-                style={inputStyle}
-                required
-              />
-              <input
-                type="number"
-                placeholder="Días asistidos"
-                value={form.diasAsistidos}
-                onChange={(e) => setForm({ ...form, diasAsistidos: Number(e.target.value) })}
-                style={inputStyle}
-                min="1"
-                required
-              />
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button type="submit" style={btnSuccess}>Guardar</button>
-                <button type="button" onClick={() => setShowForm(false)} style={btnDanger}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
+        {/* Matriz de días */}
+        {clienteSeleccionado && (
+          <div style={{ marginBottom: "1.5rem", padding: "1rem", border: "1px solid #ddd", borderRadius: "0.5rem" }}>
+            <h4>
+              {clienteSeleccionado.nombre} {clienteSeleccionado.apellido} - {mesSeleccionado}
+            </h4>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "0.5rem", fontSize: "0.9rem" }}>
+              {Array.from({ length: 31 }, (_, i) => i + 1).map((dia) => (
+                <div
+                  key={dia}
+                  onClick={() => toggleDia(dia)}
+                  style={{
+                    padding: "0.5rem",
+                    textAlign: "center",
+                    border: "1px solid #ccc",
+                    borderRadius: "0.25rem",
+                    background: diasSeleccionados.includes(dia) ? "#22c55e" : "#fff",
+                    color: diasSeleccionados.includes(dia) ? "white" : "black",
+                    cursor: "pointer",
+                  }}
+                >
+                  {dia}
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: "1rem", textAlign: "center" }}>
+              <button onClick={handleRegistrarPago} style={btnSuccess}>
+                Registrar Pago ({diasSeleccionados.length} días × ${valorDiario} = $
+                {diasSeleccionados.length * valorDiario})
+              </button>
+            </div>
           </div>
         )}
 
@@ -272,7 +270,6 @@ const PagosLigas = () => {
                   <th style={thStyle}>Equipo</th>
                   <th style={thStyle}>Días</th>
                   <th style={thStyle}>Total</th>
-                  <th style={thStyle}>Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -282,14 +279,6 @@ const PagosLigas = () => {
                     <td style={tdStyle}>{pago.equipo}</td>
                     <td style={tdStyle}>{pago.diasAsistidos}</td>
                     <td style={tdStyle}>${pago.total.toLocaleString("es-CO")}</td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => eliminarPago(pago._id)}
-                        style={{ ...btnDanger, fontSize: "0.8rem", padding: "0.25rem 0.5rem" }}
-                      >
-                        Eliminar
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -301,7 +290,7 @@ const PagosLigas = () => {
   );
 };
 
-// Estilos (sin cambios)
+// Estilos
 const inputStyle = {
   padding: "0.5rem",
   borderRadius: "0.5rem",
@@ -328,24 +317,6 @@ const btnSuccess = {
   borderRadius: "0.5rem",
   border: "none",
   cursor: "pointer",
-};
-const btnDanger = {
-  background: "#ef4444",
-  color: "white",
-  padding: "0.5rem 1rem",
-  borderRadius: "0.5rem",
-  border: "none",
-  cursor: "pointer",
-};
-const btnLarge = {
-  background: "#2563eb",
-  color: "white",
-  padding: "0.75rem 2rem",
-  borderRadius: "0.75rem",
-  border: "none",
-  cursor: "pointer",
-  fontSize: "1rem",
-  fontWeight: "bold",
 };
 const thStyle = { textAlign: "left", padding: "0.5rem 0", fontWeight: "bold" };
 const tdStyle = { padding: "0.5rem 0" };
