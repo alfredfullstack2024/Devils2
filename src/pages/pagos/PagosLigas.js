@@ -13,7 +13,7 @@ const PagosLigas = () => {
   const [form, setForm] = useState({ nombre: "", equipo: "", diasAsistidos: 1 });
 
   const backendURL =
-    process.env.REACT_APP_API_URL || "https://backendiconic.vercel.app/api";
+    process.env.REACT_APP_API_URL || "https://backendiconic.onrender.com/api";  // Cambia a tu URL de Render
 
   const token = localStorage.getItem("token");
 
@@ -31,6 +31,7 @@ const PagosLigas = () => {
         }
       } catch (error) {
         console.error("Error al cargar meses:", error);
+        alert("Error al cargar meses: " + (error.response?.data?.message || error.message));
       }
     };
     fetchMeses();
@@ -45,6 +46,7 @@ const PagosLigas = () => {
       setPagos(res.data);
     } catch (error) {
       console.error("Error al cargar pagos:", error);
+      alert("Error al cargar pagos: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -64,6 +66,7 @@ const PagosLigas = () => {
       });
       setMeses(res.data);
     } catch (error) {
+      console.error("Error al crear mes:", error);
       alert("Error al crear mes: " + (error.response?.data?.message || error.message));
     }
   };
@@ -78,7 +81,8 @@ const PagosLigas = () => {
       );
       alert("Valor diario actualizado");
     } catch (error) {
-      alert("Error al actualizar valor diario");
+      console.error("Error al actualizar valor diario:", error);
+      alert("Error al actualizar valor diario: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -88,7 +92,6 @@ const PagosLigas = () => {
     if (!form.nombre || !form.equipo || form.diasAsistidos < 1) {
       return alert("Completa todos los campos");
     }
-
     try {
       await axios.post(
         `${backendURL}/pagos-ligas/pagos`,
@@ -100,7 +103,8 @@ const PagosLigas = () => {
       setShowForm(false);
       cargarPagos(mesSeleccionado);
     } catch (error) {
-      alert("Error al registrar pago");
+      console.error("Error al registrar pago:", error);
+      alert("Error al registrar pago: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -111,9 +115,11 @@ const PagosLigas = () => {
       await axios.delete(`${backendURL}/pagos-ligas/pagos/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      alert("Pago eliminado");
       cargarPagos(mesSeleccionado);
     } catch (error) {
-      alert("Error al eliminar");
+      console.error("Error al eliminar pago:", error);
+      alert("Error al eliminar pago: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -284,13 +290,11 @@ const inputStyle = {
   border: "1px solid #ccc",
   marginRight: "0.5rem",
 };
-
 const selectStyle = {
   padding: "0.5rem",
   borderRadius: "0.5rem",
   border: "1px solid #ccc",
 };
-
 const btnPrimary = {
   background: "#4f46e5",
   color: "white",
@@ -299,7 +303,6 @@ const btnPrimary = {
   border: "none",
   cursor: "pointer",
 };
-
 const btnSuccess = {
   background: "#22c55e",
   color: "white",
@@ -308,7 +311,6 @@ const btnSuccess = {
   border: "none",
   cursor: "pointer",
 };
-
 const btnDanger = {
   background: "#ef4444",
   color: "white",
@@ -317,7 +319,6 @@ const btnDanger = {
   border: "none",
   cursor: "pointer",
 };
-
 const btnLarge = {
   background: "#2563eb",
   color: "white",
@@ -328,7 +329,6 @@ const btnLarge = {
   fontSize: "1rem",
   fontWeight: "bold",
 };
-
 const thStyle = { textAlign: "left", padding: "0.5rem 0", fontWeight: "bold" };
 const tdStyle = { padding: "0.5rem 0" };
 
