@@ -17,7 +17,7 @@ const PagosLigas = () => {
 
   const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
 
-  // Cargar meses y clientes
+  // Cargar meses y clientes al inicio
   useEffect(() => {
     const cargarInicial = async () => {
       try {
@@ -37,7 +37,7 @@ const PagosLigas = () => {
     cargarInicial();
   }, []);
 
-  // Cargar pagos cuando cambie el mes
+  // Cargar pagos cuando cambie el mes seleccionado
   useEffect(() => {
     if (!mesSeleccionado) return;
 
@@ -48,7 +48,7 @@ const PagosLigas = () => {
         setPagosDelMes(pagos);
         const total = pagos.reduce((sum, p) => sum + (p.total || 0), 0);
         setTotalRecaudado(total);
-     -lying } catch (error) {
+      } catch (error) {
         setPagosDelMes([]);
         setTotalRecaudado(0);
       }
@@ -56,7 +56,7 @@ const PagosLigas = () => {
     cargarPagos();
   }, [mesSeleccionado]);
 
-  // ← AQUÍ ESTÁ LA FUNCIÓN CORREGIDA 100%
+  // FUNCIÓN CORREGIDA AL 100%
   const registrarPagoDia = async () => {
     if (!clienteSeleccionado) return alert("Selecciona una niña");
     if (!diaSeleccionado || diaSeleccionado < 1 || diaSeleccionado > 31)
@@ -75,13 +75,13 @@ const PagosLigas = () => {
         diasPagados: [parseInt(diaSeleccionado)],
       };
 
-      console.log("Enviando pago:", payload); // ← Para que veas en consola
+      console.log("Enviando pago:", payload);
 
       await axios.post(`${backendURL}/pagos-ligas/pagos`, payload);
 
-      alert(`Día ${diaSeleccionado} registrado para ${clienteSeleccionado.nombre}`);
+      alert(`Día ${diaSeleccionado} registrado correctamente`);
 
-      // Limpiar
+      // Limpiar formulario
       setSearchCliente("");
       setClienteSeleccionado(null);
       setDiaSeleccionado("");
@@ -93,8 +93,8 @@ const PagosLigas = () => {
       const total = pagos.reduce((sum, p) => sum + (p.total || 0), 0);
       setTotalRecaudado(total);
     } catch (error) {
-      console.error("Error al registrar:", error.response || error);
-      alert("Error al registrar pago. Abre la consola (F12) para ver detalles.");
+      console.error("Error completo:", error.response || error);
+      alert("Error al registrar pago. Revisa la consola (F12)");
     }
   };
 
