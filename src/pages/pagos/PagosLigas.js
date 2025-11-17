@@ -46,8 +46,6 @@ const PagosLigas = () => {
         const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
         const pagos = res.data || [];
         setPagosDelMes(pagos);
-
-        // TOTAL RECAUDADO CORRECTO
         const total = pagos.reduce((sum, p) => sum + (p.total || 0), 0);
         setTotalRecaudado(total);
       } catch (error) {
@@ -74,7 +72,7 @@ const PagosLigas = () => {
         diasPagados: [parseInt(diaSeleccionado)],
       });
 
-      // Recargar pagos para actualizar todo
+      // Recargar pagos
       const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
       const pagos = res.data || [];
       setPagosDelMes(pagos);
@@ -113,15 +111,15 @@ const PagosLigas = () => {
   const jugadoras = [...new Set(pagosDelMes.map(p => p.nombre.trim()))];
 
   return (
-    <div style={{ padding: "2rem", background: "#f8fafc", minHeight: "100vh" }}>
-      <div style={{ maxWidth: "1950px", margin: "0 auto", background: "white", borderRadius: "1.5rem", padding: "2.5rem", boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}>
+    <div style={{ padding: "2rem", background: "#f8fafc", minHeight: "100vh", fontFamily: "Arial, sans-serif" }}>
+      <div style={{ maxWidth: "2200px", margin: "0 auto", background: "white", borderRadius: "1.5rem", padding: "2.5rem", boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}>
         
         <h2 style={{ textAlign: "center", fontSize: "2.5rem", marginBottom: "2rem", color: "#1e293b" }}>
           Control de Pagos de Ligas
         </h2>
 
-        {/* CONTROLES + TOTAL */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem" }}>
+        {/* CONTROLES + TOTAL ARRIBA */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem" }}>
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
             <input type="text" placeholder="Noviembre 2025" value={nuevoMes} onChange={(e) => setNuevoMes(e.target.value)} style={inputStyle} />
             <button onClick={crearMes} style={btnPrimary}>Crear Mes</button>
@@ -132,15 +130,16 @@ const PagosLigas = () => {
             <span style={{ fontWeight: "bold" }}>Valor diario: ${valorDiario.toLocaleString()}</span>
           </div>
 
-          <div style={{ background: "#172554", color: "white", padding: "1.2rem 3rem", borderRadius: "1.5rem", fontSize: "2rem", fontWeight: "bold" }}>
+          {/* TOTAL RECAUDADO GRANDE ARRIBA */}
+          <div style={{ background: "#172554", color: "white", padding: "1.5rem 3rem", borderRadius: "1.5rem", fontSize: "2.2rem", fontWeight: "bold", boxShadow: "0 10px 20px rgba(23,37,84,0.4)" }}>
             TOTAL RECAUDADO: ${totalRecaudado.toLocaleString("es-CO")}
           </div>
         </div>
 
-        {/* REGISTRAR PAGO */}
+        {/* REGISTRAR PAGO RÁPIDO */}
         <div style={{ background: "#f0fdf4", padding: "2rem", borderRadius: "1.5rem", marginBottom: "3rem", border: "4px solid #22c55e" }}>
-          <h3 style={{ margin: "0 0 1.5rem 0", color: "#166534" }}>Registrar Pago Rápido</h3>
-          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+          <h3 style={{ margin: "0 0 1.5rem 0", color: "#166534", fontSize: "1.6rem" }}>Registrar Pago Rápido</h3>
+          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
             <input
               type="text"
               placeholder="Nombre completo de la niña..."
@@ -152,62 +151,64 @@ const PagosLigas = () => {
                 setClienteSeleccionado(encontrada || null);
               }}
               list="clientes-list"
-              style={{ ...inputStyle, width: "420px" }}
+              style={{ ...inputStyle, width: "450px", fontSize: "1.2rem" }}
             />
             <datalist id="clientes-list">
               {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
             </datalist>
-            <input type="number" min="1" max="31" placeholder="Día" value={diaSeleccionado} onChange={(e) => setDiaSeleccionado(e.target.value)} style={{ ...inputStyle, width: "90px" }} />
-            <button onClick={registrarPagoDia} style={btnSuccess}>
+            <input type="number" min="1" max="31" placeholder="Día" value={diaSeleccionado} onChange={(e) => setDiaSeleccionado(e.target.value)} style={{ ...inputStyle, width: "100px" }} />
+            <button onClick={registrarPagoDia} style={{ ...btnSuccess, padding: "1rem 3rem", fontSize: "1.3rem" }}>
               Marcar Día {diaSeleccionado || "?"} como Pagado
             </button>
           </div>
           {clienteSeleccionado && (
-            <p style={{ marginTop: "1rem", color: "#166534", fontWeight: "bold" }}>
+            <p style={{ marginTop: "1rem", fontSize: "1.3rem", color: "#166534", fontWeight: "bold" }}>
               Seleccionada: {clienteSeleccionado.nombre} {clienteSeleccionado.apellido}
             </p>
           )}
         </div>
 
-        {/* TABLA ANCHA Y ELEGANTE */}
+        {/* TABLA ANCHA SIN SCROLL (31 días + totales) */}
         {mesSeleccionado && (
-          <div style={{ overflowX: "auto", borderRadius: "1rem", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}>
-            <table style={{ width: "100%", minWidth: "1800px", borderCollapse: "collapse", fontSize: "1rem" }}>
+          <div style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}>
+            <table style={{ width: "100%", minWidth: "2200px", borderCollapse: "collapse", fontSize: "1.05rem" }}>
               <thead>
                 <tr style={{ background: "#1e293b", color: "white" }}>
-                  <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "200px" }}>Jugadora</th>
+                  <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, minWidth: "220px", fontSize: "1.1rem" }}>Jugadora</th>
                   {Array.from({ length: 31 }, (_, i) => (
-                    <th key={i+1} style={{ ...thStyle, width: "50px" }}>{i+1}</th>
+                    <th key={i+1} style={{ ...thStyle, minWidth: "55px", fontSize: "1rem" }}>{i+1}</th>
                   ))}
-                  <th style={{ ...thStyle, background: "#172554", width: "90px" }}>Días</th>
-                  <th style={{ ...thStyle, background: "#172554", width: "140px" }}>Total</th>
+                  <th style={{ ...thStyle, background: "#172554", minWidth: "100px", fontSize: "1.1rem" }}>Días</th>
+                  <th style={{ ...thStyle, background: "#172554", minWidth: "150px", fontSize: "1.2rem" }}>Total</th>
                 </tr>
               </thead>
               <tbody>
                 {jugadoras.length === 0 ? (
-                  <tr><td colSpan="34" style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>No hay pagos este mes</td></tr>
+                  <tr><td colSpan="34" style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontSize: "1.3rem" }}>
+                    No hay pagos registrados este mes
+                  </td></tr>
                 ) : (
                   jugadoras.map(nombre => {
                     const dias = getDiasPagados(nombre);
                     const total = dias.length * valorDiario;
                     return (
-                      <tr key={nombre} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                        <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9 }}>
+                      <tr key={nombre} style={{ borderBottom: "2px solid #e2e8f0" }}>
+                        <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9, fontSize: "1.1rem" }}>
                           {nombre}
                         </td>
                         {Array.from({ length: 31 }, (_, i) => {
                           const dia = i + 1;
                           const pagado = dias.includes(dia);
                           return (
-                            <td key={dia} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-                              {pagado && <span style={{ color: "#22c55e", fontSize: "1.6rem", fontWeight: "bold" }}>X</span>}
+                            <td key={dia} style={{ textAlign: "center", padding: "0.9rem 0" }}>
+                              {pagado && <span style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</span>}
                             </td>
                           );
                         })}
-                        <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.2rem", color: "#0891b2" }}>
+                        <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#0891b2" }}>
                           {dias.length}
                         </td>
-                        <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#166534" }}>
+                        <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.4rem", color: "#166534" }}>
                           ${total.toLocaleString("es-CO")}
                         </td>
                       </tr>
@@ -223,11 +224,11 @@ const PagosLigas = () => {
   );
 };
 
-const inputStyle = { padding: "0.9rem", borderRadius: "0.8rem", border: "2px solid #94a3b8" };
-const selectStyle = { padding: "0.9rem", borderRadius: "0.8rem", border: "2px solid #94a3b8" };
+const inputStyle = { padding: "0.9rem", borderRadius: "0.8rem", border: "2px solid #94a3b8", fontSize: "1.1rem" };
+const selectStyle = { padding: "0.9rem", borderRadius: "0.8rem", border: "2px solid #94a3b8", fontSize: "1.1rem" };
 const btnPrimary = { background: "#4f46e5", color: "white", padding: "0.9rem 2rem", borderRadius: "0.8rem", border: "none", cursor: "pointer", fontWeight: "bold" };
-const btnSuccess = { background: "#22c55e", color: "white", padding: "1rem 2.5rem", borderRadius: "0.8rem", border: "none", cursor: "pointer", fontWeight: "bold" };
-const thStyle = { padding: "1rem 0.4rem", textAlign: "center", fontWeight: "bold", fontSize: "1rem" };
-const tdStyle = { padding: "0.9rem 0.4rem", textAlign: "center" };
+const btnSuccess = { background: "#22c55e", color: "white", padding: "1rem 3rem", borderRadius: "0.8rem", border: "none", cursor: "pointer", fontWeight: "bold" };
+const thStyle = { padding: "1.2rem 0.5rem", textAlign: "center", fontWeight: "bold" };
+const tdStyle = { padding: "1rem 0.5rem", textAlign: "center" };
 
 export default PagosLigas;
