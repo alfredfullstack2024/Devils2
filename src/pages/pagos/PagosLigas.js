@@ -7,7 +7,7 @@ const PagosLigas = () => {
   const [meses, setMeses] = useState([]);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
   const [nuevoMes, setNuevoMes] = useState("");
-  const [valorDiario, setValorDiario] = useState(8000);
+  const [valorDiario, setValorDiario] = useState(8000); // ← editable
   const [clientes, setClientes] = useState([]);
   const [searchCliente, setSearchCliente] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
@@ -17,16 +17,20 @@ const PagosLigas = () => {
 
   const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
 
-  // CARGAR MESES Y CLIENTES
+  // CARGAR VALOR DIARIO DESDE BACKEND + MESES + CLIENTES
   useEffect(() => {
     const cargarInicial = async () => {
       try {
-        const [mesesRes, clientesRes] = await Promise.all([
+        const [mesesRes, clientesRes, configRes] = await Promise.all([
           axios.get(`${backendURL}/pagos-ligas/meses`),
           obtenerClientes(),
+          axios.get(`${backendURL}/pagos-ligas/valor-diario`).catch(() => ({ data: { valorDiario: 8000 } })),
         ]);
+
         setMeses(mesesRes.data);
         setClientes(clientesRes.data);
+        setValorDiario(configRes.data.valorDiario || 8000);
+
         if (mesesRes.data.length > 0) {
           setMesSeleccionado(mesesRes.data[0].nombre);
         }
@@ -37,19 +41,23 @@ const PagosLigas = () => {
     cargarInicial();
   }, []);
 
-  // CARGAR PAGOS Y RECALCULAR TOTAL
+  // CARGAR PAGOS Y CALCULAR TOTAL
   useEffect(() => {
     if (!mesSeleccionado) return;
 
     const cargarPagos = async () => {
       try {
         const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
-        const pagos = res.data || [];
-        setPagosDelMes(pagos);
+        const todosPagos = res.data || [];
 
-        // CÁLCULO CORRECTO DEL TOTAL RECAUDADO
+        // FILTRAR "SYSTEM" AQUÍ EN EL FRONTEND
+        const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
+
+        setPagosDelMes(pagosReales);
+
+        // CÁLCULO CORRECTO DEL TOTAL
         let total = 0;
-        pagos.forEach(pago => {
+        pagosReales.forEach(pago => {
           if (pago.diasPagados && Array.isArray(pago.diasPagados)) {
             total += pago.diasPagados.length * valorDiario;
           }
@@ -79,15 +87,16 @@ const PagosLigas = () => {
         diasPagados: [parseInt(diaSeleccionado)],
       });
 
-      // RECARGAR Y RECALCULAR
+      // Recargar
       const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
-      const pagos = res.data || [];
-      setPagosDelMes(pagos);
+      const todosPagos = res.data || [];
+      const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
 
-      let nuevoTotal = 0;
-      pagos.forEach(p => {
-        if (p.diasPagados) nuevoTotal += p.diasPagados.length * valorDiario;
-      });
+      setPagosDelMes(pagosReales);
+
+      const nuevoTotal = pagosReales.reduce((sum, p) => {
+        return sum + (p.diasPagados?.length || 0) * valorDiario;
+      }, 0);
       setTotalRecaudado(nuevoTotal);
 
       alert(`Día ${diaSeleccionado} registrado`);
@@ -96,12 +105,12 @@ const PagosLigas = () => {
       setDiaSeleccionado("");
     } catch (error) {
       console.error(error);
-      alert("Error al registrar");
+      alert("Error al registrar pago");
     }
   };
 
   const crearMes = async () => {
-    if (!nuevoMes.trim()) return alert("Escribe el nombre");
+    if (!nuevoMes.trim()) return alert("Escribe el nombre del mes");
     try {
       await axios.post(`${backendURL}/pagos-ligas/crear-mes`, { nombre: nuevoMes });
       alert("Mes creado");
@@ -120,7 +129,7 @@ const PagosLigas = () => {
     return Array.from(dias).sort((a, b) => a - b);
   };
 
-  const jugadoras = [...new Set(pagosDelMes.map(p => p.nombre.trim()))];
+  const jugadoras = [...new Set(pagosDelMes.map(p => p.nombre.trim()))].filter(Boolean);
 
   return (
     <div style={{ padding: "2rem", background: "#f8fafc", minHeight: "100vh" }}>
@@ -138,10 +147,15 @@ const PagosLigas = () => {
               <option value="">Seleccionar mes</option>
               {meses.map(m => <option key={m._id} value={m.nombre}>{m.nombre}</option>)}
             </select>
-            <span style={{ fontWeight: "bold" }}>Valor diario: ${valorDiario.toLocaleString()}</span>
+            <input
+              type="number"
+              value={valorDiario}
+              onChange={(e) => setValorDiario(Number(e.target.value))}
+              style={{ ...inputStyle, width: "140px" }}
+              placeholder="Valor diario"
+            />
           </div>
 
-          {/* TOTAL RECAUDADO GRANDE */}
           <div style={{ background: "#172554", color: "white", padding: "1.5rem 4rem", borderRadius: "1.5rem", fontSize: "2.5rem", fontWeight: "bold" }}>
             TOTAL RECAUDADO: ${totalRecaudado.toLocaleString("es-CO")}
           </div>
@@ -172,14 +186,12 @@ const PagosLigas = () => {
           </div>
         </div>
 
-        {/* TABLA COMPLETA CON TODOS LOS DÍAS */}
         {mesSeleccionado && (
           <div style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 15px 35px rgba(0,0,0,0.15)" }}>
             <table style={{ width: "100%", minWidth: "2400px", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#1e293b", color: "white" }}>
                   <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "250px" }}>Jugadora</th>
-                  {/* TODOS LOS 31 DÍAS */}
                   {[...Array(31)].map((_, i) => (
                     <th key={i+1} style={{ ...thStyle, width: "60px" }}>{i+1}</th>
                   ))}
@@ -199,12 +211,10 @@ const PagosLigas = () => {
                         <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9 }}>
                           {nombre}
                         </td>
-                        {/* TODOS LOS 31 DÍAS */}
                         {[...Array(31)].map((_, i) => {
-                          const dia = i + 1;
-                          const pagado = dias.includes(dia);
+                          const pagado = dias.includes(i + 1);
                           return (
-                            <td key={dia} style={{ textAlign: "center", padding: "0.8rem 0" }}>
+                            <td key={i+1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
                               {pagado && <span style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</span>}
                             </td>
                           );
