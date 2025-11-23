@@ -1,4 +1,4 @@
-:// src/pages/pagos/PagosLigas.js
+// src/pages/pagos/PagosLigas.js
 
 import React, { useState, useEffect, useMemo } from "react";
 
