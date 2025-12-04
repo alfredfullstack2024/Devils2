@@ -4,6 +4,17 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { obtenerClientes } from "../../api/axios";
 
+// ===========================================
+// ⭐ NUEVA FUNCIÓN AUXILIAR: Obtener mes actual
+// ===========================================
+const obtenerNombreMesActual = () => {
+    const date = new Date();
+    const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const nombreMes = meses[date.getMonth()];
+    const anio = date.getFullYear();
+    return `${nombreMes} ${anio}`; // Ej: "Diciembre 2025"
+};
+
 // Estilos (dejados igual para no alterar la apariencia)
 const inputStyle = { padding: "1rem", borderRadius: "0.8rem", border: "2px solid #94a3b8", fontSize: "1.1rem" };
 const selectStyle = { padding: "1rem", borderRadius: "0.8rem", border: "2px solid #94a3b8", fontSize: "1.1rem" };
@@ -19,13 +30,13 @@ const PagosLigas = () => {
     const [meses, setMeses] = useState([]);
     const [mesSeleccionado, setMesSeleccionado] = useState("");
     const [nuevoMes, setNuevoMes] = useState("");
-    const [valorDiario, setValorDiario] = useState(8000); 
+    const [valorDiario, setValorDiario] = useState(8000);
     const [clientes, setClientes] = useState([]);
     const [searchCliente, setSearchCliente] = useState("");
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
     const [diaSeleccionado, setDiaSeleccionado] = useState("");
     // 🆕 NUEVO: Estado para el registro rápido
-    const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState("Efectivo"); 
+    const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState("Efectivo");
 
     const [pagosDelMes, setPagosDelMes] = useState([]);
     const [totalRecaudado, setTotalRecaudado] = useState(0);
@@ -36,10 +47,10 @@ const PagosLigas = () => {
     const [filtroDia, setFiltroDia] = useState("");
     const [filtroSemana, setFiltroSemana] = useState("");
     // 🆕 NUEVO: Estado para el filtro de Tipo de Pago
-    const [filtroTipoPago, setFiltroTipoPago] = useState("TODOS"); 
+    const [filtroTipoPago, setFiltroTipoPago] = useState("TODOS");
     // ⭐ NUEVO ESTADO PARA EL FILTRO POR NOMBRE
-    const [filtroNombre, setFiltroNombre] = useState(""); 
-    
+    const [filtroNombre, setFiltroNombre] = useState("");
+
     // Lista de especialidades únicas para el filtro
     const especialidades = useMemo(() => {
         const specs = new Set(clientes.map(c => c.especialidad).filter(Boolean));
@@ -57,11 +68,28 @@ const PagosLigas = () => {
                     obtenerClientes(),
                     axios.get(`${backendURL}/pagos-ligas/valor-diario`).catch(() => ({ data: { valorDiario: 8000 } })),
                 ]);
-                setMeses(mesesRes.data);
+                
+                const mesesData = mesesRes.data;
+                const nombreMesActual = obtenerNombreMesActual(); // Obtener el nombre del mes actual
+
+                setMeses(mesesData);
                 setClientes(clientesRes.data);
                 setValorDiario(configRes.data.valorDiario || 8000);
-                if (mesesRes.data.length > 0) {
-                    setMesSeleccionado(mesesRes.data[0].nombre);
+
+                // ===========================================
+                // ⭐ LÓGICA MODIFICADA
+                // ===========================================
+                if (mesesData.length > 0) {
+                    const mesActualExiste = mesesData.find(m => m.nombre === nombreMesActual);
+                    
+                    if (mesActualExiste) {
+                        // 1. Si existe un mes con el nombre actual (ej: "Diciembre 2025"), SELECCIONARLO.
+                        setMesSeleccionado(nombreMesActual);
+                    } else if (mesesData.length > 0) {
+                        // 2. Si no existe, seleccionar el ÚLTIMO creado (o el primero de la lista si no hay un orden claro del backend), como estaba antes, como fallback.
+                        // Asumo que mesesData[0] es el último/más reciente si no se encuentra el mes actual.
+                        setMesSeleccionado(mesesData[0].nombre);
+                    }
                 }
             } catch (error) {
                 console.error("Error inicial", error);
@@ -79,19 +107,19 @@ const PagosLigas = () => {
                 const todosPagos = res.data || [];
                 // Se filtra el registro "SYSTEM" aquí
                 const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
-                
+
                 // CÁLCULO DEL TOTAL GENERAL
                 let total = 0;
                 // Enriquecer los pagos con especialidad y tipoPago
                 const pagosEnriquecidos = pagosReales.map(pago => {
-                    const cliente = clientes.find(c => 
+                    const cliente = clientes.find(c =>
                         `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
                     );
-                    
+
                     const especialidad = cliente?.especialidad || 'Sin Especialidad';
                     // 🆕 AJUSTE: Leer el campo tipoPago que el backend debe proveer
-                    const tipoPago = pago.tipoPago || 'N/A'; 
-                    
+                    const tipoPago = pago.tipoPago || 'N/A';
+
                     if (pago.diasPagados && Array.isArray(pago.diasPagados)) {
                         total += pago.diasPagados.length * valorDiario;
                     }
@@ -128,15 +156,15 @@ const PagosLigas = () => {
                 diasPagados: [parseInt(diaSeleccionado)],
                 tipoPago: tipoPagoSeleccionado, // 🆕 ENVIAR TIPO DE PAGO AL BACKEND
             });
-            
+
             // Recargar y recalcular
             const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
             const todosPagos = res.data || [];
             const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
-            
+
             let nuevoTotalGeneral = 0;
             const pagosEnriquecidos = pagosReales.map(pago => {
-                const cliente = clientes.find(c => 
+                const cliente = clientes.find(c =>
                     `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
                 );
                 const especialidad = cliente?.especialidad || 'Sin Especialidad';
@@ -167,7 +195,14 @@ const PagosLigas = () => {
             alert("Mes creado");
             setNuevoMes("");
             const res = await axios.get(`${backendURL}/pagos-ligas/meses`);
-            setMeses(res.data);
+            const mesesData = res.data;
+            setMeses(mesesData);
+
+            // Al crear un nuevo mes, lo seleccionamos automáticamente
+            if (mesesData.find(m => m.nombre === nuevoMes.trim())) {
+                 setMesSeleccionado(nuevoMes.trim());
+            }
+
         } catch (error) {
             alert("Error al crear mes");
         }
@@ -198,20 +233,20 @@ const PagosLigas = () => {
         // 4. Filtrar por Período
         if (filtroPeriodo === "DIA" && filtroDia) {
             const diaNum = parseInt(filtroDia, 10);
-            
+
             const jugadoresConDiaPagado = new Set();
             pagos.forEach(pago => {
                 if (pago.diasPagados.includes(diaNum)) {
                     jugadoresConDiaPagado.add(pago.nombre.trim());
                 }
             });
-            
+
             // El total es el número de jugadores que pagaron ESE día (considerando todos los filtros anteriores)
             total = jugadoresConDiaPagado.size * valorDiario;
-        } 
+        }
         else if (filtroPeriodo === "SEMANA" && filtroSemana) {
             const semanaNum = parseInt(filtroSemana, 10);
-            
+
             let diasSemana = [];
             if (semanaNum === 1) diasSemana = [1, 2, 3, 4, 5, 6, 7];
             else if (semanaNum === 2) diasSemana = [8, 9, 10, 11, 12, 13, 14];
@@ -228,15 +263,16 @@ const PagosLigas = () => {
                     }
                 });
             });
-            
+
             total = diasPagadosEnSemana.size * valorDiario;
-        } 
+        }
         else { // MES (Por defecto o si no hay filtro de día/semana)
             // Calcular el total de todos los pagos que ya están filtrados por nombre, especialidad y tipoPago
             let totalDias = 0;
             pagos.forEach(pago => {
                 totalDias += pago.diasPagados?.length || 0;
-            });
+            }
+            );
             total = totalDias * valorDiario;
         }
 
@@ -278,7 +314,7 @@ const PagosLigas = () => {
     return (
         <div style={{ padding: "2rem", background: "#f8fafc", minHeight: "100vh" }}>
             <div style={{ maxWidth: "2200px", margin: "0 auto", background: "white", borderRadius: "1.5rem", padding: "2.5rem", boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}>
-                
+
                 <h2 style={{ textAlign: "center", fontSize: "2.5rem", marginBottom: "2rem", color: "#1e293b" }}>
                     Control de Pagos de Ligas
                 </h2>
@@ -309,7 +345,7 @@ const PagosLigas = () => {
                         Filtros de Pagos
                     </h3>
                     <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
-                        
+
                         {/* ⭐ Filtro por Nombre */}
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <label style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.25rem" }}>Nombre</label>
@@ -329,9 +365,9 @@ const PagosLigas = () => {
                         {/* Filtro por Especialidad */}
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <label style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.25rem" }}>Especialidad</label>
-                            <select 
-                                value={filtroEspecialidad} 
-                                onChange={(e) => setFiltroEspecialidad(e.target.value)} 
+                            <select
+                                value={filtroEspecialidad}
+                                onChange={(e) => setFiltroEspecialidad(e.target.value)}
                                 style={{ ...selectStyle, padding: "0.75rem" }}
                             >
                                 {especialidades.map(spec => (
@@ -343,9 +379,9 @@ const PagosLigas = () => {
                         {/* Filtro por Tipo de Pago 🆕 */}
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <label style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.25rem" }}>Tipo de Pago</label>
-                            <select 
-                                value={filtroTipoPago} 
-                                onChange={(e) => setFiltroTipoPago(e.target.value)} 
+                            <select
+                                value={filtroTipoPago}
+                                onChange={(e) => setFiltroTipoPago(e.target.value)}
                                 style={{ ...selectStyle, padding: "0.75rem" }}
                             >
                                 {TIPOS_PAGO.map(tipo => (
@@ -353,13 +389,13 @@ const PagosLigas = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Filtro por Período */}
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <label style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.25rem" }}>Período</label>
-                            <select 
-                                value={filtroPeriodo} 
-                                onChange={(e) => setFiltroPeriodo(e.target.value)} 
+                            <select
+                                value={filtroPeriodo}
+                                onChange={(e) => setFiltroPeriodo(e.target.value)}
                                 style={{ ...selectStyle, padding: "0.75rem" }}
                             >
                                 <option value="MES">Mes Completo</option>
@@ -367,26 +403,26 @@ const PagosLigas = () => {
                                 <option value="DIA">Día Específico</option>
                             </select>
                         </div>
-                        
+
                         {/* Input de Día o Semana, condicional */}
                         {filtroPeriodo === "DIA" && (
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.25rem" }}>Día</label>
-                                <input 
-                                    type="number" min="1" max="31" 
-                                    placeholder="Día (1-31)" 
-                                    value={filtroDia} 
-                                    onChange={(e) => setFiltroDia(e.target.value)} 
-                                    style={{ ...inputStyle, width: "120px", padding: "0.75rem" }} 
+                                <input
+                                    type="number" min="1" max="31"
+                                    placeholder="Día (1-31)"
+                                    value={filtroDia}
+                                    onChange={(e) => setFiltroDia(e.target.value)}
+                                    style={{ ...inputStyle, width: "120px", padding: "0.75rem" }}
                                 />
                             </div>
                         )}
                         {filtroPeriodo === "SEMANA" && (
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.25rem" }}>Semana</label>
-                                <select 
-                                    value={filtroSemana} 
-                                    onChange={(e) => setFiltroSemana(e.target.value)} 
+                                <select
+                                    value={filtroSemana}
+                                    onChange={(e) => setFiltroSemana(e.target.value)}
                                     style={{ ...selectStyle, padding: "0.75rem" }}
                                 >
                                     <option value="">Seleccionar</option>
@@ -425,13 +461,13 @@ const PagosLigas = () => {
                         <datalist id="clientes-list">
                             {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
                         </datalist>
-                        
+
                         {/* Selector de Tipo de Pago 🆕 */}
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <label style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.25rem" }}>Tipo</label>
-                            <select 
-                                value={tipoPagoSeleccionado} 
-                                onChange={(e) => setTipoPagoSeleccionado(e.target.value)} 
+                            <select
+                                value={tipoPagoSeleccionado}
+                                onChange={(e) => setTipoPagoSeleccionado(e.target.value)}
                                 style={{ ...selectStyle, padding: "0.75rem" }}
                             >
                                 <option value="Efectivo">Efectivo</option>
@@ -451,10 +487,10 @@ const PagosLigas = () => {
                             <thead>
                                 <tr style={{ background: "#1e293b", color: "white" }}>
                                     <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "200px" }}>Jugadora</th>
-                                    <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Especialidad</th> 
+                                    <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Especialidad</th>
                                     <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Tipo de Pago</th> {/* 🆕 NUEVA COLUMNA */}
                                     {[...Array(31)].map((_, i) => (
-                                        <th key={i+1} style={{ ...thStyle, width: "60px" }}>{i+1}</th>
+                                        <th key={i + 1} style={{ ...thStyle, width: "60px" }}>{i + 1}</th>
                                     ))}
                                     <th style={{ ...thStyle, background: "#172554", width: "110px" }}>Días</th>
                                     <th style={{ ...thStyle, background: "#172554", width: "160px" }}>Total</th>
@@ -481,7 +517,7 @@ const PagosLigas = () => {
                                                 {[...Array(31)].map((_, i) => {
                                                     const pagado = dias.includes(i + 1);
                                                     return (
-                                                        <td key={i+1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
+                                                        <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
                                                             {pagado && <span style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</span>}
                                                         </td>
                                                     );
