@@ -51,6 +51,9 @@ const PagosLigas = () => {
     // ⭐ NUEVO ESTADO PARA EL FILTRO POR NOMBRE
     const [filtroNombre, setFiltroNombre] = useState("");
 
+    // Estado para el scroll superior (solo visual)
+    const [scrollPosition, setScrollPosition] = useState(0);
+
     // Lista de especialidades únicas para el filtro
     const especialidades = useMemo(() => {
         const specs = new Set(clientes.map(c => c.especialidad).filter(Boolean));
@@ -118,12 +121,14 @@ const PagosLigas = () => {
 
                     const especialidad = cliente?.especialidad || 'Sin Especialidad';
                     // 🆕 AJUSTE: Leer el campo tipoPago que el backend debe proveer
-                    const tipoPago = pago.tipoPago || 'N/A';
+                    const tipoPago = pago.tipoPago || 'Efectivo'; // Ajustado a 'Efectivo' por defecto
 
-                    if (pago.diasPagados && Array.isArray(pago.diasPagados)) {
-                        total += pago.diasPagados.length * valorDiario;
-                    }
-
+                    // El total de cada documento es por un solo pago de valorDiario.
+                    // Sumamos el total pagado en CADA documento.
+                    // Si un documento tiene diasPagados: [10], su total es 8000.
+                    // Si se hicieron 3 pagos al día 10, habrá 3 documentos, totalizando 24000.
+                    total += pago.total || 0; 
+                    
                     return { ...pago, especialidad, tipoPago };
                 });
 
@@ -139,6 +144,11 @@ const PagosLigas = () => {
         };
         cargarPagos();
     }, [mesSeleccionado, valorDiario, clientes]);
+
+
+    // ===========================================
+    // ⭐ LÓGICA DE REGISTRO RÁPIDO Y RECARGA
+    // ===========================================
 
     // REGISTRAR PAGO (Lógica actualizada para enviar tipoPago)
     const registrarPagoDia = async () => {
@@ -157,7 +167,7 @@ const PagosLigas = () => {
                 tipoPago: tipoPagoSeleccionado, // 🆕 ENVIAR TIPO DE PAGO AL BACKEND
             });
 
-            // Recargar y recalcular
+            // --- RECARGAR Y RECALCULAR (Lógica de recarga optimizada y adaptada) ---
             const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
             const todosPagos = res.data || [];
             const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
@@ -168,15 +178,17 @@ const PagosLigas = () => {
                     `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
                 );
                 const especialidad = cliente?.especialidad || 'Sin Especialidad';
-                const tipoPago = pago.tipoPago || 'N/A';
-                if (pago.diasPagados && Array.isArray(pago.diasPagados)) {
-                    nuevoTotalGeneral += pago.diasPagados.length * valorDiario;
-                }
+                const tipoPago = pago.tipoPago || 'Efectivo';
+                
+                // Sumar el total de CADA documento de pago
+                nuevoTotalGeneral += pago.total || 0;
+                
                 return { ...pago, especialidad, tipoPago }; // Incluir tipoPago
             });
 
             setPagosDelMes(pagosEnriquecidos);
             setTotalRecaudado(nuevoTotalGeneral);
+            // ----------------------------------------------------------------------
 
             alert(`Día ${diaSeleccionado} registrado como pago (${tipoPagoSeleccionado})`);
             setSearchCliente("");
@@ -200,7 +212,7 @@ const PagosLigas = () => {
 
             // Al crear un nuevo mes, lo seleccionamos automáticamente
             if (mesesData.find(m => m.nombre === nuevoMes.trim())) {
-                 setMesSeleccionado(nuevoMes.trim());
+                   setMesSeleccionado(nuevoMes.trim());
             }
 
         } catch (error) {
@@ -208,13 +220,15 @@ const PagosLigas = () => {
         }
     };
 
-    // LÓGICA DE FILTROS Y CÁLCULO DE TOTALES FILTRADOS
+    // ===========================================
+    // ⭐ LÓGICA DE FILTROS Y CÁLCULO DE TOTALES FILTRADOS
+    // ===========================================
 
     const pagosFiltrados = useMemo(() => {
         let pagos = pagosDelMes;
         let total = 0;
 
-        // ⭐ 1. Filtrar por Nombre
+        // 1. Filtrar por Nombre
         if (filtroNombre.trim()) {
             const nombreFiltrado = filtroNombre.trim().toLowerCase();
             pagos = pagos.filter(p => p.nombre.trim().toLowerCase().includes(nombreFiltrado));
@@ -230,19 +244,15 @@ const PagosLigas = () => {
             pagos = pagos.filter(p => p.tipoPago === filtroTipoPago);
         }
 
-        // 4. Filtrar por Período
+        // 4. Calcular Total basado en el Período y los filtros anteriores
         if (filtroPeriodo === "DIA" && filtroDia) {
             const diaNum = parseInt(filtroDia, 10);
-
-            const jugadoresConDiaPagado = new Set();
-            pagos.forEach(pago => {
-                if (pago.diasPagados.includes(diaNum)) {
-                    jugadoresConDiaPagado.add(pago.nombre.trim());
-                }
-            });
-
-            // El total es el número de jugadores que pagaron ESE día (considerando todos los filtros anteriores)
-            total = jugadoresConDiaPagado.size * valorDiario;
+            
+            // Contar SÓLO los documentos que tienen este día pagado
+            const pagosDiaFiltrado = pagos.filter(p => p.diasPagados.includes(diaNum));
+            
+            // El total es la suma de los totales de cada documento (cada documento es 8000)
+            total = pagosDiaFiltrado.reduce((sum, pago) => sum + (pago.total || 0), 0);
         }
         else if (filtroPeriodo === "SEMANA" && filtroSemana) {
             const semanaNum = parseInt(filtroSemana, 10);
@@ -254,26 +264,24 @@ const PagosLigas = () => {
             else if (semanaNum === 4) diasSemana = [22, 23, 24, 25, 26, 27, 28];
             else if (semanaNum === 5) diasSemana = [29, 30, 31];
 
-            const diasPagadosEnSemana = new Set();
-            // Contar la cantidad de pares únicos (jugador-día) que cumplen el filtro
-            pagos.forEach(pago => {
-                pago.diasPagados.forEach(dia => {
-                    if (diasSemana.includes(dia)) {
-                        diasPagadosEnSemana.add(`${pago.nombre.trim()}-${dia}`);
-                    }
-                });
-            });
-
-            total = diasPagadosEnSemana.size * valorDiario;
+            // Contar SÓLO los documentos que tienen AL MENOS un día en la semana pagado
+            const pagosSemanaFiltrado = pagos.filter(p => 
+                p.diasPagados.some(dia => diasSemana.includes(dia))
+            );
+            
+            // Recalcular el total: Sumar los totales de los documentos, pero SÓLO si el día del pago está en el rango de la semana.
+            // Dado que cada documento solo tiene un día en `diasPagados`, esto es lo mismo que sumar el total de los documentos filtrados.
+            total = pagosSemanaFiltrado.reduce((sum, pago) => sum + (pago.total || 0), 0);
+            
+            // NOTA: Para este filtro (SEMANA), la lógica anterior era incorrecta. La lógica correcta es sumar el total de CADA documento que haya caído en la semana.
+            // La lógica previa contaba pares jugador-día, lo que era útil para contar cuántas "X" había, no cuánto dinero se recaudó.
+            // Al filtrar los pagos (documentos) y sumar su campo 'total' (que es 8000), obtenemos la recaudación real.
+            // Total de documentos es el número de pagos de $8000 que se hicieron en la semana.
+            total = pagosSemanaFiltrado.length * valorDiario;
         }
         else { // MES (Por defecto o si no hay filtro de día/semana)
             // Calcular el total de todos los pagos que ya están filtrados por nombre, especialidad y tipoPago
-            let totalDias = 0;
-            pagos.forEach(pago => {
-                totalDias += pago.diasPagados?.length || 0;
-            }
-            );
-            total = totalDias * valorDiario;
+            total = pagos.reduce((sum, pago) => sum + (pago.total || 0), 0);
         }
 
         // Devolvemos los pagos (filtrados por nombre, especialidad y tipoPago) y el total calculado.
@@ -295,21 +303,65 @@ const PagosLigas = () => {
         return pago?.especialidad || 'N/A';
     };
 
-    // Función para obtener el tipo de pago de un jugador (se usa el primer tipo encontrado, solo si el filtro es TODOS)
-    // Cuando hay un filtro de tipo pago, este valor será siempre el valor del filtro.
+    // Función para obtener el tipo de pago de un jugador (se usa el tipo del PRIMER pago encontrado, para la columna "Tipo de Pago")
     const getTipoPagoJugadora = (nombre) => {
+        // En este contexto, si el filtroTipoPago está activo, el valor de esta celda no tiene mucho sentido,
+        // ya que solo muestra el tipo de pago del primer documento. Lo dejamos como estaba.
         const pago = pagosDelMes.find(c => c.nombre.trim() === nombre.trim());
-        return pago?.tipoPago || 'Efectivo'; // Asumir 'Efectivo' si no se encuentra
+        return pago?.tipoPago || 'Efectivo'; 
     };
 
-    // Función para obtener los días pagados, ahora usando solo los pagos filtrados
-    const getDiasPagadosFiltrados = (nombre) => {
-        // En el caso de que se filtre por Tipo de Pago, solo contamos los días registrados con ESE tipo.
-        const pagos = pagosFiltrados.pagosFiltradosPorEspecialidad.filter(p => p.nombre.trim() === nombre.trim());
-        const dias = new Set();
-        pagos.forEach(p => (p.diasPagados || []).forEach(d => dias.add(d)));
-        return Array.from(dias).sort((a, b) => a - b);
+    // ===========================================
+    // ⭐ NUEVA FUNCIÓN CLAVE: Contar pagos por día
+    // Reemplaza getDiasPagadosFiltrados
+    // ===========================================
+    const getConteoPagosPorDia = (nombre) => {
+        // 1. Filtrar los documentos de pago solo por el nombre de la jugadora Y los filtros activos
+        const pagosJugadora = pagosFiltrados.pagosFiltradosPorEspecialidad.filter(p => p.nombre.trim() === nombre.trim());
+        
+        // 2. Acumular el conteo de pagos por cada día (ej: { 10: 2, 12: 1 })
+        const conteoPorDia = {};
+        
+        pagosJugadora.forEach(pago => {
+            // Asumiendo que cada documento solo tiene UN día en diasPagados: [Día]
+            const dia = pago.diasPagados?.[0]; 
+            if (dia) {
+                conteoPorDia[dia] = (conteoPorDia[dia] || 0) + 1;
+            }
+        });
+
+        // Retorna un objeto con el conteo: { 1: 1, 5: 2, 10: 1 }
+        return conteoPorDia;
     };
+
+    // Función para obtener el TOTAL de días pagados (documentos) por una jugadora, respetando filtros
+    const getNumeroTotalPagos = (nombre) => {
+        const conteoPorDia = getConteoPagosPorDia(nombre);
+        // El número total de pagos es la suma de los valores en el objeto de conteo
+        return Object.values(conteoPorDia).reduce((sum, count) => sum + count, 0);
+    };
+
+    // ===========================================
+    // ⭐ FUNCIONES DE SCROLL SINCRONIZADO
+    // ===========================================
+
+    // Función para sincronizar el scroll superior con el inferior
+    const syncScroll = (event) => {
+        const scrollContainer = document.getElementById('scroll-table-bottom');
+        if (scrollContainer) {
+            scrollContainer.scrollLeft = event.target.scrollLeft;
+            setScrollPosition(event.target.scrollLeft); // Solo para mantener el estado
+        }
+    };
+
+    // useEffect para sincronizar el scroll inferior con el superior al manipular el superior
+    useEffect(() => {
+        const scrollContainer = document.getElementById('scroll-table-bottom');
+        if (scrollContainer && scrollContainer.scrollLeft !== scrollPosition) {
+            scrollContainer.scrollLeft = scrollPosition;
+        }
+    }, [scrollPosition]);
+
 
     return (
         <div style={{ padding: "2rem", background: "#f8fafc", minHeight: "100vh" }}>
@@ -481,8 +533,29 @@ const PagosLigas = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* =========================================== */}
+                {/* ⭐ SCROLL HORIZONTAL SUPERIOR (Nuevo) */}
+                {/* =========================================== */}
                 {mesSeleccionado && (
-                    <div style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 15px 35px rgba(0,0,0,0.15)" }}>
+                    <div 
+                        id="scroll-table-top"
+                        style={{ overflowX: "auto", overflowY: "hidden", margin: "0 0 -1px 0" }}
+                        onScroll={syncScroll}
+                    >
+                        <div style={{ width: "2550px", height: "1px" }} />
+                    </div>
+                )}
+                
+                {/* =========================================== */}
+                {/* ⭐ TABLA CON SCROLL HORIZONTAL INFERIOR (Modificado) */}
+                {/* =========================================== */}
+                {mesSeleccionado && (
+                    <div 
+                        id="scroll-table-bottom"
+                        style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 15px 35px rgba(0,0,0,0.15)" }}
+                        onScroll={syncScroll}
+                    >
                         <table style={{ width: "100%", minWidth: "2550px", borderCollapse: "collapse" }}>
                             <thead>
                                 <tr style={{ background: "#1e293b", color: "white" }}>
@@ -492,7 +565,7 @@ const PagosLigas = () => {
                                     {[...Array(31)].map((_, i) => (
                                         <th key={i + 1} style={{ ...thStyle, width: "60px" }}>{i + 1}</th>
                                     ))}
-                                    <th style={{ ...thStyle, background: "#172554", width: "110px" }}>Días</th>
+                                    <th style={{ ...thStyle, background: "#172554", width: "110px" }}>Pagos</th> {/* Cambiado de 'Días' a 'Pagos' */}
                                     <th style={{ ...thStyle, background: "#172554", width: "160px" }}>Total</th>
                                 </tr>
                             </thead>
@@ -501,8 +574,10 @@ const PagosLigas = () => {
                                     <tr><td colSpan="36" style={{ textAlign: "center", padding: "4rem", color: "#64748b" }}>No hay pagos este mes que coincidan con los filtros.</td></tr>
                                 ) : (
                                     jugadorasFiltradas.map(nombre => {
-                                        const dias = getDiasPagadosFiltrados(nombre);
-                                        const total = dias.length * valorDiario;
+                                        // ⭐ FUNCIÓN MODIFICADA: Ahora trae el conteo de pagos por día: { 10: 2, 12: 1 }
+                                        const conteoPorDia = getConteoPagosPorDia(nombre); 
+                                        const numeroTotalPagos = getNumeroTotalPagos(nombre); // ⭐ NUEVO CÁLCULO
+                                        const total = numeroTotalPagos * valorDiario; // ⭐ NUEVO CÁLCULO
                                         const especialidad = getEspecialidadJugadora(nombre);
                                         const tipoPago = getTipoPagoJugadora(nombre);
                                         return (
@@ -515,15 +590,17 @@ const PagosLigas = () => {
                                                 <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}> {/* Color condicional para diferenciar */}
                                                     **{tipoPago}** </td>
                                                 {[...Array(31)].map((_, i) => {
-                                                    const pagado = dias.includes(i + 1);
+                                                    const dia = i + 1;
+                                                    const conteo = conteoPorDia[dia] || 0; // Obtener el conteo para el día
                                                     return (
-                                                        <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-                                                            {pagado && <span style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</span>}
+                                                        <td key={dia} style={{ textAlign: "center", padding: "0.8rem 0" }}>
+                                                            {conteo === 1 && <span style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</span>}
+                                                            {conteo > 1 && <span style={{ color: "#4f46e5", fontSize: "1.4rem", fontWeight: "bold" }}>{conteo}</span>}
                                                         </td>
                                                     );
                                                 })}
                                                 <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#0891b2" }}>
-                                                    {dias.length}
+                                                    {numeroTotalPagos}
                                                 </td>
                                                 <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.4rem", color: "#166534" }}>
                                                     ${total.toLocaleString("es-CO")}
