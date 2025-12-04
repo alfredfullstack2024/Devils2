@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Form, Button, Alert, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
-import axios, { obtenerEquipos } from "../api/axios"; // Importamos 'obtenerEquipos'
+import axios, { obtenerEquipos } from "../api/axios";
 
 const EditarCliente = () => {
   const { id } = useParams();
@@ -21,16 +21,17 @@ const EditarCliente = () => {
     tallaTrenSuperior: "",
     tallaTrenInferior: "",
     nombreResponsable: "",
-    especialidad: "", // <--- Campo agregado
+    especialidad: "", // Campo funcional agregado
   });
   
-  const [especialidades, setEspecialidades] = useState([]); // <--- Estado agregado
+  const [especialidades, setEspecialidades] = useState([]); // Estado funcional agregado
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
   const navigate = useNavigate();
 
-  // Opciones de tallas válidas (Copiado de CrearCliente.js para el select)
-  const tallas = ["S", "M", "L", "XL"];
+  // Las tallas ya no se necesitan como array si se usan cajas de texto,
+  // pero las mantengo por si acaso.
+  // const tallas = ["S", "M", "L", "XL"]; 
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -43,7 +44,6 @@ const EditarCliente = () => {
         // 1. Cargar datos del Cliente
         const clienteResponse = await axios.get(`/clientes/${id}`, config);
         const clienteData = clienteResponse.data;
-        console.log("Datos recibidos del cliente:", clienteData);
 
         setFormData({
           nombre: clienteData.nombre || "",
@@ -63,10 +63,10 @@ const EditarCliente = () => {
           tallaTrenSuperior: clienteData.tallaTrenSuperior || "",
           tallaTrenInferior: clienteData.tallaTrenInferior || "",
           nombreResponsable: clienteData.nombreResponsable || "",
-          especialidad: clienteData.especialidad || "", // <--- Inicializa la especialidad
+          especialidad: clienteData.especialidad || "", // Inicialización de Especialidad
         });
         
-        // 2. Cargar Especialidades (Equipos)
+        // 2. Cargar Especialidades
         const especialidadesResponse = await obtenerEquipos(config);
         let lista = [];
 
@@ -79,7 +79,7 @@ const EditarCliente = () => {
               .filter((val) => val && val.trim() !== "");
           }
         }
-        setEspecialidades(lista); // <--- Guarda las especialidades
+        setEspecialidades(lista);
         
       } catch (err) {
         setError(`❌ Error al cargar los datos: ${err.message}`);
@@ -92,19 +92,18 @@ const EditarCliente = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Campo ${name} cambiado a: ${value}`);
     setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Validación de especialidad en frontend (opcional, ya que el backend falla)
+    
+    // Validación de especialidad agregada
     if (!formData.especialidad) {
       setError("La especialidad es obligatoria.");
       return;
     }
 
-    console.log("Datos enviados al backend:", formData);
     try {
       const token = localStorage.getItem("token");
       await axios.put(`/clientes/${id}`, formData, {
@@ -127,7 +126,9 @@ const EditarCliente = () => {
       <h2>Editar Cliente</h2>
       {error && <Alert variant="danger">{error}</Alert>}
       <Form onSubmit={handleSubmit}>
-        {/* ----------------- Campos Existentes (Sin cambios) ----------------- */}
+        {/* Campos de texto y select existentes */}
+        {/* ... (todos los campos anteriores: nombre, apellido, email, etc.) ... */}
+        
         <Form.Group className="mb-3" controlId="nombre">
           <Form.Label>Nombre</Form.Label>
           <Form.Control
@@ -265,40 +266,30 @@ const EditarCliente = () => {
             placeholder="Ingresa la EPS"
           />
         </Form.Group>
-
+        
+        {/* CAMPOS DE TALLA RESTAURADOS A 'type="text"' (como estaban originalmente) */}
         <Form.Group className="mb-3" controlId="tallaTrenSuperior">
           <Form.Label>Talla Tren Superior</Form.Label>
           <Form.Control
-            as="select"
+            type="text"
             name="tallaTrenSuperior"
-            value={tallas.includes(formData.tallaTrenSuperior) ? formData.tallaTrenSuperior : ""}
+            value={formData.tallaTrenSuperior}
             onChange={handleChange}
-          >
-            <option value="">Selecciona una talla</option>
-            {tallas.map((talla) => (
-              <option key={talla} value={talla}>
-                {talla}
-              </option>
-            ))}
-          </Form.Control>
+            placeholder="Ingresa la talla (ej. S, M, L)"
+          />
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="tallaTrenInferior">
           <Form.Label>Talla Tren Inferior</Form.Label>
           <Form.Control
-            as="select"
+            type="text"
             name="tallaTrenInferior"
-            value={tallas.includes(formData.tallaTrenInferior) ? formData.tallaTrenInferior : ""}
+            value={formData.tallaTrenInferior}
             onChange={handleChange}
-          >
-            <option value="">Selecciona una talla</option>
-            {tallas.map((talla) => (
-              <option key={talla} value={talla}>
-                {talla}
-              </option>
-            ))}
-          </Form.Control>
+            placeholder="Ingresa la talla (ej. S, M, L)"
+          />
         </Form.Group>
+        {/* FIN CAMPOS DE TALLA RESTAURADOS */}
 
         <Form.Group className="mb-3" controlId="nombreResponsable">
           <Form.Label>Nombre Responsable</Form.Label>
@@ -311,7 +302,7 @@ const EditarCliente = () => {
           />
         </Form.Group>
 
-        {/* ----------------- CAMPO AGREGADO: ESPECIALIDAD ----------------- */}
+        {/* CAMPO DE ESPECIALIDAD AGREGADO (funcionalidad clave) */}
         <Form.Group className="mb-3" controlId="especialidad">
           <Form.Label>Especialidad</Form.Label>
           <Form.Control
@@ -319,7 +310,7 @@ const EditarCliente = () => {
             name="especialidad"
             value={formData.especialidad}
             onChange={handleChange}
-            required // Obligatorio para evitar el Error 400
+            required 
           >
             <option value="">Selecciona una especialidad</option>
             {especialidades.map((esp, idx) => (
@@ -329,8 +320,7 @@ const EditarCliente = () => {
             ))}
           </Form.Control>
         </Form.Group>
-        {/* ---------------------------------------------------------------- */}
-
+        
         <Button variant="primary" type="submit">
           Guardar Cambios
         </Button>
