@@ -27,10 +27,10 @@ const DashboardLayout = () => {
     navigate("/login");
   };
 
-  // 🛠️ UNIFICACIÓN DE ROLES (Arregla el error de que no aparezca el menú)
+  // 🛠️ UNIFICACIÓN DE ROLES: Previene que el menú desaparezca por errores de nombre
   const userRole = user ? (user.rol || user.role || "user").toLowerCase().trim() : "user";
 
-  // Menú dinámico actualizado
+  // Menú dinámico actualizado con la nueva ruta de Mensualidades
   const menuItems = {
     admin: [
       { path: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
@@ -44,17 +44,17 @@ const DashboardLayout = () => {
       { path: "/clases", icon: <FaDumbbell />, label: "Clases" },
       { path: "/rutinas/crear", icon: <FaDumbbell />, label: "Crear rutina" },
       { path: "/rutinas/asignar", icon: <FaPlus />, label: "Asignar rutina" },
-      { path: "/rutinas/editar-asignacion", icon: <FaEdit />, label: "Editar Asignación Rutina" },
-      { path: "/composicion-corporal", icon: <FaUser />, label: "Composición Corporal" },
+      { path: "/rutinas/editar-asignacion", icon: <FaEdit />, label: "Editar Asignación" },
+      { path: "/composicion-corporal", icon: <FaUser />, label: "Comp. Corporal" },
       { path: "/usuarios", icon: <FaUsersCog />, label: "Usuarios" },
       { path: "/indicadores", icon: <FaChartBar />, label: "Indicadores" },
-      { path: "/videos-entrenamiento", icon: <FaVideo />, label: "Asesoramiento Ejercicios" },
+      { path: "/videos-entrenamiento", icon: <FaVideo />, label: "Asesoramiento" },
       { path: "/medicion-porristas", icon: <FaDumbbell />, label: "Medición Porristas" },
     ],
     recepcionista: [
       { path: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
       { path: "/clientes", icon: <FaUsers />, label: "Clientes" },
-      { path: "/pagos/mensualidades", icon: <FaMoneyBillWave />, label: "Mensualidades" }, // ✅ También para recepción
+      { path: "/pagos/mensualidades", icon: <FaMoneyBillWave />, label: "Mensualidades" },
       { path: "/membresias", icon: <FaIdCard />, label: "Membresías" },
       { path: "/entrenadores", icon: <FaUsersCog />, label: "Entrenadores" },
       { path: "/productos", icon: <FaShoppingCart />, label: "Productos" },
@@ -65,18 +65,17 @@ const DashboardLayout = () => {
       { path: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
       { path: "/rutinas/crear", icon: <FaDumbbell />, label: "Crear rutina" },
       { path: "/rutinas/asignar", icon: <FaPlus />, label: "Asignar rutina" },
-      { path: "/rutinas/editar-asignacion", icon: <FaEdit />, label: "Editar Asignación Rutina" },
-      { path: "/composicion-corporal", icon: <FaUser />, label: "Composición Corporal" },
+      { path: "/rutinas/editar-asignacion", icon: <FaEdit />, label: "Editar Asignación" },
+      { path: "/composicion-corporal", icon: <FaUser />, label: "Comp. Corporal" },
       { path: "/medicion-porristas", icon: <FaDumbbell />, label: "Medición Porristas" },
     ],
     user: [
       { path: "/rutinas/consultar", icon: <FaSearch />, label: "Consultar Rutina" },
-      { path: "/consultar-composicion-corporal", icon: <FaSearch />, label: "Consultar Composición Corporal" },
-      { path: "/videos-entrenamiento", icon: <FaVideo />, label: "Asesoramiento Ejercicios" },
+      { path: "/consultar-composicion-corporal", icon: <FaSearch />, label: "Consultar Comp. Corp." },
+      { path: "/videos-entrenamiento", icon: <FaVideo />, label: "Asesoramiento" },
     ],
   };
 
-  // Seleccionamos el menú basándonos en el rol unificado
   const userMenu = menuItems[userRole] || menuItems["user"];
 
   return (
@@ -101,7 +100,7 @@ const DashboardLayout = () => {
             style={{ width: "150px", marginBottom: "10px", objectFit: "contain" }}
           />
           <h5>Admin Escuela</h5>
-          <small className="text-muted">{userRole}</small>
+          <div className="badge bg-secondary text-uppercase">{userRole}</div>
         </div>
         <Nav className="flex-column">
           {userMenu.map((item, index) => (
@@ -109,9 +108,12 @@ const DashboardLayout = () => {
               key={index} 
               as={NavLink} 
               to={item.path} 
-              className={({ isActive }) => isActive ? "text-white bg-primary px-3 py-2" : "text-white px-3 py-2"}
+              className={({ isActive }) => 
+                `text-white px-3 py-2 d-flex align-items-center ${isActive ? "bg-primary" : ""}`
+              }
             >
-              {item.icon} <span className="ms-2">{item.label}</span>
+              <span style={{ width: "25px" }}>{item.icon}</span>
+              <span className="ms-2">{item.label}</span>
             </Nav.Link>
           ))}
           <Button
