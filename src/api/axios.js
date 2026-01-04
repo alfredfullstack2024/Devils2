@@ -284,5 +284,9 @@ export const eliminarMedicionPorristas = (id, config) =>
 // Autenticación
 export const login = (data) => api.post("/auth/login", data);
 export const registrarse = (data) => api.post("/auth/register", data);
+// ✅ ESTAS DOS LÍNEAS SON LAS QUE FALTABAN PARA QUE EL MENU Y LA APP NO SE ROMPAN:
+export const obtenerMensualidades = (anio, config) => api.get("/pagos/mensualidades", { ...config, params: { anio } });
+export const crearPagoMensualidad = (data, config) => api.post("/pagos/mensualidades", data, config);
 
 export default api;
+
