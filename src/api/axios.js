@@ -10,18 +10,12 @@ const getBaseUrl = () => {
     envUrl ||
     (process.env.NODE_ENV === "development" ? defaultDevUrl : defaultProdUrl);
 
-  console.log("Depuración de URL - Variables de entorno:", {
-    REACT_APP_API_URL: envUrl,
-    NODE_ENV: process.env.NODE_ENV,
-    BaseUrlSeleccionada: baseUrl,
-  });
-
   return baseUrl;
 };
 
 const api = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 10000, // Timeout de 10 segundos
+  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -90,10 +84,13 @@ export const crearPago = (data, config) => api.post("/pagos", data, config);
 export const editarPago = (id, data, config) => api.put(`/pagos/${id}`, data, config);
 export const eliminarPago = (id, config) => api.delete(`/pagos/${id}`, config);
 
-// --- FUNCIÓN AGREGADA PARA LA PLANILLA ---
-export const obtenerMensualidades = (params, config) => 
-  api.get("/pagos/mensualidades", { ...config, params });
-// -----------------------------------------
+// --- FUNCIONES PARA LA PLANILLA DE MENSUALIDADES ---
+export const obtenerMensualidades = (anio, config) => 
+  api.get("/pagos/mensualidades", { ...config, params: { anio } });
+
+export const crearPagoMensualidad = (data, config) => 
+  api.post("/pagos/mensualidades", data, config);
+// --------------------------------------------------
 
 // Contabilidad
 export const obtenerTransacciones = (params, config) => api.get("/contabilidad", { ...config, params });
