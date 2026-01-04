@@ -27,11 +27,15 @@ const DashboardLayout = () => {
     navigate("/login");
   };
 
-  // Menú dinámico basado en el rol
+  // 🛠️ UNIFICACIÓN DE ROLES (Arregla el error de que no aparezca el menú)
+  const userRole = user ? (user.rol || user.role || "user").toLowerCase().trim() : "user";
+
+  // Menú dinámico actualizado
   const menuItems = {
     admin: [
       { path: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
       { path: "/clientes", icon: <FaUsers />, label: "Clientes" },
+      { path: "/pagos/mensualidades", icon: <FaMoneyBillWave />, label: "Mensualidades" }, // ✅ Nueva Ruta
       { path: "/membresias", icon: <FaIdCard />, label: "Membresías" },
       { path: "/entrenadores", icon: <FaUsersCog />, label: "Entrenadores" },
       { path: "/productos", icon: <FaShoppingCart />, label: "Productos" },
@@ -50,6 +54,7 @@ const DashboardLayout = () => {
     recepcionista: [
       { path: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
       { path: "/clientes", icon: <FaUsers />, label: "Clientes" },
+      { path: "/pagos/mensualidades", icon: <FaMoneyBillWave />, label: "Mensualidades" }, // ✅ También para recepción
       { path: "/membresias", icon: <FaIdCard />, label: "Membresías" },
       { path: "/entrenadores", icon: <FaUsersCog />, label: "Entrenadores" },
       { path: "/productos", icon: <FaShoppingCart />, label: "Productos" },
@@ -71,7 +76,8 @@ const DashboardLayout = () => {
     ],
   };
 
-  const userMenu = user?.rol ? menuItems[user.rol] || menuItems["user"] : [];
+  // Seleccionamos el menú basándonos en el rol unificado
+  const userMenu = menuItems[userRole] || menuItems["user"];
 
   return (
     <div className="d-flex" style={{ minHeight: "100vh" }}>
@@ -85,6 +91,7 @@ const DashboardLayout = () => {
           position: "fixed",
           height: "100%",
           overflowY: "auto",
+          zIndex: 1000
         }}
       >
         <div className="text-center mb-4">
@@ -94,11 +101,17 @@ const DashboardLayout = () => {
             style={{ width: "150px", marginBottom: "10px", objectFit: "contain" }}
           />
           <h5>Admin Escuela</h5>
+          <small className="text-muted">{userRole}</small>
         </div>
         <Nav className="flex-column">
           {userMenu.map((item, index) => (
-            <Nav.Link key={index} as={NavLink} to={item.path} className="text-white">
-              {item.icon} {item.label}
+            <Nav.Link 
+              key={index} 
+              as={NavLink} 
+              to={item.path} 
+              className={({ isActive }) => isActive ? "text-white bg-primary px-3 py-2" : "text-white px-3 py-2"}
+            >
+              {item.icon} <span className="ms-2">{item.label}</span>
             </Nav.Link>
           ))}
           <Button
@@ -110,9 +123,10 @@ const DashboardLayout = () => {
           </Button>
         </Nav>
       </div>
+
       {/* Contenido Principal */}
-      <div style={{ marginLeft: "250px", width: "calc(100% - 250px)" }}>
-        <Container className="mt-4">
+      <div style={{ marginLeft: "250px", width: "calc(100% - 250px)", backgroundColor: "#f8f9fa" }}>
+        <Container className="py-4">
           <Outlet />
         </Container>
       </div>
