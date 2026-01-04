@@ -33,7 +33,7 @@ api.interceptors.response.use(
   }
 );
 
-// --- EXPORTACIONES (Nombres exactos en inglés) ---
+// --- EXPORTACIONES ---
 
 // Clientes
 export const obtenerClientes = (config) => api.get("/clientes", config);
@@ -44,7 +44,7 @@ export const editarCliente = (id, data, config) => api.put(`/clientes/${id}`, da
 export const eliminarCliente = (id, config) => api.delete(`/clientes/${id}`, config);
 export const obtenerClientesActivos = (config) => api.get("/clientes/activos", config);
 
-// Rutinas (Aquí estaba el error de compilación)
+// Rutinas
 export const obtenerRutinas = (config) => api.get("/rutinas", config);
 export const crearRutina = (data, config) => api.post("/rutinas", data, config);
 export const editarRutina = (id, data, config) => api.put(`/rutinas/${id}`, data, config);
@@ -63,7 +63,11 @@ export const eliminarPago = (id, config) => api.delete(`/pagos/${id}`, config);
 export const obtenerMensualidades = (anio, config) => api.get("/pagos/mensualidades", { params: { anio }, ...config });
 export const crearPagoMensualidad = (data, config) => api.post("/pagos/mensualidades", data, config);
 
-// Otros necesarios para que el Dashboard no falle
+// Entrenadores y Equipos (Los que causaron el nuevo error)
+export const obtenerEntrenadores = (config) => api.get("/entrenadores", config);
+export const obtenerEquipos = (config) => api.get("/entrenadores/equipos", config);
+
+// Autenticación y Usuarios
 export const obtenerUsuarios = (config) => api.get("/users", config);
 export const login = (data) => api.post("/auth/login", data);
 export const registrarse = (data) => api.post("/auth/register", data);
