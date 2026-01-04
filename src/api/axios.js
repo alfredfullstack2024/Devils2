@@ -200,6 +200,14 @@ export const editarPago = (id, data, config) =>
 export const eliminarPago = (id, config) =>
   api.delete(`/pagos/${id}`, config);
 
+// ✅ FUNCIONES AGREGADAS PARA LA PLANILLA DE MENSUALIDADES
+export const obtenerMensualidades = (anio, config) => 
+  api.get("/pagos/mensualidades", { ...config, params: { anio } });
+
+export const crearPagoMensualidad = (data, config) => 
+  api.post("/pagos/mensualidades", data, config);
+// --------------------------------------------------------
+
 // Contabilidad
 export const obtenerTransacciones = (params, config) =>
   api.get("/contabilidad", { ...config, params });
@@ -223,7 +231,6 @@ export const editarEntrenador = (id, data, config) =>
   api.put(`/entrenadores/${id}`, data, config);
 export const eliminarEntrenador = (id, config) =>
   api.delete(`/entrenadores/${id}`, config);
-// 👇 Endpoint para traer equipos (especialidades únicas)
 export const obtenerEquipos = (config) =>
   api.get("/entrenadores/equipos", config);
 
