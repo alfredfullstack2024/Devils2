@@ -2,25 +2,31 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { ListGroup } from "react-bootstrap";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import "./Sidebar.css";
 
 const Sidebar = () => {
   const context = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Si el contexto no carga, no matamos la app, solo retornamos vacío temporalmente
-  if (!context) return null;
+  // 1. Verificación de Contexto: Si no hay contexto, mostramos un error visual
+  if (!context) {
+    return (
+      <div style={{ color: "white", background: "red", padding: "20px", width: "250px" }}>
+        Error: AuthContext no encontrado.
+      </div>
+    );
+  }
 
   const { user } = context;
 
-  // Forzamos la detección del rol sin importar si viene como 'rol' o 'role'
-  const rawRole = user?.rol || user?.role || "public";
-  const userRole = String(rawRole).toLowerCase().trim();
+  // 2. Normalización de Rol: Detectamos 'rol' o 'role'
+  const userRole = user ? (user.rol || user.role || "public").toLowerCase().trim() : "public";
 
+  // 3. Definición de Ítems (Incluyendo la nueva opción de Mensualidades)
   const menuItems = {
     admin: [
       { label: "📊 Panel", path: "/dashboard" },
       { label: "🧍 Clientes", path: "/clientes" },
+      { label: "💵 Mensualidades", path: "/pagos/mensualidades" }, // Nueva ruta
       { label: "📦 Productos", path: "/productos" },
       { label: "🎟️ Membresías", path: "/membresias" },
       { label: "💵 Pagos", path: "/pagos" },
@@ -35,7 +41,6 @@ const Sidebar = () => {
       { label: "📏 Composición Corporal", path: "/composicion-corporal" },
       { label: "🔍 Consultar Composición", path: "/consultar-composicion-corporal" },
       { label: "🎥 Videos Entrenamiento", path: "/videos-entrenamiento" },
-      { label: "✏️ Editar Clases", path: "/entrenadores/editar-clases" },
       { label: "📋 Inscripciones", path: "/admin/inscripciones" },
     ],
     entrenador: [
@@ -44,41 +49,88 @@ const Sidebar = () => {
       { label: "📏 Composición Corporal", path: "/composicion-corporal" },
       { label: "🔍 Consultar Composición", path: "/consultar-composicion-corporal" },
       { label: "🎥 Videos Entrenamiento", path: "/videos-entrenamiento" },
-      { label: "✏️ Editar Clases", path: "/entrenadores/editar-clases" },
     ],
     public: [
       { label: "🔍 Consultar Rutinas", path: "/rutinas/consultar" },
-      { label: "📏 Consultar Composición Corporal", path: "/consultar-composicion-corporal" },
-      { label: "🎥 Asesoramiento de Ejercicios", path: "/videos-entrenamiento" },
       { label: "🕒 Clases", path: "/clases" },
     ],
   };
 
-  // Determinamos qué mostrar. Si no reconoce el rol, por defecto muestra 'entrenador' + 'public'
-  const itemsToShow = (menuItems[userRole] || [...menuItems.entrenador, ...menuItems.public]);
+  // 4. Lógica de visualización: Si es admin, mostramos admin. Si no, forzamos público para que no quede vacío.
+  const itemsToShow = menuItems[userRole] || menuItems.public;
 
-  const handleEditarClasesClick = () => navigate("/entrenadores");
+  useEffect(() => {
+    console.log("Sidebar Debug - Usuario:", user);
+    console.log("Sidebar Debug - Rol procesado:", userRole);
+  }, [user, userRole]);
 
   return (
-    <div className="sidebar p-3 bg-dark text-white vh-100" style={{ minWidth: '250px' }}>
-      <div className="text-center mb-4">
-        <img src="/logo192.png" alt="Logo" style={{ width: "80px" }} />
-        <small className="d-block text-muted mt-2">MODO: {userRole}</small>
+    <div 
+      className="sidebar-container"
+      style={{
+        width: "260px",
+        minHeight: "100vh",
+        backgroundColor: "#1a1a1a",
+        color: "white",
+        position: "fixed",
+        left: 0,
+        top: 0,
+        zIndex: 9999,
+        padding: "20px 10px",
+        overflowY: "auto",
+        borderRight: "1px solid #333"
+      }}
+    >
+      <div style={{ textAlign: "center", marginBottom: "30px" }}>
+        <img src="/logo192.png" alt="Logo" style={{ width: "80px", marginBottom: "10px" }} />
+        <div style={{ 
+          fontSize: "12px", 
+          background: "#333", 
+          padding: "5px", 
+          borderRadius: "4px",
+          textTransform: "uppercase" 
+        }}>
+          Rol: {userRole}
+        </div>
       </div>
-      <ListGroup variant="flush">
+
+      <ListGroup variant="flush" style={{ background: "transparent" }}>
         {itemsToShow.map((item, index) => (
-          <ListGroup.Item
+          <NavLink
             key={`${item.path}-${index}`}
-            as={item.label === "✏️ Editar Clases" ? "div" : NavLink}
-            to={item.label !== "✏️ Editar Clases" ? item.path : undefined}
-            className={({ isActive }) => `sidebar-item ${isActive ? "active" : ""}`}
-            onClick={item.label === "✏️ Editar Clases" ? handleEditarClasesClick : undefined}
-            style={{ cursor: "pointer", background: 'transparent', color: 'white', border: 'none' }}
+            to={item.path}
+            style={({ isActive }) => ({
+              textDecoration: "none",
+              display: "block",
+              padding: "12px 15px",
+              color: isActive ? "#fff" : "#bbb",
+              backgroundColor: isActive ? "#0d6efd" : "transparent",
+              borderRadius: "5px",
+              marginBottom: "5px",
+              fontSize: "14px",
+              transition: "0.3s"
+            })}
           >
             {item.label}
-          </ListGroup.Item>
+          </NavLink>
         ))}
       </ListGroup>
+
+      <button 
+        onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
+        style={{
+          marginTop: "20px",
+          width: "100%",
+          padding: "10px",
+          backgroundColor: "#dc3545",
+          border: "none",
+          color: "white",
+          borderRadius: "5px",
+          cursor: "pointer"
+        }}
+      >
+        Cerrar Sesión (Limpiar)
+      </button>
     </div>
   );
 };
