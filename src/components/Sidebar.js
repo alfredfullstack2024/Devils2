@@ -8,17 +8,14 @@ const Sidebar = () => {
   const context = useContext(AuthContext);
   const navigate = useNavigate();
 
-  if (!context) {
-    console.error("AuthContext no está disponible en Sidebar.js");
-    return null;
-  }
+  // Si el contexto no carga, no matamos la app, solo retornamos vacío temporalmente
+  if (!context) return null;
 
   const { user } = context;
 
-  // 🛠️ CORRECCIÓN CLAVE: Unificamos 'rol' y 'role' para evitar que el menú desaparezca
-  const userRole = user ? (user.rol || user.role || "public").toLowerCase() : "public";
-
-  console.log("Sidebar - Usuario detectado:", userRole);
+  // Forzamos la detección del rol sin importar si viene como 'rol' o 'role'
+  const rawRole = user?.rol || user?.role || "public";
+  const userRole = String(rawRole).toLowerCase().trim();
 
   const menuItems = {
     admin: [
@@ -57,28 +54,16 @@ const Sidebar = () => {
     ],
   };
 
-  // Lógica de filtrado de items según el rol unificado
-  const itemsToShow = user
-    ? userRole === "user" || userRole === "public"
-      ? [...menuItems.public]
-      : [...(menuItems[userRole] || menuItems.entrenador), ...menuItems.public]
-    : menuItems.public;
+  // Determinamos qué mostrar. Si no reconoce el rol, por defecto muestra 'entrenador' + 'public'
+  const itemsToShow = (menuItems[userRole] || [...menuItems.entrenador, ...menuItems.public]);
 
-  const handleEditarClasesClick = () => {
-    navigate("/entrenadores");
-  };
-
-  useEffect(() => {
-    console.log("Sidebar actualizado para el rol:", userRole);
-  }, [user, userRole]);
+  const handleEditarClasesClick = () => navigate("/entrenadores");
 
   return (
-    <div className="sidebar p-3 bg-dark text-white vh-100" key={userRole}>
+    <div className="sidebar p-3 bg-dark text-white vh-100" style={{ minWidth: '250px' }}>
       <div className="text-center mb-4">
-        <img src="/logo192.png" alt="Logo Admin Gym" style={{ width: "100px" }} />
-        <h6 className="mt-2 text-uppercase" style={{ fontSize: '0.8rem', color: '#aaa' }}>
-          {userRole}
-        </h6>
+        <img src="/logo192.png" alt="Logo" style={{ width: "80px" }} />
+        <small className="d-block text-muted mt-2">MODO: {userRole}</small>
       </div>
       <ListGroup variant="flush">
         {itemsToShow.map((item, index) => (
@@ -86,13 +71,9 @@ const Sidebar = () => {
             key={`${item.path}-${index}`}
             as={item.label === "✏️ Editar Clases" ? "div" : NavLink}
             to={item.label !== "✏️ Editar Clases" ? item.path : undefined}
-            className={({ isActive }) =>
-              `sidebar-item ${item.label !== "✏️ Editar Clases" && isActive ? "active" : ""}`
-            }
-            onClick={
-              item.label === "✏️ Editar Clases" ? handleEditarClasesClick : undefined
-            }
-            style={{ cursor: "pointer" }}
+            className={({ isActive }) => `sidebar-item ${isActive ? "active" : ""}`}
+            onClick={item.label === "✏️ Editar Clases" ? handleEditarClasesClick : undefined}
+            style={{ cursor: "pointer", background: 'transparent', color: 'white', border: 'none' }}
           >
             {item.label}
           </ListGroup.Item>
