@@ -267,7 +267,6 @@ const Pagos = () => {
                 </Card.Body>
             </Card>
 
-            {/* BOTONES DE ACCIÓN: Mantenemos los originales e insertamos el nuevo */}
             <div className="mb-3 d-flex gap-2 flex-wrap">
                 <Button variant="primary" onClick={() => navigate("/pagos/crear")}>
                     Crear pago
@@ -314,7 +313,6 @@ const Pagos = () => {
                 </Table>
             )}
 
-            {/* Modal Resumen */}
             <Modal show={showResumen} onHide={() => setShowResumen(false)} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Resumen por Método de Pago ({filtroTipo.toUpperCase()})</Modal.Title>
@@ -354,4 +352,3 @@ const Pagos = () => {
 };
 
 export default Pagos;
-           
