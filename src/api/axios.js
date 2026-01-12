@@ -14,7 +14,7 @@ const getBaseUrl = () => {
 
 const api = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 10000, 
+  timeout: 30000, // Ajustado a 30s para evitar errores de conexión con Render
   headers: {
     "Content-Type": "application/json",
   },
@@ -49,7 +49,7 @@ api.interceptors.response.use(
 );
 
 /* ============================
-   Exported API helper functions
+    Exported API helper functions
    ============================ */
 
 // Clientes
@@ -137,8 +137,11 @@ export const eliminarMedicionPorristas = (id, config) => api.delete(`/medicion-p
 export const login = (data) => api.post("/auth/login", data);
 export const registrarse = (data) => api.post("/auth/register", data);
 
-// ✅ NUEVAS FUNCIONES DE MENSUALIDADES
-export const obtenerMensualidades = (anio, config) => api.get("/pagos/mensualidades", { ...config, params: { anio } });
-export const crearPagoMensualidad = (data, config) => api.post("/pagos/mensualidades", data, config);
+// ✅ FUNCIONES DE MENSUALIDADES CORREGIDAS Y SINCRONIZADAS
+// El backend espera el año en la ruta: /pagos/mensualidades/:año
+export const obtenerMensualidades = (anio, config) => api.get(`/pagos/mensualidades/${anio}`, config);
+
+// El backend espera la ruta de registro completo: /pagos/mensualidad-completa
+export const crearPagoMensualidad = (data, config) => api.post("/pagos/mensualidad-completa", data, config);
 
 export default api;
