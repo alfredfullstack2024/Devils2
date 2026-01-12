@@ -1,4 +1,3 @@
-//src/pages/pagos/Pagos.js
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, Button, Alert, Form, Row, Col, Card, Modal, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +5,7 @@ import api from "../../api/axios";
 
 // Función auxiliar para formatear montos (usa toLocaleString de forma segura)
 const formatCurrencySafe = (amount) => {
+    // Si amount no es un número, devuelve 0
     const value = parseFloat(amount) || 0; 
     return `$${value.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
@@ -57,7 +57,7 @@ const Pagos = () => {
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 6);
                 endDate.setHours(23, 59, 59, 999);
-                                        
+                        
                 params.fechaInicio = startDate.toISOString();
                 params.fechaFin = endDate.toISOString();
             } else if (filtroTipo === "dia" && dia) {
@@ -69,7 +69,7 @@ const Pagos = () => {
                 params.fechaFin = endDate.toISOString();
             }
 
-            // A) Obtener el total GENERAL
+            // A) Obtener el total GENERAL (sin filtros de fecha)
             const allResponse = await api.get("/pagos");
             const totalGeneralMonto = (allResponse.data.pagos || [])
                 .reduce((sum, pago) => sum + (pago.monto || 0), 0);
@@ -95,7 +95,7 @@ const Pagos = () => {
         fetchPagos();
     }, [fetchPagos]);
 
-    // --- 2. Filtro local por nombre ---
+    // --- 2. Filtro local por nombre y cálculo de TOTAL FILTRADO ---
     useEffect(() => {
         let filtrados;
         
@@ -111,6 +111,7 @@ const Pagos = () => {
         }
         setPagosFiltrados(filtrados);
 
+        // CÁLCULO DEL TOTAL FILTRADO (Sumar los montos de los pagos mostrados en la tabla)
         const total = filtrados.reduce((sum, pago) => sum + (pago.monto || 0), 0);
         setTotalRecaudadoFiltrado(total);
         
@@ -122,6 +123,7 @@ const Pagos = () => {
         setSemana("");
         setDia("");
         setBusquedaNombre("");
+        // No llamamos a fetchPagos explícitamente, el useEffect de fetchPagos lo hará al cambiar los estados.
     };
 
     const eliminarPago = async (id) => {
@@ -129,6 +131,7 @@ const Pagos = () => {
         try {
             setIsLoading(true);
             await api.delete(`/pagos/${id}`);
+            // Actualizar la lista de pagos para reflejar el cambio y recalcular totales
             await fetchPagos(); 
         } catch (err) {
             setError("Error al eliminar el pago: " + (err.response?.data?.message || err.message));
@@ -139,11 +142,13 @@ const Pagos = () => {
 
     const formatFecha = (fecha) => new Date(fecha).toLocaleDateString("es-ES");
 
+    // --- 3. Mostrar modal con resumen ---
     const abrirResumen = async () => {
         try {
             setIsLoading(true);
             const params = {};
             
+            // Usamos la misma lógica de fechas para el resumen
             if (filtroTipo === "mes" && mes) {
                 const [year, month] = mes.split("-");
                 const startDate = new Date(year, month - 1, 1);
@@ -157,11 +162,14 @@ const Pagos = () => {
                 const day = date.getDay();
                 const dayOffset = (day <= 4) ? -day + 1 : -day + 8;
                 date.setDate(date.getDate() + dayOffset + (week - 1) * 7);
+
                 const startDate = new Date(date);
                 startDate.setHours(0, 0, 0, 0);
+
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 6);
                 endDate.setHours(23, 59, 59, 999);
+                        
                 params.fechaInicio = startDate.toISOString();
                 params.fechaFin = endDate.toISOString();
             } else if (filtroTipo === "dia" && dia) {
@@ -175,6 +183,8 @@ const Pagos = () => {
 
             const { data } = await api.get("/pagos/resumen-metodo-pago", { params });
             setResumen(data.resumen || []);
+            // Usamos el totalGeneral que viene de la API para el modal, si está disponible
+            setTotalRecaudadoFiltrado(data.totalGeneral || 0); 
             setShowResumen(true);
         } catch (error) {
             setError("Error al obtener el resumen de pagos");
@@ -183,11 +193,17 @@ const Pagos = () => {
         }
     };
 
+    // === Botón para navegar a Pagos Ligas ===
+    const irAPagosLigas = () => {
+        navigate("/pagos/ligas");
+    };
+    
     return (
         <div className="container mt-4">
             <h2>Pagos</h2>
             {error && <Alert variant="danger">{error}</Alert>}
 
+            {/* --- Tarjeta de Total Recaudado GENERAL --- */}
             <Card bg="dark" text="white" className="mb-4 shadow-lg">
                 <Card.Body className="text-center py-3">
                     <Card.Title className="m-0 h4">
@@ -195,16 +211,25 @@ const Pagos = () => {
                     </Card.Title>
                 </Card.Body>
             </Card>
+            {/* ------------------------------------------------ */}
 
             <Card className="mb-4">
                 <Card.Body>
                     <Card.Title>Filtros por Fecha y Nombre</Card.Title>
-                    <Form onSubmit={(e) => { e.preventDefault(); fetchPagos(); }}>
+                    <Form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            fetchPagos();
+                        }}
+                    >
                         <Row className="align-items-end">
                             <Col md={2}>
                                 <Form.Group>
                                     <Form.Label>Tipo de Filtro</Form.Label>
-                                    <Form.Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+                                    <Form.Select
+                                        value={filtroTipo}
+                                        onChange={(e) => setFiltroTipo(e.target.value)}
+                                    >
                                         <option value="dia">Día</option>
                                         <option value="semana">Semana</option>
                                         <option value="mes">Mes</option>
@@ -216,7 +241,11 @@ const Pagos = () => {
                                 <Col md={2}>
                                     <Form.Group>
                                         <Form.Label>Mes</Form.Label>
-                                        <Form.Control type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+                                        <Form.Control
+                                            type="month"
+                                            value={mes}
+                                            onChange={(e) => setMes(e.target.value)}
+                                        />
                                     </Form.Group>
                                 </Col>
                             )}
@@ -225,7 +254,11 @@ const Pagos = () => {
                                 <Col md={2}>
                                     <Form.Group>
                                         <Form.Label>Semana</Form.Label>
-                                        <Form.Control type="week" value={semana} onChange={(e) => setSemana(e.target.value)} />
+                                        <Form.Control
+                                            type="week"
+                                            value={semana}
+                                            onChange={(e) => setSemana(e.target.value)}
+                                        />
                                     </Form.Group>
                                 </Col>
                             )}
@@ -234,7 +267,11 @@ const Pagos = () => {
                                 <Col md={2}>
                                     <Form.Group>
                                         <Form.Label>Día</Form.Label>
-                                        <Form.Control type="date" value={dia} onChange={(e) => setDia(e.target.value)} />
+                                        <Form.Control
+                                            type="date"
+                                            value={dia}
+                                            onChange={(e) => setDia(e.target.value)}
+                                        />
                                     </Form.Group>
                                 </Col>
                             )}
@@ -242,45 +279,57 @@ const Pagos = () => {
                             <Col md={3}>
                                 <Form.Group>
                                     <Form.Label>Buscar por Nombre</Form.Label>
-                                    <Form.Control type="text" value={busquedaNombre} onChange={(e) => setBusquedaNombre(e.target.value)} placeholder="Nombre del cliente" />
+                                    <Form.Control
+                                        type="text"
+                                        value={busquedaNombre}
+                                        onChange={(e) => setBusquedaNombre(e.target.value)}
+                                        placeholder="Nombre del cliente"
+                                    />
                                 </Form.Group>
                             </Col>
 
                             <Col md={3}>
                                 <Row>
                                     <Col xs={6}>
-                                        <Button type="submit" variant="primary" className="w-100 mt-3">Filtrar</Button>
+                                        <Button type="submit" variant="primary" className="w-100 mt-3">
+                                            Filtrar
+                                        </Button>
                                     </Col>
                                     <Col xs={6}>
-                                        <Button variant="secondary" onClick={limpiarFiltros} className="w-100 mt-3">Limpiar</Button>
+                                        <Button variant="secondary" onClick={limpiarFiltros} className="w-100 mt-3">
+                                            Limpiar
+                                        </Button>
                                     </Col>
                                 </Row>
-                                <Button variant="warning" onClick={abrirResumen} className="w-100 mt-2">Resumen método de pago</Button>
+                                <Button variant="warning" onClick={abrirResumen} className="w-100 mt-2">
+                                    Resumen método de pago
+                                </Button>
                             </Col>
                         </Row>
                     </Form>
                     
+                    {/* --- Total Recaudado FILTRADO (Se actualiza con los filtros de fecha y nombre) --- */}
                     <div className="mt-4 p-3 bg-success text-white rounded text-center">
                         <h5 className="m-0">
                             TOTAL FILTRADO ({filtroTipo.toUpperCase()}): {isLoading && pagosFiltrados.length === 0 ? <Spinner animation="border" size="sm" variant="light"/> : formatCurrencySafe(totalRecaudadoFiltrado)}
                         </h5>
                     </div>
+                    {/* --------------------------------------- */}
+
                 </Card.Body>
             </Card>
 
-            {/* Botones principales ACTUALIZADOS */}
-            <div className="mb-3 d-flex gap-2 flex-wrap">
-                <Button variant="primary" onClick={() => navigate("/pagos/crear")}>
+            {/* Botones principales */}
+            <div className="mb-3">
+                <Button
+                    variant="primary"
+                    className="me-2"
+                    onClick={() => navigate("/pagos/crear")}
+                >
                     Crear pago
                 </Button>
-                
-                <Button variant="success" onClick={() => navigate("/pagos/ligas")}>
+                <Button variant="success" onClick={irAPagosLigas}>
                     Pagos Ligas
-                </Button>
-
-                {/* Botón de Planilla de Mensualidades añadido */}
-                <Button variant="info" className="text-white" onClick={() => navigate("/pagos/mensualidades")}>
-                    Planilla Mensualidades
                 </Button>
             </div>
 
@@ -289,7 +338,7 @@ const Pagos = () => {
                 <Alert variant="info">No hay pagos para mostrar en este periodo/filtro.</Alert>
             )}
             {!isLoading && pagosFiltrados.length > 0 && (
-                <Table striped bordered hover responsive>
+                <Table striped bordered hover>
                     <thead>
                         <tr>
                             <th>Cliente</th>
@@ -302,13 +351,30 @@ const Pagos = () => {
                     <tbody>
                         {pagosFiltrados.map((pago) => (
                             <tr key={pago._id}>
-                                <td>{pago.cliente ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}` : "Sin cliente"}</td>
+                                <td>
+                                    {pago.cliente
+                                        ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}`
+                                        : "Sin cliente"}
+                                </td>
                                 <td>{formatCurrencySafe(pago.monto)}</td>
                                 <td>{formatFecha(pago.fecha)}</td>
                                 <td>{pago.producto?.nombre || "No especificado"}</td>
                                 <td>
-                                    <Button variant="warning" size="sm" className="me-2" onClick={() => navigate(`/pagos/editar/${pago._id}`)}>Editar</Button>
-                                    <Button variant="danger" size="sm" onClick={() => eliminarPago(pago._id)}>Eliminar</Button>
+                                    <Button
+                                        variant="warning"
+                                        size="sm"
+                                        className="me-2"
+                                        onClick={() => navigate(`/pagos/editar/${pago._id}`)}
+                                    >
+                                        Editar
+                                    </Button>
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={() => eliminarPago(pago._id)}
+                                    >
+                                        Eliminar
+                                    </Button>
                                 </td>
                             </tr>
                         ))}
@@ -339,8 +405,8 @@ const Pagos = () => {
                                         <td>{formatCurrencySafe(r.total)}</td>
                                     </tr>
                                 ))}
-                                <tr className="fw-bold text-primary">
-                                    <td>Total filtrado del periodo</td>
+                                <tr className="fw-bold">
+                                    <td>Total general del periodo</td>
                                     <td>{formatCurrencySafe(totalRecaudadoFiltrado)}</td>
                                 </tr>
                             </tbody>
@@ -348,7 +414,9 @@ const Pagos = () => {
                     )}
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowResumen(false)}>Cerrar</Button>
+                    <Button variant="secondary" onClick={() => setShowResumen(false)}>
+                        Cerrar
+                    </Button>
                 </Modal.Footer>
             </Modal>
         </div>
@@ -356,8 +424,3 @@ const Pagos = () => {
 };
 
 export default Pagos;
-
-
-
-
-
