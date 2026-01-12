@@ -195,24 +195,24 @@ const Pagos = () => {
                 </Card.Body>
             </Card>
 
-            <Card className="mb-4">
+            <Card className="mb-4 shadow-sm">
                 <Card.Body>
                     <Card.Title>Filtros por Fecha y Nombre</Card.Title>
                     <Form onSubmit={(e) => { e.preventDefault(); fetchPagos(); }}>
-                        <Row className="align-items-end">
+                        <Row className="align-items-end g-3">
                             <Col md={2}>
                                 <Form.Group>
-                                    <Form.Label>Tipo de Filtro</Form.Label>
+                                    <Form.Label>Tipo de filtro</Form.Label>
                                     <Form.Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-                                        <option value="dia">Día</option>
-                                        <option value="semana">Semana</option>
                                         <option value="mes">Mes</option>
+                                        <option value="semana">Semana</option>
+                                        <option value="dia">Día</option>
                                     </Form.Select>
                                 </Form.Group>
                             </Col>
 
                             {filtroTipo === "mes" && (
-                                <Col md={2}>
+                                <Col md={3}>
                                     <Form.Group>
                                         <Form.Label>Mes</Form.Label>
                                         <Form.Control type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
@@ -221,7 +221,7 @@ const Pagos = () => {
                             )}
 
                             {filtroTipo === "semana" && (
-                                <Col md={2}>
+                                <Col md={3}>
                                     <Form.Group>
                                         <Form.Label>Semana</Form.Label>
                                         <Form.Control type="week" value={semana} onChange={(e) => setSemana(e.target.value)} />
@@ -230,7 +230,7 @@ const Pagos = () => {
                             )}
 
                             {filtroTipo === "dia" && (
-                                <Col md={2}>
+                                <Col md={3}>
                                     <Form.Group>
                                         <Form.Label>Día</Form.Label>
                                         <Form.Control type="date" value={dia} onChange={(e) => setDia(e.target.value)} />
@@ -240,33 +240,30 @@ const Pagos = () => {
 
                             <Col md={3}>
                                 <Form.Group>
-                                    <Form.Label>Buscar por Nombre</Form.Label>
+                                    <Form.Label>Buscar por nombre</Form.Label>
                                     <Form.Control type="text" value={busquedaNombre} onChange={(e) => setBusquedaNombre(e.target.value)} placeholder="Nombre del cliente" />
                                 </Form.Group>
                             </Col>
 
-                            <Col md={3}>
-                                <Row>
-                                    <Col xs={6}>
-                                        <Button type="submit" variant="primary" className="w-100 mt-3">Filtrar</Button>
-                                    </Col>
-                                    <Col xs={6}>
-                                        <Button variant="secondary" onClick={limpiarFiltros} className="w-100 mt-3">Limpiar</Button>
-                                    </Col>
-                                </Row>
+                            <Col md={4}>
+                                <div className="d-flex gap-2">
+                                    <Button type="submit" variant="primary" className="flex-grow-1">Filtrar</Button>
+                                    <Button variant="secondary" onClick={limpiarFiltros}>Limpiar</Button>
+                                </div>
                                 <Button variant="warning" onClick={abrirResumen} className="w-100 mt-2">Resumen método de pago</Button>
                             </Col>
                         </Row>
                     </Form>
                     
                     <div className="mt-4 p-3 bg-success text-white rounded text-center">
-                        <h5 className="m-0">
-                            TOTAL FILTRADO ({filtroTipo.toUpperCase()}): {isLoading && pagosFiltrados.length === 0 ? <Spinner animation="border" size="sm" variant="light"/> : formatCurrencySafe(totalRecaudadoFiltrado)}
+                        <h5 className="m-0 fw-bold">
+                            TOTAL FILTRADO ( {filtroTipo.toUpperCase()} ): {isLoading && pagosFiltrados.length === 0 ? <Spinner animation="border" size="sm" variant="light"/> : formatCurrencySafe(totalRecaudadoFiltrado)}
                         </h5>
                     </div>
                 </Card.Body>
             </Card>
 
+            {/* SECCIÓN DE BOTONES DE ACCIÓN */}
             <div className="mb-3 d-flex gap-2 flex-wrap">
                 <Button variant="primary" onClick={() => navigate("/pagos/crear")}>
                     Crear pago
@@ -276,7 +273,12 @@ const Pagos = () => {
                     Pagos Ligas
                 </Button>
 
-                <Button variant="info" className="text-white fw-bold shadow-sm" onClick={() => navigate("/pagos/mensualidades")}>
+                {/* ESTE ES EL BOTÓN QUE ACCEDE A LA PLANILLA */}
+                <Button 
+                    variant="info" 
+                    className="text-white fw-bold shadow-sm" 
+                    onClick={() => navigate("/pagos/mensualidades")}
+                >
                     <i className="bi bi-calendar3 me-1"></i> Planilla Mensualidades
                 </Button>
             </div>
@@ -286,24 +288,24 @@ const Pagos = () => {
                 <Alert variant="info">No hay pagos para mostrar en este periodo/filtro.</Alert>
             )}
             {!isLoading && pagosFiltrados.length > 0 && (
-                <Table striped bordered hover responsive>
-                    <thead>
+                <Table striped bordered hover responsive className="shadow-sm rounded overflow-hidden">
+                    <thead className="table-light">
                         <tr>
                             <th>Cliente</th>
                             <th>Monto</th>
                             <th>Fecha</th>
                             <th>Producto</th>
-                            <th>Acciones</th>
+                            <th className="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {pagosFiltrados.map((pago) => (
                             <tr key={pago._id}>
-                                <td>{pago.cliente ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}` : "Sin cliente"}</td>
-                                <td>{formatCurrencySafe(pago.monto)}</td>
+                                <td className="fw-bold text-uppercase">{pago.cliente ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}` : "Sin cliente"}</td>
+                                <td className="fw-bold">{formatCurrencySafe(pago.monto)}</td>
                                 <td>{formatFecha(pago.fecha)}</td>
-                                <td>{pago.producto?.nombre || "No especificado"}</td>
-                                <td>
+                                <td className="text-uppercase">{pago.producto?.nombre || "No especificado"}</td>
+                                <td className="text-center">
                                     <Button variant="warning" size="sm" className="me-2" onClick={() => navigate(`/pagos/editar/${pago._id}`)}>Editar</Button>
                                     <Button variant="danger" size="sm" onClick={() => eliminarPago(pago._id)}>Eliminar</Button>
                                 </td>
@@ -313,16 +315,17 @@ const Pagos = () => {
                 </Table>
             )}
 
-            <Modal show={showResumen} onHide={() => setShowResumen(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Resumen por Método de Pago ({filtroTipo.toUpperCase()})</Modal.Title>
+            {/* Modal Resumen (Mantenemos toda la estructura original) */}
+            <Modal show={showResumen} onHide={() => setShowResumen(false)} centered size="lg">
+                <Modal.Header closeButton className="bg-warning text-dark">
+                    <Modal.Title className="fw-bold">Resumen por Método de Pago ({filtroTipo.toUpperCase()})</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     {resumen.length === 0 ? (
                         <Alert variant="info">No hay datos disponibles para este periodo.</Alert>
                     ) : (
-                        <Table striped bordered>
-                            <thead>
+                        <Table striped bordered hover>
+                            <thead className="table-dark">
                                 <tr>
                                     <th>Método</th>
                                     <th>Total</th>
@@ -331,12 +334,12 @@ const Pagos = () => {
                             <tbody>
                                 {resumen.map((r) => (
                                     <tr key={r.metodoPago}>
-                                        <td>{r.metodoPago}</td>
+                                        <td className="fw-bold">{r.metodoPago}</td>
                                         <td>{formatCurrencySafe(r.total)}</td>
                                     </tr>
                                 ))}
-                                <tr className="fw-bold text-primary">
-                                    <td>Total filtrado del periodo</td>
+                                <tr className="table-primary fw-bold text-primary">
+                                    <td>TOTAL FILTRADO DEL PERIODO</td>
                                     <td>{formatCurrencySafe(totalRecaudadoFiltrado)}</td>
                                 </tr>
                             </tbody>
