@@ -204,9 +204,9 @@ const Pagos = () => {
                                 <Form.Group>
                                     <Form.Label>Tipo de filtro</Form.Label>
                                     <Form.Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-                                        <option value="mes">Mes</option>
-                                        <option value="semana">Semana</option>
                                         <option value="dia">Día</option>
+                                        <option value="semana">Semana</option>
+                                        <option value="mes">Mes</option>
                                     </Form.Select>
                                 </Form.Group>
                             </Col>
@@ -263,7 +263,6 @@ const Pagos = () => {
                 </Card.Body>
             </Card>
 
-            {/* SECCIÓN DE BOTONES DE ACCIÓN */}
             <div className="mb-3 d-flex gap-2 flex-wrap">
                 <Button variant="primary" onClick={() => navigate("/pagos/crear")}>
                     Crear pago
@@ -273,12 +272,7 @@ const Pagos = () => {
                     Pagos Ligas
                 </Button>
 
-                {/* ESTE ES EL BOTÓN QUE ACCEDE A LA PLANILLA */}
-                <Button 
-                    variant="info" 
-                    className="text-white fw-bold shadow-sm" 
-                    onClick={() => navigate("/pagos/mensualidades")}
-                >
+                <Button variant="info" className="text-white fw-bold shadow-sm" onClick={() => navigate("/pagos/mensualidades")}>
                     <i className="bi bi-calendar3 me-1"></i> Planilla Mensualidades
                 </Button>
             </div>
@@ -288,8 +282,8 @@ const Pagos = () => {
                 <Alert variant="info">No hay pagos para mostrar en este periodo/filtro.</Alert>
             )}
             {!isLoading && pagosFiltrados.length > 0 && (
-                <Table striped bordered hover responsive className="shadow-sm rounded overflow-hidden">
-                    <thead className="table-light">
+                <Table striped bordered hover responsive className="shadow-sm">
+                    <thead>
                         <tr>
                             <th>Cliente</th>
                             <th>Monto</th>
@@ -301,10 +295,10 @@ const Pagos = () => {
                     <tbody>
                         {pagosFiltrados.map((pago) => (
                             <tr key={pago._id}>
-                                <td className="fw-bold text-uppercase">{pago.cliente ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}` : "Sin cliente"}</td>
-                                <td className="fw-bold">{formatCurrencySafe(pago.monto)}</td>
+                                <td>{pago.cliente ? `${pago.cliente.nombre} ${pago.cliente.apellido || ""}` : "Sin cliente"}</td>
+                                <td>{formatCurrencySafe(pago.monto)}</td>
                                 <td>{formatFecha(pago.fecha)}</td>
-                                <td className="text-uppercase">{pago.producto?.nombre || "No especificado"}</td>
+                                <td>{pago.producto?.nombre || "No especificado"}</td>
                                 <td className="text-center">
                                     <Button variant="warning" size="sm" className="me-2" onClick={() => navigate(`/pagos/editar/${pago._id}`)}>Editar</Button>
                                     <Button variant="danger" size="sm" onClick={() => eliminarPago(pago._id)}>Eliminar</Button>
@@ -315,17 +309,16 @@ const Pagos = () => {
                 </Table>
             )}
 
-            {/* Modal Resumen (Mantenemos toda la estructura original) */}
             <Modal show={showResumen} onHide={() => setShowResumen(false)} centered size="lg">
-                <Modal.Header closeButton className="bg-warning text-dark">
-                    <Modal.Title className="fw-bold">Resumen por Método de Pago ({filtroTipo.toUpperCase()})</Modal.Title>
+                <Modal.Header closeButton>
+                    <Modal.Title>Resumen por Método de Pago ({filtroTipo.toUpperCase()})</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     {resumen.length === 0 ? (
                         <Alert variant="info">No hay datos disponibles para este periodo.</Alert>
                     ) : (
-                        <Table striped bordered hover>
-                            <thead className="table-dark">
+                        <Table striped bordered>
+                            <thead>
                                 <tr>
                                     <th>Método</th>
                                     <th>Total</th>
@@ -334,12 +327,12 @@ const Pagos = () => {
                             <tbody>
                                 {resumen.map((r) => (
                                     <tr key={r.metodoPago}>
-                                        <td className="fw-bold">{r.metodoPago}</td>
+                                        <td>{r.metodoPago}</td>
                                         <td>{formatCurrencySafe(r.total)}</td>
                                     </tr>
                                 ))}
-                                <tr className="table-primary fw-bold text-primary">
-                                    <td>TOTAL FILTRADO DEL PERIODO</td>
+                                <tr className="fw-bold text-primary">
+                                    <td>Total filtrado del periodo</td>
                                     <td>{formatCurrencySafe(totalRecaudadoFiltrado)}</td>
                                 </tr>
                             </tbody>
@@ -355,3 +348,4 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
