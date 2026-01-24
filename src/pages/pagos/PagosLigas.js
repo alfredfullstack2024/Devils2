@@ -12,7 +12,7 @@ const obtenerNombreMesActual = () => {
     const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     const nombreMes = meses[date.getMonth()];
     const anio = date.getFullYear();
-    return `${nombreMes} ${anio}`; // Ej: "Enero 2026"
+    return `${nombreMes} ${anio}`;
 };
 
 // Estilos
@@ -36,6 +36,7 @@ const PagosLigas = () => {
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
     const [diaSeleccionado, setDiaSeleccionado] = useState("");
     const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState("Efectivo");
+    const [comentarioPago, setComentarioPago] = useState(""); // ⭐ Nuevo: Estado para comentario
 
     const [pagosDelMes, setPagosDelMes] = useState([]);
     const [totalRecaudado, setTotalRecaudado] = useState(0);
@@ -139,6 +140,7 @@ const PagosLigas = () => {
                 total: valorDiario,
                 diasPagados: [parseInt(diaSeleccionado)],
                 tipoPago: tipoPagoSeleccionado,
+                comentario: comentarioPago // ⭐ Enviamos el comentario al backend
             });
 
             // Recargar datos
@@ -166,6 +168,7 @@ const PagosLigas = () => {
             setSearchCliente("");
             setClienteSeleccionado(null);
             setDiaSeleccionado("");
+            setComentarioPago(""); // Limpiar comentario
         } catch (error) {
             console.error(error);
             alert("Error al registrar pago");
@@ -186,7 +189,7 @@ const PagosLigas = () => {
         }
     };
 
-    // LÓGICA DE FILTROS Y CÁLCULO DE TOTALES FILTRADOS
+    // LÓGICA DE FILTROS
     const pagosFiltrados = useMemo(() => {
         let pagos = pagosDelMes;
         let total = 0;
@@ -254,16 +257,16 @@ const PagosLigas = () => {
         return pago?.especialidad || 'N/A';
     };
 
-    const getTipoPagoJugadora = (nombre) => {
-        const pago = pagosDelMes.find(c => c.nombre.trim() === nombre.trim());
-        return pago?.tipoPago || 'Efectivo';
-    };
-
-    const getDiasPagadosFiltrados = (nombre) => {
-        const pagos = pagosFiltrados.pagosFiltradosFinal.filter(p => p.nombre.trim() === nombre.trim());
-        const dias = new Set();
-        pagos.forEach(p => (p.diasPagados || []).forEach(d => dias.add(d)));
-        return Array.from(dias).sort((a, b) => a - b);
+    // ⭐ FUNCIÓN ACTUALIZADA: Retorna el detalle completo de los pagos de un día
+    const getDetalleDia = (nombre, dia) => {
+        const pagoEncontrado = pagosFiltrados.pagosFiltradosFinal.find(p => 
+            p.nombre.trim() === nombre.trim() && p.diasPagados.includes(dia)
+        );
+        return pagoEncontrado ? {
+            pagado: true,
+            tipo: pagoEncontrado.tipoPago,
+            comentario: pagoEncontrado.comentario || ""
+        } : { pagado: false };
     };
 
     return (
@@ -367,7 +370,7 @@ const PagosLigas = () => {
                                 setClienteSeleccionado(encontrada || null);
                             }}
                             list="clientes-list"
-                            style={{ ...inputStyle, width: "400px" }}
+                            style={{ ...inputStyle, width: "350px" }}
                         />
                         <datalist id="clientes-list">
                             {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
@@ -379,6 +382,15 @@ const PagosLigas = () => {
                         </select>
 
                         <input type="number" placeholder="Día" value={diaSeleccionado} onChange={(e) => setDiaSeleccionado(e.target.value)} style={{ ...inputStyle, width: "100px" }} />
+                        
+                        {/* ⭐ CAMPO COMENTARIO */}
+                        <input 
+                            type="text" 
+                            placeholder="Comentario (Opcional)" 
+                            value={comentarioPago} 
+                            onChange={(e) => setComentarioPago(e.target.value)} 
+                            style={{...inputStyle, width: "300px"}} 
+                        />
                         
                         <button onClick={registrarPagoDia} style={btnSuccess}>
                             Marcar Día {diaSeleccionado || "?"} como Pagado
@@ -394,7 +406,6 @@ const PagosLigas = () => {
                                 <tr style={{ background: "#1e293b", color: "white" }}>
                                     <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "220px" }}>Jugadora</th>
                                     <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Especialidad</th>
-                                    <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Tipo de Pago</th>
                                     {[...Array(31)].map((_, i) => <th key={i + 1} style={{ ...thStyle, width: "60px" }}>{i + 1}</th>)}
                                     <th style={{ ...thStyle, background: "#172554", width: "110px" }}>Días</th>
                                     <th style={{ ...thStyle, background: "#172554", width: "160px" }}>Total</th>
@@ -405,21 +416,37 @@ const PagosLigas = () => {
                                     <tr><td colSpan="36" style={{ textAlign: "center", padding: "4rem" }}>No se encontraron registros.</td></tr>
                                 ) : (
                                     jugadorasEnTabla.map(nombre => {
-                                        const dias = getDiasPagadosFiltrados(nombre);
-                                        const total = dias.length * valorDiario;
-                                        const tipoP = getTipoPagoJugadora(nombre);
+                                        let diasPagadosCount = 0;
                                         return (
                                             <tr key={nombre}>
                                                 <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9, textAlign: "left" }}>{nombre}</td>
                                                 <td style={{ ...tdStyle, background: "#f1f5f9" }}>{getEspecialidadJugadora(nombre)}</td>
-                                                <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoP === 'Nequi' ? '#ea580c' : '#16a34a', fontWeight: "bold" }}>{tipoP}</td>
-                                                {[...Array(31)].map((_, i) => (
-                                                    <td key={i + 1} style={tdStyle}>
-                                                        {dias.includes(i + 1) && <span style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</span>}
-                                                    </td>
-                                                ))}
-                                                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", color: "#0891b2" }}>{dias.length}</td>
-                                                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", color: "#166534" }}>${total.toLocaleString("es-CO")}</td>
+                                                
+                                                {[...Array(31)].map((_, i) => {
+                                                    const detalle = getDetalleDia(nombre, i + 1);
+                                                    if (detalle.pagado) diasPagadosCount++;
+                                                    
+                                                    // ⭐ COLORES DINÁMICOS POR TIPO
+                                                    const colorX = detalle.tipo === 'Nequi' ? '#8b5cf6' : '#22c55e';
+
+                                                    return (
+                                                        <td key={i + 1} style={tdStyle} title={detalle.comentario}>
+                                                            {detalle.pagado && (
+                                                                <span style={{ 
+                                                                    color: colorX, 
+                                                                    fontSize: "1.8rem", 
+                                                                    fontWeight: "bold",
+                                                                    cursor: "help" // Indica que hay un comentario al pasar el mouse
+                                                                }}>
+                                                                    X
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
+
+                                                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", color: "#0891b2" }}>{diasPagadosCount}</td>
+                                                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", color: "#166534" }}>${(diasPagadosCount * valorDiario).toLocaleString("es-CO")}</td>
                                             </tr>
                                         );
                                     })
