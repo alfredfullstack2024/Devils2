@@ -183,27 +183,7 @@ const [comentarioPago, setComentarioPago] = useState("");
 
 
             // Recargar y recalcular
-            const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
-            const todosPagos = res.data || [];
-            const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
-
-            let nuevoTotalGeneral = 0;
-            const pagosEnriquecidos = pagosReales.map(pago => {
-                const cliente = clientes.find(c =>
-                    `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
-                );
-                const especialidad = cliente?.especialidad || 'Sin Especialidad';
-                const tipoPago = pago.tipoPago || 'N/A';
-                if (pago.diasPagados && Array.isArray(pago.diasPagados)) {
-                    nuevoTotalGeneral += pago.diasPagados.length * valorDiario;
-                }
-                return { ...pago, especialidad, tipoPago }; // Incluir tipoPago
-            });
-
-            setPagosDelMes(pagosEnriquecidos);
-            setTotalRecaudado(nuevoTotalGeneral);
-
-            alert(`Día ${diaSeleccionado} registrado como pago (${tipoPagoSeleccionado})`);
+           
             setSearchCliente("");
             setClienteSeleccionado(null);
             setDiaSeleccionado("");
