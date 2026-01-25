@@ -18,9 +18,9 @@ const PagosLigas = () => {
     const [clienteSeleccionado, establecerClienteSeleccionado] = useState(null);
     const [diaSeleccionado, establecerDiaSeleccionado] = useState("");
     const [tipoPagoSeleccionado, establecerTipoPagoSeleccionado] = useState("Efectivo");
+    const [comentario, establecerComentario] = useState(""); // NUEVO: Estado para el comentario
     const [pagosDelMes, establecerPagosDelMes] = useState([]);
     
-    // Filtros
     const [filtroNombre, establecerFiltroNombre] = useState("");
     const [filtroEspecialidad, establecerFiltroEspecialidad] = useState("TODAS");
     const [filtroTipoPago, establecerFiltroTipoPago] = useState("TODOS");
@@ -64,12 +64,14 @@ const PagosLigas = () => {
                 diasAsistidos: 1,
                 total: valorDiario,
                 diasPagados: [parseInt(diaSeleccionado)],
-                tipoPago: tipoPagoSeleccionado
+                tipoPago: tipoPagoSeleccionado,
+                comentario: comentario // Enviamos el comentario al backend
             });
             const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
             establecerPagosDelMes(res.data.filter(p => p.nombre !== "SYSTEM"));
             establecerBusquedaCliente("");
             establecerDiaSeleccionado("");
+            establecerComentario(""); // Limpiar comentario
             alert("Pago exitoso");
         } catch (err) { alert("Error al guardar"); }
     };
@@ -79,13 +81,11 @@ const PagosLigas = () => {
             const c = clientes.find(cli => `${cli.nombre} ${cli.apellido}`.toUpperCase() === p.nombre.toUpperCase());
             return { ...p, especialidad: c?.especialidad || "Sin Especialidad" };
         });
-
         const tMes = pagos.reduce((acc, p) => acc + (p.diasPagados.length * valorDiario), 0);
-
         if (filtroNombre) pagos = pagos.filter(p => p.nombre.toLowerCase().includes(filtroNombre.toLowerCase()));
         if (filtroEspecialidad !== "TODAS") pagos = pagos.filter(p => p.especialidad === filtroEspecialidad);
         if (filtroTipoPago !== "TODOS") pagos = pagos.filter(p => p.tipoPago === filtroTipoPago);
-
+        
         let caja = 0;
         if (filtroPeriodo === "DIA" && filtroDia) {
             const d = parseInt(filtroDia);
@@ -96,14 +96,12 @@ const PagosLigas = () => {
         } else {
             caja = pagos.reduce((acc, p) => acc + (p.diasPagados.length * valorDiario), 0);
         }
-
         return { datosFiltrados: pagos, totalCaja: caja, totalMes: tMes };
     }, [pagosDelMes, clientes, filtroNombre, filtroEspecialidad, filtroTipoPago, filtroPeriodo, filtroDia, valorDiario]);
 
     const listaSpecs = ["TODAS", ...new Set(clientes.map(c => c.especialidad).filter(Boolean))];
 
     return (
-        /* AJUSTE DE MARGEN PARA EL SIDEBAR (marginLeft: 260px) */
         <div style={{ padding: "20px", marginLeft: "260px", minHeight: "100vh", background: "#f8fafc" }}>
             <div style={{ background: "white", padding: "2rem", borderRadius: "1rem", boxShadow: "0 4px 10px rgba(0,0,0,0.05)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2rem", alignItems: "center" }}>
@@ -114,7 +112,7 @@ const PagosLigas = () => {
                     </div>
                 </div>
 
-                {/* Registro de pago rápido */}
+                {/* Formulario con COMENTARIO */}
                 <div style={{ display: "flex", gap: "10px", marginBottom: "2rem", flexWrap: "wrap", background: "#f0fdf4", padding: "1.5rem", borderRadius: "0.8rem", border: "1px solid #bbf7d0" }}>
                     <input style={{...estiloEntrada, flex: 1}} placeholder="Nombre de la niña..." list="cli-list" value={buscarCliente}
                         onChange={(e) => {
@@ -125,6 +123,7 @@ const PagosLigas = () => {
                     />
                     <datalist id="cli-list">{clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}</datalist>
                     <input type="number" placeholder="Día" style={{...estiloEntrada, width: "80px"}} value={diaSeleccionado} onChange={(e) => establecerDiaSeleccionado(e.target.value)} />
+                    <input style={{...estiloEntrada, flex: 1}} placeholder="Comentario (opcional)..." value={comentario} onChange={(e) => establecerComentario(e.target.value)} />
                     <select style={estiloSelect} value={tipoPagoSeleccionado} onChange={(e) => establecerTipoPagoSeleccionado(e.target.value)}>
                         <option value="Efectivo">Efectivo</option>
                         <option value="Nequi">Nequi</option>
@@ -132,23 +131,17 @@ const PagosLigas = () => {
                     <button onClick={manejarRegistro} style={btnExito}>Registrar Pago</button>
                 </div>
 
-                {/* Filtros de Tabla */}
+                {/* Filtros */}
                 <div style={{ display: "flex", gap: "15px", marginBottom: "2rem", alignItems: "center", flexWrap: "wrap" }}>
                     <input style={estiloEntrada} placeholder="Filtrar por nombre..." value={filtroNombre} onChange={(e) => establecerFiltroNombre(e.target.value)} />
                     <select style={estiloSelect} value={filtroEspecialidad} onChange={(e) => establecerFiltroEspecialidad(e.target.value)}>
                         {listaSpecs.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
-                    <select style={estiloSelect} value={filtroPeriodo} onChange={(e) => establecerFiltroPeriodo(e.target.value)}>
-                        <option value="MES">Ver Total Acumulado</option>
-                        <option value="DIA">Ver Caja por Día Físico</option>
-                    </select>
-                    {filtroPeriodo === "DIA" && <input type="number" placeholder="Día" style={{...estiloEntrada, width: "70px"}} value={filtroDia} onChange={(e) => establecerFiltroDia(e.target.value)} />}
                     <div style={{ marginLeft: "auto", background: "#065f46", color: "white", padding: "0.8rem 1.5rem", borderRadius: "0.5rem", fontWeight: "bold" }}>
                         Caja Actual: ${totalCaja.toLocaleString()}
                     </div>
                 </div>
 
-                {/* Tabla de Asistencia */}
                 <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1200px" }}>
                         <thead>
@@ -169,26 +162,25 @@ const PagosLigas = () => {
                                         <td style={{...tdEstilo, textAlign: "left", fontWeight: "bold", position: "sticky", left: 0, background: "white"}}>{nom}</td>
                                         <td style={tdEstilo}>{mPagos[0]?.especialidad}</td>
                                         {[...Array(31)].map((_, i) => {
-    const d = i + 1;
-    const pagoInfo = diasDicionario[d];
-    if (!pagoInfo) return <td key={i} style={tdEstilo}>-</td>;
+                                            const d = i + 1;
+                                            const pagoInfo = diasDicionario[d];
+                                            if (!pagoInfo) return <td key={i} style={tdEstilo}>-</td>;
+                                            
+                                            const hoy = new Date().getDate();
+                                            const esHoy = d === hoy;
+                                            const esAdelantado = d > hoy;
 
-    // LÓGICA DE COLORES Y COMENTARIOS
-    const hoy = new Date().getDate();
-    const esHoy = d === hoy;
-    const esAdelantado = d > hoy;
-
-    return (
-        <td key={i} style={{
-            ...tdEstilo, 
-            color: esHoy ? "#2563eb" : (esAdelantado ? "#f59e0b" : "#22c55e"), 
-            fontWeight: "bold",
-            cursor: "help"
-        }} title={pagoInfo.comentario || "Pago registrado"}>
-            {esHoy ? "💬" : "X"}
-        </td>
-    );
-})}
+                                            return (
+                                                <td key={i} style={{
+                                                    ...tdEstilo, 
+                                                    color: esHoy ? "#2563eb" : (esAdelantado ? "#f59e0b" : "#22c55e"), 
+                                                    fontWeight: "bold",
+                                                    cursor: "help"
+                                                }} title={pagoInfo.comentario || "Pago registrado"}>
+                                                    {esHoy && pagoInfo.comentario ? "💬" : "X"}
+                                                </td>
+                                            );
+                                        })}
                                         <td style={{...tdEstilo, fontWeight: "bold"}}>${mPagos.reduce((a, b) => a + (b.diasPagados.length * valorDiario), 0).toLocaleString()}</td>
                                     </tr>
                                 );
