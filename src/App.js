@@ -40,7 +40,8 @@ import CrearPago from "./pages/pagos/CrearPago";
 import EditarPago from "./pages/pagos/EditarPago";
 import ReportePagosPorEquipo from "./pages/pagos/ReportePagosPorEquipo";
 import PagosLigas from "./pages/pagos/PagosLigas";
-import PagosMensualidades from "./pages/pagos/PagosMensualidades"; // ✅ Importación agregada
+// ✅ IMPORTACIÓN CORREGIDA: Apuntando al archivo exacto pagames.js
+import Pagames from "./pages/pagos/pagames"; 
 
 // Contabilidad
 import Contabilidad from "./pages/contabilidad/Contabilidad";
@@ -91,7 +92,9 @@ const App = () => {
         <Ruta path="/pagos/editar/:id" element={<EditarPago />} />
         <Ruta path="/pagos/reporte-equipos" element={<ReportePagosPorEquipo />} />
         <Ruta path="/pagos/ligas" element={<PagosLigas />} />
-        <Ruta path="/pagos/mensualidades" element={<PagosMensualidades />} /> {/* ✅ Ruta registrada */}
+        
+        {/* ✅ RUTA CORREGIDA: path debe ser /pagos/pagames para que el botón lo encuentre */}
+        <Ruta path="/pagos/pagames" element={<Pagames />} /> 
 
         {/* Contabilidad */}
         <Ruta path="/contabilidad" element={<Contabilidad />} />
