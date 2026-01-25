@@ -129,18 +129,47 @@ const [comentarioPago, setComentarioPago] = useState("");
                     return { ...pago, especialidad, tipoPago };
                 });
 
-                setTotalRecaudado(total);
-                // Actualizar pagosDelMes con la especialidad y tipoPago
-                setPagosDelMes(pagosEnriquecidos);
+                // CARGAR PAGOS Y CALCULAR TOTAL (TOTAL GENERAL)
+useEffect(() => {
+    if (!mesSeleccionado) return;
 
-            } catch (error) {
-                console.error("Error cargando pagos:", error);
-                setPagosDelMes([]);
-                setTotalRecaudado(0);
-            }
-        };
-        cargarPagos();
-    }, [mesSeleccionado, valorDiario, clientes]);
+    const cargarPagos = async () => {
+        try {
+            const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
+            const todosPagos = res.data || [];
+            const pagosReales = todosPagos.filter(
+                p => p.nombre !== "SYSTEM" && p.nombre.trim() !== ""
+            );
+
+            let total = 0;
+
+            const pagosEnriquecidos = pagosReales.map(pago => {
+                const cliente = clientes.find(c =>
+                    `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
+                );
+
+                const especialidad = cliente?.especialidad || "Sin Especialidad";
+                const tipoPago = pago.tipoPago || "N/A";
+
+                if (Array.isArray(pago.diasPagados)) {
+                    total += pago.diasPagados.length * valorDiario;
+                }
+
+                return { ...pago, especialidad, tipoPago };
+            });
+
+            setPagosDelMes(pagosEnriquecidos);
+            setTotalRecaudado(total);
+
+        } catch (error) {
+            console.error("Error cargando pagos:", error);
+            setPagosDelMes([]);
+            setTotalRecaudado(0);
+        }
+    };
+
+    cargarPagos();
+}, [mesSeleccionado, valorDiario, clientes]);
 
     // REGISTRAR PAGO (Lógica actualizada para enviar tipoPago)
     const registrarPagoDia = async () => {
