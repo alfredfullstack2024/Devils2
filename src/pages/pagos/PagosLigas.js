@@ -35,6 +35,8 @@ const PagosLigas = () => {
     const [searchCliente, setSearchCliente] = useState("");
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
     const [diaSeleccionado, setDiaSeleccionado] = useState("");
+    const [esDiaDiferenteAHoy, setEsDiaDiferenteAHoy] = useState(false);
+const [comentarioPago, setComentarioPago] = useState("");
     // 🆕 NUEVO: Estado para el registro rápido
     const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState("Efectivo");
 
@@ -142,20 +144,43 @@ const PagosLigas = () => {
 
     // REGISTRAR PAGO (Lógica actualizada para enviar tipoPago)
     const registrarPagoDia = async () => {
-        if (!clienteSeleccionado) return alert("Selecciona una niña");
-        if (!diaSeleccionado || diaSeleccionado < 1 || diaSeleccionado > 31) return alert("Día inválido");
-        if (!mesSeleccionado) return alert("Selecciona un mes");
-        if (!tipoPagoSeleccionado) return alert("Selecciona el tipo de pago"); // 🆕 Validación de tipoPago
+    if (!clienteSeleccionado) return alert("Selecciona una niña");
+    if (!diaSeleccionado || diaSeleccionado < 1 || diaSeleccionado > 31) return alert("Día inválido");
+    if (!mesSeleccionado) return alert("Selecciona un mes");
+    if (!tipoPagoSeleccionado) return alert("Selecciona el tipo de pago");
 
-        try {
-            await axios.post(`${backendURL}/pagos-ligas/pagos`, {
-                nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim(),
-                mes: mesSeleccionado,
-                diasAsistidos: 1,
-                total: valorDiario,
-                diasPagados: [parseInt(diaSeleccionado)],
-                tipoPago: tipoPagoSeleccionado, // 🆕 ENVIAR TIPO DE PAGO AL BACKEND
-            });
+    // 🆕 VALIDACIÓN: SI EL DÍA NO ES HOY, COMENTARIO OBLIGATORIO
+    const hoy = new Date().getDate();
+    if (Number(diaSeleccionado) !== hoy && !comentarioPago.trim()) {
+        return alert("Debes agregar un comentario cuando registras pagos de otro día");
+    }
+
+    try {
+        await axios.post(`${backendURL}/pagos-ligas/pagos`, {
+            nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim(),
+            mes: mesSeleccionado,
+            diasAsistidos: 1,
+            total: valorDiario,
+            diasPagados: [parseInt(diaSeleccionado)],
+            tipoPago: tipoPagoSeleccionado,
+
+            // 🆕 ENVIAR COMENTARIO SOLO SI APLICA
+            comentario: Number(diaSeleccionado) !== hoy ? comentarioPago.trim() : "",
+        });
+
+        alert(`Día ${diaSeleccionado} registrado correctamente`);
+        setSearchCliente("");
+        setClienteSeleccionado(null);
+        setDiaSeleccionado("");
+        setComentarioPago("");
+        setEsDiaDiferenteAHoy(false);
+
+    } catch (error) {
+        console.error(error);
+        alert("Error al registrar pago");
+    }
+};
+
 
             // Recargar y recalcular
             const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
@@ -475,7 +500,37 @@ const PagosLigas = () => {
                             </select>
                         </div>
 
-                        <input type="number" min="1" max="31" placeholder="Día" value={diaSeleccionado} onChange={(e) => setDiaSeleccionado(e.target.value)} style={{ ...inputStyle, width: "100px" }} />
+                        <input
+  type="number"
+  min="1"
+  max="31"
+  placeholder="Día"
+  value={diaSeleccionado}
+  onChange={(e) => {
+    const dia = e.target.value;
+    setDiaSeleccionado(dia);
+
+    const hoy = new Date().getDate();
+    setEsDiaDiferenteAHoy(Number(dia) !== hoy);
+    if (Number(dia) === hoy) setComentarioPago("");
+  }}
+  style={{ ...inputStyle, width: "100px" }}
+/>
+{esDiaDiferenteAHoy && (
+  <input
+    type="text"
+    placeholder="Hoy se registraron pagos de los días: ej 26, 27"
+    value={comentarioPago}
+    onChange={(e) => setComentarioPago(e.target.value)}
+    style={{
+      ...inputStyle,
+      width: "420px",
+      borderColor: "#f97316",
+      background: "#fff7ed"
+    }}
+  />
+)}
+
                         <button onClick={registrarPagoDia} style={btnSuccess}>
                             Marcar Día {diaSeleccionado || "?"} como Pagado
                         </button>
