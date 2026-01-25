@@ -167,7 +167,18 @@ useEffect(() => {
             comentario: Number(diaSeleccionado) !== hoy ? comentarioPago.trim() : "",
         });
 
-        alert(`Día ${diaSeleccionado} registrado correctamente`);
+       alert(`Día ${diaSeleccionado} registrado correctamente`);
+
+        // --- NUEVO: ESTO REFRESCARÁ LA TABLA DE INMEDIATO ---
+        const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
+        const todosPagos = res.data || [];
+        const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
+        const pagosEnriquecidos = pagosReales.map(pago => {
+            const cliente = clientes.find(c => `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase());
+            return { ...pago, especialidad: cliente?.especialidad || "Sin Especialidad", tipoPago: pago.tipoPago || "N/A" };
+        });
+        setPagosDelMes(pagosEnriquecidos);
+        // ----------------------------------------------------
 
         setSearchCliente("");
         setClienteSeleccionado(null);
