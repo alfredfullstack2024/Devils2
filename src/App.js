@@ -61,7 +61,8 @@ const App = () => {
       {/* Rutas Protegidas bajo DashboardLayout */}
       <Ruta element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
         <Ruta path="/" element={<Navegar to="/dashboard" replace />} />
-        <Ruta path="/dashboard" element={<Dashboard />} />
+        <Ruta path="/dashboard" element={<div>TEST DASHBOARD</div>} />
+
         <Ruta path="/suscripcion" element={<Suscripcion />} />
 
         {/* Clientes */}
