@@ -543,17 +543,10 @@ useEffect(() => {
                                                     **{especialidad}** </td>
                                                 <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}> {/* Color condicional para diferenciar */}
                                                     **{tipoPago}** </td>
-                                                {[...Array(31)].map((_, i) => {
-                                                    const dia = i + 1;
-const pagado = dias.includes(dia);
-const esHoy = dia === new Date().getDate();
-
-                                                    return (
-                                                        {[...Array(31)].map((_, i) => {
+                                                {Array.from({ length: 31 }, (_, i) => {
   const dia = i + 1;
   const pagado = dias.includes(dia);
   const esHoy = dia === new Date().getDate();
-
   return (
     <td key={dia} style={{ textAlign: "center", padding: "0.8rem 0" }}>
       {pagado && (
