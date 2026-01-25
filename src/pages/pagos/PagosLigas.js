@@ -107,7 +107,9 @@ useEffect(() => {
 
     const cargarPagos = async () => {
         try {
-            const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
+            const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`)
+  .then(res => setPagosDelMes(res.data || []));
+
             const todosPagos = res.data || [];
             const pagosReales = todosPagos.filter(
                 p => p.nombre !== "SYSTEM" && p.nombre.trim() !== ""
@@ -542,19 +544,25 @@ useEffect(() => {
                                                 <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}> {/* Color condicional para diferenciar */}
                                                     **{tipoPago}** </td>
                                                 {[...Array(31)].map((_, i) => {
-                                                    const pagado = dias.includes(i + 1);
+                                                    const dia = i + 1;
+const pagado = dias.includes(dia);
+const esHoy = dia === new Date().getDate();
+
                                                     return (
                                                         <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-                                                            {pagado && (() => {
-  const pagoConComentario = pagosDelMes.find(
-    p => p.nombre.trim() === nombre.trim()
-  );
+                                                            {pagado && (
+  <span
+    style={{
+      color: esHoy ? "#22c55e" : "#2563eb",
+      fontSize: "1.8rem",
+      fontWeight: "bold"
+    }}
+    title={!esHoy ? "Pago adelantado" : ""}
+  >
+    {esHoy ? "X" : "●"}
+  </span>
+)}
 
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>
-        X
-      </div>
 
       {pagoConComentario?.comentario && pagoConComentario.comentario.trim() !== "" && (
         <div style={{ fontSize: "0.7rem", color: "#475569", marginTop: "2px" }}>
