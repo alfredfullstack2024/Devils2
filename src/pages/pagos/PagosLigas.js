@@ -550,19 +550,24 @@ const esHoy = dia === new Date().getDate();
 
                                                     return (
                                                         <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-                                                            {pagado && (
-  <span
-    style={{
-      color: esHoy ? "#22c55e" : "#2563eb",
-      fontSize: "1.8rem",
-      fontWeight: "bold"
-    }}
-    title={!esHoy ? "Pago adelantado" : ""}
-  >
-    {esHoy ? "X" : "●"}
-  </span>
-)}
+  {pagado && (() => {
+    const esHoy = i + 1 === new Date().getDate();
+
+    return (
+      <span
+        style={{
+          color: esHoy ? "#22c55e" : "#2563eb",
+          fontSize: "1.8rem",
+          fontWeight: "bold"
+        }}
+        title={!esHoy ? "Pago adelantado" : ""}
+      >
+        {esHoy ? "X" : "●"}
+      </span>
+    );
+  })()}
 </td>
+
 
       {pagoConComentario?.comentario && pagoConComentario.comentario.trim() !== "" && (
         <div style={{ fontSize: "0.7rem", color: "#475569", marginTop: "2px" }}>
