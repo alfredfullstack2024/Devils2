@@ -196,6 +196,9 @@ const Pagos = () => {
     // === Botón para navegar a Pagos Ligas ===
     const irAPagosLigas = () => {
         navigate("/pagos/ligas");
+        const irAPagames = () => {
+    navigate("/pagos/pagames");
+};
     };
     
     return (
@@ -331,6 +334,12 @@ const Pagos = () => {
                 <Button variant="success" onClick={irAPagosLigas}>
                     Pagos Ligas
                 </Button>
+                        <Button 
+        variant="info" 
+        onClick={irAPagames}
+    >
+        Pago Mes
+    </Button>
             </div>
 
             {isLoading && <Alert variant="info">Cargando pagos...</Alert>}
@@ -424,3 +433,4 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
