@@ -149,8 +149,8 @@ const [comentarioPago, setComentarioPago] = useState("");
     if (!mesSeleccionado) return alert("Selecciona un mes");
     if (!tipoPagoSeleccionado) return alert("Selecciona el tipo de pago");
 
-    // 🆕 VALIDACIÓN: SI EL DÍA NO ES HOY, COMENTARIO OBLIGATORIO
     const hoy = new Date().getDate();
+
     if (Number(diaSeleccionado) !== hoy && !comentarioPago.trim()) {
         return alert("Debes agregar un comentario cuando registras pagos de otro día");
     }
@@ -163,13 +163,11 @@ const [comentarioPago, setComentarioPago] = useState("");
             total: valorDiario,
             diasPagados: [parseInt(diaSeleccionado)],
             tipoPago: tipoPagoSeleccionado,
-            comentario: Number(diaSeleccionado) !== new Date().getDate() ? comentarioPago.trim() : "",
-
-            // 🆕 ENVIAR COMENTARIO SOLO SI APLICA
             comentario: Number(diaSeleccionado) !== hoy ? comentarioPago.trim() : "",
         });
 
         alert(`Día ${diaSeleccionado} registrado correctamente`);
+
         setSearchCliente("");
         setClienteSeleccionado(null);
         setDiaSeleccionado("");
@@ -181,6 +179,7 @@ const [comentarioPago, setComentarioPago] = useState("");
         alert("Error al registrar pago");
     }
 };
+
 
 
             // Recargar y recalcular
