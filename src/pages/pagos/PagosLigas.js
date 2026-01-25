@@ -163,6 +163,7 @@ const [comentarioPago, setComentarioPago] = useState("");
             total: valorDiario,
             diasPagados: [parseInt(diaSeleccionado)],
             tipoPago: tipoPagoSeleccionado,
+            comentario: Number(diaSeleccionado) !== new Date().getDate() ? comentarioPago.trim() : "",
 
             // 🆕 ENVIAR COMENTARIO SOLO SI APLICA
             comentario: Number(diaSeleccionado) !== hoy ? comentarioPago.trim() : "",
