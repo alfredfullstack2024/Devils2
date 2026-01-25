@@ -521,7 +521,7 @@ useEffect(() => {
                 </div>
                 {mesSeleccionado && (
                     <div style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 15px 35px rgba(0,0,0,0.15)" }}>
-                        <table style={{ width: "100%", minWidth: "2550px", borderCollapse: "collapse" }}>
+                        <table style={{ width: "100%", minWidth: "2800px", borderCollapse: "collapse" }}>
                             <thead>
                                 <tr style={{ background: "#1e293b", color: "white" }}>
                                     <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "200px" }}>Jugadora</th>
@@ -553,31 +553,38 @@ useEffect(() => {
                                                 <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}> {/* Color condicional para diferenciar */}
                                                     **{tipoPago}** </td>
                                                 {[...Array(31)].map((_, i) => {
-                                                    const pagado = dias.includes(i + 1);
-                                                    return (
-                                                        <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-                                                            {pagado && (() => {
-  const pagoConComentario = pagosDelMes.find(
-    p => p.nombre.trim() === nombre.trim()
-  );
+    const diaActual = i + 1;
+    // Buscamos el pago específico de esta jugadora que contenga ESTE día
+    const registroDeEsteDia = pagosDelMes.find(p => 
+        p.nombre.trim() === nombre.trim() && 
+        p.diasPagados.includes(diaActual)
+    );
 
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>
-        X
-      </div>
+    return (
+        <td key={diaActual} style={{ textAlign: "center", padding: "0.5rem 0", minWidth: "60px" }}>
+            {registroDeEsteDia && (
+                <div style={{ textAlign: "center" }}>
+                    <div style={{ 
+                        // Si tiene comentario, es pago de otro día (AZUL), si no, es del mismo día (VERDE)
+                        color: registroDeEsteDia.comentario ? "#3b82f6" : "#22c55e", 
+                        fontSize: "1.8rem", 
+                        fontWeight: "bold",
+                        lineHeight: "1" 
+                    }}>
+                        X
+                    </div>
 
-      {pagoConComentario?.comentario && pagoConComentario.comentario.trim() !== "" && (
-        <div style={{ fontSize: "0.7rem", color: "#475569", marginTop: "2px" }}>
-          {pagoConComentario.comentario}
-        </div>
-      )}
-    </div>
-  );
-})()}
-
-
-                                                        </td>
+                    {/* Mostramos el comentario debajo de la X si existe */}
+                    {registroDeEsteDia.comentario && (
+                        <div style={{ fontSize: "0.65rem", color: "#475569", marginTop: "2px", lineHeight: "1" }}>
+                            {registroDeEsteDia.comentario}
+                        </div>
+                    )}
+                </div>
+            )}
+        </td>
+    );
+})}
                                                     );
                                                 })}
                                                 <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#0891b2" }}>
