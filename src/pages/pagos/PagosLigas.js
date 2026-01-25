@@ -502,7 +502,7 @@ useEffect(() => {
 {esDiaDiferenteAHoy && (
   <input
     type="text"
-    placeholder="Hoy se registraron pagos de los días: ej 26, 27"
+    placeholder="Pago del dia: "
     value={comentarioPago}
     onChange={(e) => setComentarioPago(e.target.value)}
     style={{
