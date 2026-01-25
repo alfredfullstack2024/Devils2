@@ -1,141 +1,158 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Table, Button, Form, Row, Col, Card, Alert, Spinner } from "react-bootstrap";
-import api from "../../api/axios";
+import React, { useState, useEffect } from "react";
+import { Form, Button, Table, Card, Row, Col, Alert } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+// Asumiendo que usas Firebase o una API similar a PagosLigas
+// import { collection, getDocs, addDoc, query, where } from "firebase/firestore"; 
+// import { db } from "../../firebase"; 
 
-const PagaMes = () => {
-    const [meses, setMeses] = useState([]);
+const Pagames = () => {
+    const [mesesDisponibles, setMesesDisponibles] = useState(["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]);
+    const [anioSeleccionado, setAnioSeleccionado] = useState(new Date().getFullYear());
     const [mesSeleccionado, setMesSeleccionado] = useState("");
-    const [pagos, setPagos] = useState([]);
-    const [nuevoMes, setNuevoMes] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    const [form, setForm] = useState({
-        nombre: "", monto: "", tipoPago: "Efectivo", comentario: ""
+    const [clientes, setClientes] = useState([]); // Para el autocomplete
+    const [filtroNombre, setFiltroNombre] = useState("");
+    const [sugerencias, setSugerencias] = useState([]);
+    
+    // Formulario de nuevo pago
+    const [nuevoPago, setNuevoPago] = useState({
+        cliente: "",
+        monto: "",
+        tipo: "Efectivo",
+        plan: "Black", // Nuevo campo Planes
+        comentario: ""
     });
 
-    const fetchMeses = useCallback(async () => {
-        try {
-            const { data } = await api.get("/paga-mes/meses");
-            setMeses(data);
-            if (data.length > 0 && !mesSeleccionado) setMesSeleccionado(data[0]._id);
-        } catch (err) { setError("Error al cargar meses"); }
-    }, [mesSeleccionado]);
+    const [pagos, setPagos] = useState([]);
+    const [error, setError] = useState(null);
 
-    const fetchPagos = useCallback(async () => {
-        if (!mesSeleccionado) return;
-        setLoading(true);
-        try {
-            const { data } = await api.get(`/paga-mes/pagos/${mesSeleccionado}`);
-            setPagos(data);
-        } catch (err) { setError("Error al cargar pagos"); }
-        finally { setLoading(false); }
-    }, [mesSeleccionado]);
+    // 1. Cargar Clientes para el Autocomplete (Igual que en PagosLigas)
+    useEffect(() => {
+        // Aquí iría tu lógica de cargar clientes desde la DB
+        const cargarClientes = async () => {
+            // Ejemplo: const querySnapshot = await getDocs(collection(db, "clientes"));
+            // setClientes(querySnapshot.docs.map(doc => doc.data().nombre));
+            setClientes(["MARIANA FIERRO LOPEZ", "MELISSA VICTORIA VERA", "SHIRLY VALENTINA"]); 
+        };
+        cargarClientes();
+    }, []);
 
-    useEffect(() => { fetchMeses(); }, [fetchMeses]);
-    useEffect(() => { fetchPagos(); }, [fetchPagos]);
-
-    const handleCrearMes = async () => {
-        if (!nuevoMes) return;
-        try {
-            await api.post("/paga-mes/crear-mes", { nombre: nuevoMes });
-            setNuevoMes("");
-            fetchMeses();
-        } catch (err) { setError("El mes ya existe o error de red"); }
+    // Manejar escritura en Nombre Cliente
+    const handleNombreChange = (e) => {
+        const value = e.target.value;
+        setNuevoPago({...nuevoPago, cliente: value});
+        if (value.length > 1) {
+            const filtrados = clientes.filter(c => c.toLowerCase().includes(value.toLowerCase()));
+            setSugerencias(filtrados);
+        } else {
+            setSugerencias([]);
+        }
     };
 
-    const handleRegistrarPago = async (e) => {
-        e.preventDefault();
-        try {
-            await api.post("/paga-mes/pagos", { ...form, mes: mesSeleccionado });
-            setForm({ nombre: "", monto: "", tipoPago: "Efectivo", comentario: "" });
-            fetchPagos();
-        } catch (err) { setError("Error al registrar pago"); }
+    const seleccionarCliente = (nombre) => {
+        setNuevoPago({...nuevoPago, cliente: nombre});
+        setSugerencias([]);
     };
-
-    const eliminarPago = async (id) => {
-        if (!window.confirm("¿Eliminar registro?")) return;
-        await api.delete(`/paga-mes/pagos/${id}`);
-        fetchPagos();
-    };
-
-    const totalMes = pagos.reduce((acc, p) => acc + (p.tipoPago !== 'SYSTEM' ? p.monto : 0), 0);
 
     return (
         <div className="container mt-4">
-            <h3>Gestión Mensualidades (Paga Mes)</h3>
-            {error && <Alert variant="danger" onClose={() => setError("")} dismissible>{error}</Alert>}
+            <h2 className="mb-4">Gestión Mensualidades (Paga Mes)</h2>
 
-            <Row className="mb-4">
-                <Col md={6}>
-                    <Card>
-                        <Card.Body>
+            {/* Bloque Superior: Selección de Año/Mes (Estilo PagosLigas) */}
+            <Card className="mb-4 shadow-sm border-0">
+                <Card.Body className="bg-light">
+                    <Row className="align-items-end">
+                        <Col md={3}>
+                            <Form.Label>Año</Form.Label>
+                            <Form.Control 
+                                type="number" 
+                                value={anioSeleccionado} 
+                                onChange={(e) => setAnioSeleccionado(e.target.value)}
+                            />
+                        </Col>
+                        <Col md={3}>
                             <Form.Label>Seleccionar Mes</Form.Label>
-                            <div className="d-flex gap-2">
-                                <Form.Select value={mesSeleccionado} onChange={(e) => setMesSeleccionado(e.target.value)}>
-                                    {meses.map(m => <option key={m._id} value={m._id}>{m.nombre}</option>)}
-                                </Form.Select>
-                                <Form.Control type="text" placeholder="Nuevo Mes (Ej: Mayo 2026)" value={nuevoMes} onChange={(e) => setNuevoMes(e.target.value)} />
-                                <Button onClick={handleCrearMes}>Crear</Button>
+                            <Form.Select value={mesSeleccionado} onChange={(e) => setMesSeleccionado(e.target.value)}>
+                                <option value="">Seleccione...</option>
+                                {mesesDisponibles.map(m => <option key={m} value={m}>{m}</option>)}
+                            </Form.Select>
+                        </Col>
+                        <Col md={2}>
+                            <Button variant="primary" className="w-100">Crear Año</Button>
+                        </Col>
+                        <Col md={4}>
+                            <div className="bg-dark text-white p-3 rounded text-center">
+                                <h5 className="mb-0">TOTAL RECAUDADO (MES): $0</h5>
                             </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={6}>
-                    <Card className="bg-success text-white text-center">
-                        <Card.Body>
-                            <h5>Total Recaudado en {mesSeleccionado}:</h5>
-                            <h3>${totalMes.toLocaleString()}</h3>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-
-            <Card className="mb-4 shadow-sm">
-                <Card.Body>
-                    <Form onSubmit={handleRegistrarPago}>
-                        <Row>
-                            <Col md={4}><Form.Control placeholder="Nombre Cliente" required value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} /></Col>
-                            <Col md={2}><Form.Control type="number" placeholder="Monto $" required value={form.monto} onChange={e => setForm({...form, monto: e.target.value})} /></Col>
-                            <Col md={2}>
-                                <Form.Select value={form.tipoPago} onChange={e => setForm({...form, tipoPago: e.target.value})}>
-                                    <option value="Efectivo">Efectivo</option>
-                                    <option value="Nequi">Nequi</option>
-                                </Form.Select>
-                            </Col>
-                            <Col md={3}><Form.Control placeholder="Comentario" value={form.comentario} onChange={e => setForm({...form, comentario: e.target.value})} /></Col>
-                            <Col md={1}><Button type="submit" variant="primary">Add</Button></Col>
-                        </Row>
-                    </Form>
+                        </Col>
+                    </Row>
                 </Card.Body>
             </Card>
 
-            <Table striped bordered hover responsive>
+            {/* Bloque Registrador Rápido (Igual a la imagen 10) */}
+            <Card className="mb-4 border-success">
+                <Card.Header className="bg-success text-white">Registrador Pago Rápido</Card.Header>
+                <Card.Body>
+                    <Row>
+                        <Col md={4} className="position-relative">
+                            <Form.Control 
+                                placeholder="Nombre completo de la niña..." 
+                                value={nuevoPago.cliente}
+                                onChange={handleNombreChange}
+                            />
+                            {sugerencias.length > 0 && (
+                                <ul className="list-group position-absolute w-100 shadow" style={{zIndex: 1000}}>
+                                    {sugerencias.map(s => (
+                                        <li key={s} className="list-group-item list-group-item-action" onClick={() => seleccionarCliente(s)}>
+                                            {s}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </Col>
+                        <Col md={2}>
+                            <Form.Select value={nuevoPago.plan} onChange={(e) => setNuevoPago({...nuevoPago, plan: e.target.value})}>
+                                <option value="Black">PLAN: Black</option>
+                                <option value="White">PLAN: White</option>
+                                <option value="Gold">PLAN: Gold</option>
+                            </Form.Select>
+                        </Col>
+                        <Col md={2}>
+                            <Form.Control placeholder="Monto $" type="number" />
+                        </Col>
+                        <Col md={2}>
+                            <Form.Select>
+                                <option>Efectivo</option>
+                                <option>Transferencia</option>
+                            </Form.Select>
+                        </Col>
+                        <Col md={2}>
+                            <Button variant="success" className="w-100">Registrar</Button>
+                        </Col>
+                    </Row>
+                </Card.Body>
+            </Card>
+
+            {/* Tabla de Resultados (Estilo Imagen 1 y 2) */}
+            <Table striped bordered hover responsive className="text-center">
                 <thead className="table-dark">
                     <tr>
-                        <th>Cliente</th>
-                        <th>Monto</th>
+                        <th>Jugadora</th>
+                        <th>Plan</th>
                         <th>Tipo</th>
                         <th>Fecha</th>
+                        <th>Monto</th>
                         <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {loading ? <tr><td colSpan="5" className="text-center"><Spinner animation="border" /></td></tr> :
-                        pagos.filter(p => p.tipoPago !== 'SYSTEM').map(p => (
-                            <tr key={p._id}>
-                                <td>{p.nombre}</td>
-                                <td>${p.monto.toLocaleString()}</td>
-                                <td><span className={`badge ${p.tipoPago === 'Nequi' ? 'bg-info' : 'bg-success'}`}>{p.tipoPago}</span></td>
-                                <td>{new Date(p.createdAt).toLocaleDateString()}</td>
-                                <td><Button variant="outline-danger" size="sm" onClick={() => eliminarPago(p._id)}>X</Button></td>
-                            </tr>
-                        ))
-                    }
+                    {/* Aquí mapearías tus pagos */}
+                    <tr>
+                        <td colSpan="6" className="text-muted">No hay pagos registrados para este mes</td>
+                    </tr>
                 </tbody>
             </Table>
         </div>
     );
 };
 
-export default PagaMes;
+export default Pagames;
