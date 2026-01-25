@@ -194,15 +194,21 @@ const Pagos = () => {
     };
 
     // === Botón para navegar a Pagos Ligas ===
+    // ... líneas anteriores de código (eliminarPago, abrirResumen, etc.)
+
+    // === Botones para navegar ===
     const irAPagosLigas = () => {
         navigate("/pagos/ligas");
-        const irAPagames = () => {
-    navigate("/pagos/pagames");
-};
+    };
+
+    // ASEGÚRATE DE QUE ESTA FUNCIÓN ESTÉ AQUÍ ADENTRO
+    const irAPagames = () => {
+        navigate("/pagos/pagames");
     };
     
     return (
         <div className="container mt-4">
+// ... sigue el resto del código
             <h2>Pagos</h2>
             {error && <Alert variant="danger">{error}</Alert>}
 
@@ -323,25 +329,22 @@ const Pagos = () => {
             </Card>
 
             {/* Botones principales */}
-            <div className="mb-3">
-                <Button
-                    variant="primary"
-                    className="me-2"
-                    onClick={() => navigate("/pagos/crear")}
-                >
-                    Crear pago
-                </Button>
-                <Button variant="success" onClick={irAPagosLigas}>
-                    Pagos Ligas
-                </Button>
-                        <Button 
-        variant="info" 
-        onClick={irAPagames}
+           <div className="mb-3">
+    <Button
+        variant="primary"
+        className="me-2"
+        onClick={() => navigate("/pagos/crear")}
     >
-        Pago Mes
+        Crear pago
     </Button>
-            </div>
-
+    <Button variant="success" className="me-2" onClick={irAPagosLigas}>
+        Pagos Ligas
+    </Button>
+    {/* El nombre aquí debe coincidir con la función de arriba */}
+    <Button variant="info" onClick={irAPagames}>
+        Ver Pagames
+    </Button>
+</div>
             {isLoading && <Alert variant="info">Cargando pagos...</Alert>}
             {!isLoading && pagosFiltrados.length === 0 && !error && (
                 <Alert variant="info">No hay pagos para mostrar en este periodo/filtro.</Alert>
@@ -433,4 +436,5 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
 
