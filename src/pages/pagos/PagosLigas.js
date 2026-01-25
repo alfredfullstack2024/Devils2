@@ -499,20 +499,7 @@ useEffect(() => {
   }}
   style={{ ...inputStyle, width: "100px" }}
 />
-{esDiaDiferenteAHoy && (
-  <input
-    type="text"
-    placeholder="Pago se recibio el dia : "
-    value={comentarioPago}
-    onChange={(e) => setComentarioPago(e.target.value)}
-    style={{
-      ...inputStyle,
-      width: "420px",
-      borderColor: "#f97316",
-      background: "#fff7ed"
-    }}
-  />
-)}
+
 
                         <button onClick={registrarPagoDia} style={btnSuccess}>
                             Marcar Día {diaSeleccionado || "?"} como Pagado
@@ -560,23 +547,26 @@ useEffect(() => {
                                                 </td>
                                                {[...Array(31)].map((_, i) => {
     const diaActual = i + 1;
+    const hoy = new Date().getDate(); 
+
     const registroDeEsteDia = pagosDelMes.find(p => 
         p.nombre.trim() === nombre.trim() && 
         p.diasPagados.includes(diaActual)
     );
 
-    const esPagoDiferente = registroDeEsteDia?.comentario && registroDeEsteDia.comentario.trim() !== "";
+    // Si el día de la celda es hoy sale X verde, si es otro día sale círculo azul
+    const esHoy = diaActual === hoy;
 
     return (
         <td key={diaActual} style={{ textAlign: "center", padding: "0.5rem 0", minWidth: "60px", border: "1px solid #e2e8f0" }}>
             {registroDeEsteDia && (
                 <div style={{ 
-                    fontSize: esPagoDiferente ? "1.5rem" : "1.8rem", 
+                    fontSize: esHoy ? "1.8rem" : "1.4rem", 
                     fontWeight: "bold",
                     lineHeight: "1",
-                    color: esPagoDiferente ? "#3b82f6" : "#22c55e" 
+                    color: esHoy ? "#22c55e" : "#3b82f6" 
                 }}>
-                    {esPagoDiferente ? "●" : "X"}
+                    {esHoy ? "X" : "●"}
                 </div>
             )}
         </td>
