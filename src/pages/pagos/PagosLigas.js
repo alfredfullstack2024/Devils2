@@ -100,35 +100,7 @@ const [comentarioPago, setComentarioPago] = useState("");
         cargarInicial();
     }, []);
 
-    // CARGAR PAGOS Y CALCULAR TOTAL (TOTAL GENERAL)
-    useEffect(() => {
-        if (!mesSeleccionado) return;
-        const cargarPagos = async () => {
-            try {
-                const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
-                const todosPagos = res.data || [];
-                // Se filtra el registro "SYSTEM" aquí
-                const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
-
-                // CÁLCULO DEL TOTAL GENERAL
-                let total = 0;
-                // Enriquecer los pagos con especialidad y tipoPago
-                const pagosEnriquecidos = pagosReales.map(pago => {
-                    const cliente = clientes.find(c =>
-                        `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
-                    );
-
-                    const especialidad = cliente?.especialidad || 'Sin Especialidad';
-                    // 🆕 AJUSTE: Leer el campo tipoPago que el backend debe proveer
-                    const tipoPago = pago.tipoPago || 'N/A';
-
-                    if (pago.diasPagados && Array.isArray(pago.diasPagados)) {
-                        total += pago.diasPagados.length * valorDiario;
-                    }
-
-                    return { ...pago, especialidad, tipoPago };
-                });
-
+   
                 // CARGAR PAGOS Y CALCULAR TOTAL (TOTAL GENERAL)
 useEffect(() => {
     if (!mesSeleccionado) return;
@@ -211,16 +183,7 @@ useEffect(() => {
 
 
 
-            // Recargar y recalcular
-           
-            setSearchCliente("");
-            setClienteSeleccionado(null);
-            setDiaSeleccionado("");
-        } catch (error) {
-            console.error(error);
-            alert("Error al registrar pago");
-        }
-    };
+            
 
     const crearMes = async () => {
         if (!nuevoMes.trim()) return alert("Escribe el nombre del mes");
