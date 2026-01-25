@@ -536,57 +536,41 @@ useEffect(() => {
                             </thead>
                             <tbody>
                                 {jugadorasFiltradas.length === 0 ? (
-                                    <tr><td colSpan="36" style={{ textAlign: "center", padding: "4rem", color: "#64748b" }}>No hay pagos este mes que coincidan con los filtros.</td></tr>
-                                ) : (
-                                    jugadorasFiltradas.map(nombre => {
-                                        const dias = getDiasPagadosFiltrados(nombre);
-                                        const total = dias.length * valorDiario;
-                                        const especialidad = getEspecialidadJugadora(nombre);
-                                        const tipoPago = getTipoPagoJugadora(nombre);
-                                        return (
-                                            <tr key={nombre}>
-                                                <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9, textAlign: "left" }}>
-                                                    {nombre}
-                                                </td>
-                                                <td style={{ ...tdStyle, background: "#f1f5f9", color: "#475569" }}>
-                                                    **{especialidad}** </td>
-                                                <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}> {/* Color condicional para diferenciar */}
-                                                    **{tipoPago}** </td>
-                                                {[...Array(31)].map((_, i) => {
-    const diaActual = i + 1;
-    // Buscamos el pago específico de esta jugadora que contenga ESTE día
-    const registroDeEsteDia = pagosDelMes.find(p => 
-        p.nombre.trim() === nombre.trim() && 
-        p.diasPagados.includes(diaActual)
-    );
+    <tr><td colSpan="38" style={{ textAlign: "center", padding: "4rem" }}>No hay pagos.</td></tr>
+) : (
+    jugadorasFiltradas.map(nombre => {
+        const dias = getDiasPagadosFiltrados(nombre);
+        const total = dias.length * valorDiario;
+        const especialidad = getEspecialidadJugadora(nombre);
+        const tipoPago = getTipoPagoJugadora(nombre);
 
-    return (
-        <td key={diaActual} style={{ textAlign: "center", padding: "0.5rem 0", minWidth: "60px" }}>
-            {registroDeEsteDia && (
-                <div style={{ textAlign: "center" }}>
-                    <div style={{ 
-                        // Si tiene comentario, es pago de otro día (AZUL), si no, es del mismo día (VERDE)
-                        color: registroDeEsteDia.comentario ? "#3b82f6" : "#22c55e", 
-                        fontSize: "1.8rem", 
-                        fontWeight: "bold",
-                        lineHeight: "1" 
-                    }}>
-                        X
-                    </div>
+        return (
+            <tr key={nombre}>
+                <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9, textAlign: "left" }}>{nombre}</td>
+                <td style={{ ...tdStyle, background: "#f1f5f9" }}>{especialidad}</td>
+                <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}>{tipoPago}</td>
+                
+                {[...Array(31)].map((_, i) => {
+                    const diaActual = i + 1;
+                    const registro = pagosDelMes.find(p => p.nombre.trim() === nombre.trim() && p.diasPagados.includes(diaActual));
+                    return (
+                        <td key={diaActual} style={{ textAlign: "center", minWidth: "60px", border: "1px solid #e2e8f0" }}>
+                            {registro && (
+                                <div>
+                                    <div style={{ color: (registro.comentario && registro.comentario.length > 0) ? "#3b82f6" : "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</div>
+                                    {registro.comentario && <div style={{ fontSize: "0.6rem", color: "#475569" }}>{registro.comentario}</div>}
+                                </div>
+                            )}
+                        </td>
+                    );
+                })}
 
-                    {/* Mostramos el comentario debajo de la X si existe */}
-                    {registroDeEsteDia.comentario && (
-                        <div style={{ fontSize: "0.65rem", color: "#475569", marginTop: "2px", lineHeight: "1" }}>
-                            {registroDeEsteDia.comentario}
-                        </div>
-                    )}
-                </div>
-            )}
-        </td>
-    );
-})}
-                                                    );
-                                                })}
+                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold" }}>{dias.length}</td>
+                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold" }}>${total.toLocaleString("es-CO")}</td>
+            </tr>
+        );
+    })
+)}
                                                 <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#0891b2" }}>
                                                     {dias.length}
                                                 </td>
