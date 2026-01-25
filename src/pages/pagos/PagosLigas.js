@@ -549,23 +549,29 @@ const pagado = dias.includes(dia);
 const esHoy = dia === new Date().getDate();
 
                                                     return (
-                                                        <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-  {pagado && (() => {
-    const esHoy = i + 1 === new Date().getDate();
+                                                        {[...Array(31)].map((_, i) => {
+  const dia = i + 1;
+  const pagado = dias.includes(dia);
+  const esHoy = dia === new Date().getDate();
 
-    return (
-      <span
-        style={{
-          color: esHoy ? "#22c55e" : "#2563eb",
-          fontSize: "1.8rem",
-          fontWeight: "bold"
-        }}
-        title={!esHoy ? "Pago adelantado" : ""}
-      >
-        {esHoy ? "X" : "●"}
-      </span>
-    );
-  })()}
+  return (
+    <td key={dia} style={{ textAlign: "center", padding: "0.8rem 0" }}>
+      {pagado && (
+        <span
+          style={{
+            color: esHoy ? "#22c55e" : "#2563eb",
+            fontSize: "1.8rem",
+            fontWeight: "bold"
+          }}
+          title={!esHoy ? "Pago adelantado" : ""}
+        >
+          {esHoy ? "X" : "●"}
+        </span>
+      )}
+    </td>
+  );
+})}
+
 </td>
 
 
