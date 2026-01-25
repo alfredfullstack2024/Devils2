@@ -574,7 +574,15 @@ const [comentarioPago, setComentarioPago] = useState("");
                                                     const pagado = dias.includes(i + 1);
                                                     return (
                                                         <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-                                                            {pagado && <span style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>X</span>}
+                                                            {pagado && (
+  <span
+    title={pagosDelMes.find(p => p.nombre.trim() === nombre.trim())?.comentario || ""}
+    style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold", cursor: "help" }}
+  >
+    X
+  </span>
+)}
+
                                                         </td>
                                                     );
                                                 })}
