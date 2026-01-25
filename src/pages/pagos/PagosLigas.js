@@ -545,14 +545,26 @@ useEffect(() => {
                                                     const pagado = dias.includes(i + 1);
                                                     return (
                                                         <td key={i + 1} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-                                                            {pagado && (
-  <span
-    title={pagosDelMes.find(p => p.nombre.trim() === nombre.trim())?.comentario || ""}
-    style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold", cursor: "help" }}
-  >
-    X
-  </span>
-)}
+                                                            {pagado && (() => {
+  const pagoConComentario = pagosDelMes.find(
+    p => p.nombre.trim() === nombre.trim()
+  );
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ color: "#22c55e", fontSize: "1.8rem", fontWeight: "bold" }}>
+        X
+      </div>
+
+      {pagoConComentario?.comentario && pagoConComentario.comentario.trim() !== "" && (
+        <div style={{ fontSize: "0.7rem", color: "#475569", marginTop: "2px" }}>
+          {pagoConComentario.comentario}
+        </div>
+      )}
+    </div>
+  );
+})()}
+
 
                                                         </td>
                                                     );
