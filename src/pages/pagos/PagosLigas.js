@@ -169,11 +169,26 @@ const PagosLigas = () => {
                                         <td style={{...tdEstilo, textAlign: "left", fontWeight: "bold", position: "sticky", left: 0, background: "white"}}>{nom}</td>
                                         <td style={tdEstilo}>{mPagos[0]?.especialidad}</td>
                                         {[...Array(31)].map((_, i) => {
-                                            const d = i + 1;
-                                            const pagoInfo = diasDicionario[d];
-                                            if (!pagoInfo) return <td key={i} style={tdEstilo}>-</td>;
-                                            return <td key={i} style={{...tdEstilo, color: "#22c55e", fontWeight: "bold"}}>X</td>;
-                                        })}
+    const d = i + 1;
+    const pagoInfo = diasDicionario[d];
+    if (!pagoInfo) return <td key={i} style={tdEstilo}>-</td>;
+
+    // LÓGICA DE COLORES Y COMENTARIOS
+    const hoy = new Date().getDate();
+    const esHoy = d === hoy;
+    const esAdelantado = d > hoy;
+
+    return (
+        <td key={i} style={{
+            ...tdEstilo, 
+            color: esHoy ? "#2563eb" : (esAdelantado ? "#f59e0b" : "#22c55e"), 
+            fontWeight: "bold",
+            cursor: "help"
+        }} title={pagoInfo.comentario || "Pago registrado"}>
+            {esHoy ? "💬" : "X"}
+        </td>
+    );
+})}
                                         <td style={{...tdEstilo, fontWeight: "bold"}}>${mPagos.reduce((a, b) => a + (b.diasPagados.length * valorDiario), 0).toLocaleString()}</td>
                                     </tr>
                                 );
