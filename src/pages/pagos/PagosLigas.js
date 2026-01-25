@@ -558,43 +558,25 @@ useEffect(() => {
                                                 <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}>
                                                     {tipoPago}
                                                 </td>
-                                                {[...Array(31)].map((_, i) => {
+                                               {[...Array(31)].map((_, i) => {
     const diaActual = i + 1;
-    // Buscamos el registro específico para esta jugadora y este día
     const registroDeEsteDia = pagosDelMes.find(p => 
         p.nombre.trim() === nombre.trim() && 
         p.diasPagados.includes(diaActual)
     );
 
-    // Verificamos si existe un comentario real
-    const tieneComentario = registroDeEsteDia?.comentario && registroDeEsteDia.comentario.trim() !== "";
+    const esPagoDiferente = registroDeEsteDia?.comentario && registroDeEsteDia.comentario.trim() !== "";
 
     return (
         <td key={diaActual} style={{ textAlign: "center", padding: "0.5rem 0", minWidth: "60px", border: "1px solid #e2e8f0" }}>
             {registroDeEsteDia && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ 
-                        // CAMBIO CLAVE: Si tiene comentario, forzamos AZUL. Si no, VERDE.
-                        color: tieneComentario ? "#3b82f6" : "#22c55e", 
-                        fontSize: "1.8rem", 
-                        fontWeight: "bold",
-                        lineHeight: "1" 
-                    }}>
-                        X
-                    </div>
-                    
-                    {/* Texto del comentario debajo de la X */}
-                    {tieneComentario && (
-                        <div style={{ 
-                            fontSize: "0.7rem", 
-                            color: "#1e40af", // Azul oscuro para que se lea bien
-                            marginTop: "2px", 
-                            lineHeight: "1.1",
-                            fontWeight: "500"
-                        }}>
-                            {registroDeEsteDia.comentario}
-                        </div>
-                    )}
+                <div style={{ 
+                    fontSize: esPagoDiferente ? "1.5rem" : "1.8rem", 
+                    fontWeight: "bold",
+                    lineHeight: "1",
+                    color: esPagoDiferente ? "#3b82f6" : "#22c55e" 
+                }}>
+                    {esPagoDiferente ? "●" : "X"}
                 </div>
             )}
         </td>
