@@ -562,7 +562,7 @@ const esHoy = dia === new Date().getDate();
     {esHoy ? "X" : "●"}
   </span>
 )}
-
+</td>
 
       {pagoConComentario?.comentario && pagoConComentario.comentario.trim() !== "" && (
         <div style={{ fontSize: "0.7rem", color: "#475569", marginTop: "2px" }}>
