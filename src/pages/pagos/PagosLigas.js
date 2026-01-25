@@ -152,9 +152,7 @@ useEffect(() => {
 
     const hoy = new Date().getDate();
 
-    if (Number(diaSeleccionado) !== hoy && !comentarioPago.trim()) {
-        return alert("Debes agregar un comentario cuando registras pagos de otro día");
-    }
+    
 
     try {
         await axios.post(`${backendURL}/pagos-ligas/pagos`, {
