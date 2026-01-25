@@ -512,87 +512,65 @@ useEffect(() => {
                 </div>
                 {mesSeleccionado && (
                     <div style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 15px 35px rgba(0,0,0,0.15)" }}>
-                        <table style={{ width: "100%", minWidth: "2550px", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr style={{ background: "#1e293b", color: "white" }}>
-                                    <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "200px" }}>Jugadora</th>
-                                    <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Especialidad</th>
-                                    <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Tipo de Pago</th> {/* 🆕 NUEVA COLUMNA */}
-                                    {[...Array(31)].map((_, i) => (
-                                        <th key={i + 1} style={{ ...thStyle, width: "60px" }}>{i + 1}</th>
-                                    ))}
-                                    <th style={{ ...thStyle, background: "#172554", width: "110px" }}>Días</th>
-                                    <th style={{ ...thStyle, background: "#172554", width: "160px" }}>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {jugadorasFiltradas.length === 0 ? (
-                                    <tr><td colSpan="36" style={{ textAlign: "center", padding: "4rem", color: "#64748b" }}>No hay pagos este mes que coincidan con los filtros.</td></tr>
-                                ) : (
-                                    jugadorasFiltradas.map(nombre => {
-                                        const dias = getDiasPagadosFiltrados(nombre);
-                                        const total = dias.length * valorDiario;
-                                        const especialidad = getEspecialidadJugadora(nombre);
-                                        const tipoPago = getTipoPagoJugadora(nombre);
-                                        return (
-                                            <tr key={nombre}>
-                                                <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9, textAlign: "left" }}>
-                                                    {nombre}
-                                                </td>
-                                                <td style={{ ...tdStyle, background: "#f1f5f9", color: "#475569" }}>
-                                                    **{especialidad}** </td>
-                                                <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}> {/* Color condicional para diferenciar */}
-                                                    **{tipoPago}** </td>
-                                                {Array.from({ length: 31 }, (_, i) => {
-  const dia = i + 1;
-  const pagado = dias.includes(dia);
-  const esHoy = dia === new Date().getDate();
-  return (
-    <td key={dia} style={{ textAlign: "center", padding: "0.8rem 0" }}>
-      {pagado && (
-        <span
-          style={{
-            color: esHoy ? "#22c55e" : "#2563eb",
-            fontSize: "1.8rem",
-            fontWeight: "bold"
-          }}
-          title={!esHoy ? "Pago adelantado" : ""}
-        >
-          {esHoy ? "X" : "●"}
-        </span>
-      )}
-    </td>
-  );
-})}
-
-</td>
-
-
-      {pagoConComentario?.comentario && pagoConComentario.comentario.trim() !== "" && (
-        <div style={{ fontSize: "0.7rem", color: "#475569", marginTop: "2px" }}>
-          {pagoConComentario.comentario}
-        </div>
-      )}
-    </div>
-  );
-})()}
-
-
-                                                        </td>
-                                                    );
-                                                })}
-                                                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#0891b2" }}>
-                                                    {dias.length}
-                                                </td>
-                                                <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.4rem", color: "#166534" }}>
-                                                    ${total.toLocaleString("es-CO")}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                       <table style={{ width: "100%", minWidth: "2550px", borderCollapse: "collapse" }}>
+    <thead>
+        <tr style={{ background: "#1e293b", color: "white" }}>
+            <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "200px" }}>Jugadora</th>
+            <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Especialidad</th>
+            <th style={{ ...thStyle, background: "#334155", width: "150px" }}>Tipo de Pago</th>
+            {[...Array(31)].map((_, i) => (
+                <th key={i + 1} style={{ ...thStyle, width: "60px" }}>{i + 1}</th>
+            ))}
+            <th style={{ ...thStyle, background: "#172554", width: "110px" }}>Días</th>
+            <th style={{ ...thStyle, background: "#172554", width: "160px" }}>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {jugadorasFiltradas.length === 0 ? (
+            <tr><td colSpan="36" style={{ textAlign: "center", padding: "4rem", color: "#64748b" }}>No hay pagos este mes que coincidan con los filtros.</td></tr>
+        ) : (
+            jugadorasFiltradas.map(nombre => {
+                const dias = getDiasPagadosFiltrados(nombre);
+                const total = dias.length * valorDiario;
+                const especialidad = getEspecialidadJugadora(nombre);
+                const tipoPago = getTipoPagoJugadora(nombre);
+                return (
+                    <tr key={nombre}>
+                        <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9, textAlign: "left" }}>
+                            {nombre}
+                        </td>
+                        <td style={{ ...tdStyle, background: "#f1f5f9", color: "#475569" }}>
+                            {especialidad}
+                        </td>
+                        <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}>
+                            {tipoPago}
+                        </td>
+                        {Array.from({ length: 31 }, (_, i) => {
+                            const dia = i + 1;
+                            const pagado = dias.includes(dia);
+                            const esHoy = dia === new Date().getDate();
+                            return (
+                                <td key={dia} style={{ textAlign: "center", padding: "0.8rem 0" }}>
+                                    {pagado && (
+                                        <span style={{ color: esHoy ? "#22c55e" : "#2563eb", fontSize: "1.8rem", fontWeight: "bold" }}>
+                                            {esHoy ? "X" : "●"}
+                                        </span>
+                                    )}
+                                </td>
+                            );
+                        })}
+                        <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#0891b2" }}>
+                            {dias.length}
+                        </td>
+                        <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.4rem", color: "#166534" }}>
+                            ${total.toLocaleString("es-CO")}
+                        </td>
+                    </tr>
+                );
+            })
+        )}
+    </tbody>
+</table>
                     </div>
                 )}
             </div>
