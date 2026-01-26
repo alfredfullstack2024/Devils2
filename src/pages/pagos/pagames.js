@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { obtenerClientes } from "../../api/axios";
 
-// Configuración de Meses y Estilos
+// Configuración de Meses y Estilos base
 const MESES_ANIO = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const TIPOS_PAGO = ["TODOS", "Efectivo", "Nequi"];
 
@@ -35,7 +35,7 @@ const Pagames = () => {
     const [filtroTipoPago, setFiltroTipoPago] = useState("TODOS");
     const [filtroPeriodo, setFiltroPeriodo] = useState("MES");
 
-    const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
+    const backendURL = "https://backend-5zxh.onrender.com/api";
 
     const cargarDatosIniciales = async () => {
         try {
@@ -57,9 +57,11 @@ const Pagames = () => {
             const res = await axios.get(`${backendURL}/paga-mes/pagos/${anioSeleccionado}`);
             const pagosReales = res.data.filter(p => p.nombre !== "SYSTEM");
             
-            // Enriquecer con especialidad del cliente
+            // Enriquecer cada pago con la especialidad real del cliente desde la BD
             const pagosEnriquecidos = pagosReales.map(pago => {
-                const cliente = clientes.find(c => `${c.nombre} ${c.apellido}`.trim().toUpperCase() === pago.nombre.toUpperCase());
+                const cliente = clientes.find(c => 
+                    `${c.nombre} ${c.apellido}`.trim().toUpperCase() === pago.nombre.toUpperCase()
+                );
                 return { ...pago, especialidad: cliente?.especialidad || "Sin Especialidad" };
             });
             setPagosDelAnio(pagosEnriquecidos);
@@ -83,7 +85,7 @@ const Pagames = () => {
         if (!clienteSeleccionado || !mesAPagar || !valorManual) return alert("Completa todos los campos");
         try {
             await axios.post(`${backendURL}/paga-mes/pagos`, {
-                nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim(),
+                nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim().toUpperCase(),
                 anio: anioSeleccionado,
                 plan: planSeleccionado,
                 total: Number(valorManual),
@@ -98,14 +100,15 @@ const Pagames = () => {
         } catch (error) { alert("Error al registrar pago"); }
     };
 
-    // Lógica de Filtros
-    const especialidades = useMemo(() => {
+    // Lógica de Filtros Dinámicos
+    const especialidadesDisponibles = useMemo(() => {
         const specs = new Set(clientes.map(c => c.especialidad).filter(Boolean));
         return ["TODAS", ...Array.from(specs).sort()];
     }, [clientes]);
 
     const datosFiltrados = useMemo(() => {
         let pagos = pagosDelAnio;
+
         if (filtroNombre.trim()) {
             pagos = pagos.filter(p => p.nombre.toLowerCase().includes(filtroNombre.toLowerCase()));
         }
@@ -120,7 +123,7 @@ const Pagames = () => {
         return { pagos, total };
     }, [pagosDelAnio, filtroNombre, filtroEspecialidad, filtroTipoPago]);
 
-    const nombresUnicos = useMemo(() => {
+    const nombresUnicosFiltrados = useMemo(() => {
         return [...new Set(datosFiltrados.pagos.map(p => p.nombre))];
     }, [datosFiltrados.pagos]);
 
@@ -147,6 +150,7 @@ const Pagames = () => {
 
                 {/* --- REGISTRADOR PAGO RÁPIDO (Verde) --- */}
                 <div style={{ background: "#f0fdf4", padding: "2rem", borderRadius: "1.5rem", marginBottom: "2rem", border: "4px solid #22c55e" }}>
+                    <h4 style={{ color: "#166534", marginBottom: "1rem" }}>Nuevo Registro de Pago</h4>
                     <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
                         <input
                             type="text" placeholder="Nombre de la niña..." value={searchCliente}
@@ -155,7 +159,7 @@ const Pagames = () => {
                                 const encontrada = clientes.find(c => `${c.nombre} ${c.apellido}`.toLowerCase() === e.target.value.toLowerCase().trim());
                                 setClienteSeleccionado(encontrada || null);
                             }}
-                            list="clientes-list" style={{ ...inputStyle, width: "400px" }}
+                            list="clientes-list" style={{ ...inputStyle, width: "350px" }}
                         />
                         <datalist id="clientes-list">
                             {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
@@ -194,7 +198,7 @@ const Pagames = () => {
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <label style={{ fontSize: "0.9rem", color: "#475569" }}>Especialidad</label>
                             <select value={filtroEspecialidad} onChange={e => setFiltroEspecialidad(e.target.value)} style={{ ...selectStyle, padding: "0.6rem" }}>
-                                {especialidades.map(s => <option key={s} value={s}>{s}</option>)}
+                                {especialidadesDisponibles.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column" }}>
@@ -221,6 +225,7 @@ const Pagames = () => {
                         <thead>
                             <tr style={{ background: "#1e293b", color: "white" }}>
                                 <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10 }}>Jugadora</th>
+                                <th style={{ ...thStyle, background: "#334155" }}>Especialidad</th>
                                 <th style={{ ...thStyle, background: "#334155" }}>Plan</th>
                                 {MESES_ANIO.map(m => <th key={m} style={thStyle}>{m.substring(0, 3)}</th>)}
                                 <th style={{ ...thStyle, background: "#172554" }}>Meses</th>
@@ -228,13 +233,16 @@ const Pagames = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {nombresUnicos.map(nombre => {
+                            {nombresUnicosFiltrados.map(nombre => {
                                 const pagosPersona = datosFiltrados.pagos.filter(p => p.nombre === nombre);
                                 const mesesPagados = new Set(pagosPersona.flatMap(p => p.mesesPagados));
                                 const totalDinero = pagosPersona.reduce((acc, p) => acc + p.total, 0);
+                                const especialidad = pagosPersona[0]?.especialidad || "N/A";
+                                
                                 return (
                                     <tr key={nombre} style={{ borderBottom: "1px solid #e2e8f0" }}>
                                         <td style={{ ...tdStyle, fontWeight: "bold", textAlign: "left", position: "sticky", left: 0, background: "white" }}>{nombre}</td>
+                                        <td style={tdStyle}>{especialidad}</td>
                                         <td style={tdStyle}>{pagosPersona[0]?.plan}</td>
                                         {MESES_ANIO.map(m => (
                                             <td key={m} style={{ ...tdStyle, color: mesesPagados.has(m) ? "#22c55e" : "#e2e8f0", fontSize: "1.5rem" }}>
