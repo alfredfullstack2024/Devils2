@@ -205,10 +205,8 @@ const Pagos = () => {
     const irAPagames = () => {
         navigate("/pagos/pagames");
     };
-    
     return (
         <div className="container mt-4">
-
             <h2>Pagos</h2>
             {error && <Alert variant="danger">{error}</Alert>}
 
@@ -436,6 +434,7 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
 
 
 
