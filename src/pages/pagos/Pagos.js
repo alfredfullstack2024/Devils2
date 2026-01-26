@@ -208,7 +208,7 @@ const Pagos = () => {
     
     return (
         <div className="container mt-4">
-// ... sigue el resto del código
+
             <h2>Pagos</h2>
             {error && <Alert variant="danger">{error}</Alert>}
 
@@ -436,5 +436,6 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
 
 
