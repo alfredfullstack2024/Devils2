@@ -40,7 +40,6 @@ import CrearPago from "./pages/pagos/CrearPago";
 import EditarPago from "./pages/pagos/EditarPago";
 import ReportePagosPorEquipo from "./pages/pagos/ReportePagosPorEquipo";
 import PagosLigas from "./pages/pagos/PagosLigas";
-// ✅ IMPORTACIÓN CORREGIDA: Apuntando al archivo exacto pagames.js
 import Pagames from "./pages/pagos/pagames"; 
 
 // Contabilidad
@@ -62,7 +61,9 @@ const App = () => {
       {/* Rutas Protegidas bajo DashboardLayout */}
       <Ruta element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
         <Ruta path="/" element={<Navegar to="/dashboard" replace />} />
-        <Ruta path="/dashboard" element={<div>TEST DASHBOARD</div>} />
+        
+        {/* ✅ CORRECCIÓN AQUÍ: Se cambió el div por el componente <Dashboard /> */}
+        <Ruta path="/dashboard" element={<Dashboard />} />
 
         <Ruta path="/suscripcion" element={<Suscripcion />} />
 
@@ -93,7 +94,7 @@ const App = () => {
         <Ruta path="/pagos/reporte-equipos" element={<ReportePagosPorEquipo />} />
         <Ruta path="/pagos/ligas" element={<PagosLigas />} />
         
-        {/* ✅ RUTA CORREGIDA: path debe ser /pagos/pagames para que el botón lo encuentre */}
+        {/* ✅ RUTA PAGAMES: Confirmada para coincidir con tus botones */}
         <Ruta path="/pagos/pagames" element={<Pagames />} /> 
 
         {/* Contabilidad */}
