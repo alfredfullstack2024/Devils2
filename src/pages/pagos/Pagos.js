@@ -329,17 +329,20 @@ const Pagos = () => {
                 </Card.Body>
             </Card>
 
-            <div className="mb-3">
-                <Button variant="primary" className="me-2" onClick={() => navigate("/pagos/crear")}>
-                    Crear pago
-                </Button>
-                <Button variant="success" className="me-2" onClick={irAPagosLigas}>
-                    Pagos Ligas
-                </Button>
-                <Button variant="info" onClick={irAPagames}>
-                    Pagos Mes
-                </Button>
-            </div>
+           <div className="mb-3">
+    <Button variant="primary" className="me-2" onClick={() => navigate("/pagos/crear")}>
+        Crear pago
+    </Button>
+    <Button variant="success" className="me-2" onClick={irAPagosLigas}>
+        Pagos Ligas
+    </Button>
+    <Button variant="info" className="me-2" onClick={irAPagames}>
+        Pagos Mes
+    </Button>
+    <Button variant="dark" onClick={() => navigate("/pagos/resumen-general")}>
+        Resumen General
+    </Button>
+</div>
 
             {isLoading && <Alert variant="info">Cargando pagos...</Alert>}
             {!isLoading && pagosFiltrados.length === 0 && !error && (
@@ -423,6 +426,7 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
 
 
 
