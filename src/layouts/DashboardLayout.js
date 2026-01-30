@@ -27,7 +27,11 @@ const DashboardLayout = () => {
     navigate("/login");
   };
 
-  // Menú dinámico basado en el rol
+  // ⛔️ PROTECCIÓN: si aún no hay usuario, no renderizar layout
+  if (!user) {
+    return null;
+  }
+
   const menuItems = {
     admin: [
       { path: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
@@ -71,11 +75,11 @@ const DashboardLayout = () => {
     ],
   };
 
-  const userMenu = user?.rol ? menuItems[user.rol] || menuItems["user"] : [];
+  const userMenu = menuItems[user.rol] || menuItems.user;
 
   return (
     <div className="d-flex" style={{ minHeight: "100vh" }}>
-      {/* Menú Lateral */}
+      {/* Sidebar */}
       <div
         style={{
           width: "250px",
@@ -95,12 +99,20 @@ const DashboardLayout = () => {
           />
           <h5>Admin Escuela</h5>
         </div>
+
         <Nav className="flex-column">
           {userMenu.map((item, index) => (
-            <Nav.Link key={index} as={NavLink} to={item.path} className="text-white">
+            <NavLink
+              key={index}
+              to={item.path}
+              className={({ isActive }) =>
+                `nav-link text-white ${isActive ? "fw-bold bg-secondary" : ""}`
+              }
+            >
               {item.icon} {item.label}
-            </Nav.Link>
+            </NavLink>
           ))}
+
           <Button
             variant="danger"
             className="mt-4 w-75 mx-auto"
@@ -110,7 +122,8 @@ const DashboardLayout = () => {
           </Button>
         </Nav>
       </div>
-      {/* Contenido Principal */}
+
+      {/* Main content */}
       <div style={{ marginLeft: "250px", width: "calc(100% - 250px)" }}>
         <Container className="mt-4">
           <Outlet />
