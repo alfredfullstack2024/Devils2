@@ -337,7 +337,7 @@ const Pagos = () => {
                     Pagos Ligas
                 </Button>
                 <Button variant="info" onClick={irAPagames}>
-                    Ver Pagames
+                    Pagos Mes
                 </Button>
             </div>
 
@@ -423,6 +423,7 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
 
 
 
