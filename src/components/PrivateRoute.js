@@ -1,6 +1,6 @@
-import { Navigate, useLocation, useSearchParams } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isPublic = searchParams.get("public") === "true";
@@ -12,7 +12,7 @@ const PrivateRoute = ({ children }) => {
   ];
 
   if (isPublic || publicRoutes.includes(location.pathname)) {
-    return children;
+    return <Outlet />;
   }
 
   const token = localStorage.getItem("token");
@@ -21,7 +21,7 @@ const PrivateRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <Outlet />;
 };
 
 export default PrivateRoute;
