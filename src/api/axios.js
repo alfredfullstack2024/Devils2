@@ -9,7 +9,7 @@ const getBaseUrl = () => {
 
 const api = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 50000,
+  timeout: 30000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -105,5 +105,6 @@ export const login = (data) => api.post("/auth/login", data);
 export const registrarse = (data) => api.post("/auth/register", data);
 
 export default api;
+
 
 
