@@ -3,7 +3,7 @@ import axios from "axios";
 const getBaseUrl = () => {
   const envUrl = process.env.REACT_APP_API_URL;
   const defaultDevUrl = "http://localhost:5000/api";
-  const defaultProdUrl = "https://backend-5zxh.onrender.com/api";
+  const defaultProdUrl = "https://devils2.onrender.com/api";
   return envUrl || (process.env.NODE_ENV === "development" ? defaultDevUrl : defaultProdUrl);
 };
 
@@ -105,3 +105,4 @@ export const login = (data) => api.post("/auth/login", data);
 export const registrarse = (data) => api.post("/auth/register", data);
 
 export default api;
+
