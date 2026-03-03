@@ -93,7 +93,7 @@ const DashboardLayout = () => {
       >
         <div className="text-center mb-4">
           <img
-            src="https://raw.githubusercontent.com/alfredfullstack2024/alfredfullstack.com/main/images/LOGOICONIC.jpg"
+            src="https://raw.githubusercontent.com/alfredfullstack2024/alfredfullstack.com/refs/heads/main/images/Devilsgris.jpg"
             alt="Logo Iconic"
             style={{ width: "150px", marginBottom: "10px", objectFit: "contain" }}
           />
@@ -134,3 +134,4 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
+
