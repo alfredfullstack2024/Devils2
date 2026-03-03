@@ -27,8 +27,8 @@ const Dashboard = () => {
             </h5>
             <p>Equipo:</p>
             <img
-              src="https://raw.githubusercontent.com/alfredfullstack2024/alfredfullstack.com/main/images/LOGOICONIC.jpg"
-              alt="Logo Iconic"
+              src="https://github.com/alfredfullstack2024/alfredfullstack.com/blob/main/images/Devilsgris.jpg"
+              alt="Logo Devils"
               style={{ width: "120px", marginTop: "10px", objectFit: "contain" }}
             />
           </div>
@@ -39,3 +39,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
