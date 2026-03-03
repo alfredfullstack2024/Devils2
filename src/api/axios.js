@@ -6,7 +6,7 @@ const getBaseUrl = () => {
   if (envUrl) return envUrl;
 
   const defaultDevUrl = "http://localhost:5000/api/";
-  const defaultProdUrl = "https://devils2.onrender.com/api/";
+  const defaultProdUrl = "https://devils-1.onrender.com/api/";
   
   return process.env.NODE_ENV === "development" ? defaultDevUrl : defaultProdUrl;
 };
@@ -108,6 +108,7 @@ export const login = (data) => api.post("/auth/login", data);
 export const registrarse = (data) => api.post("/auth/register", data);
 
 export default api;
+
 
 
 
