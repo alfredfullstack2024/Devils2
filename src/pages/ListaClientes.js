@@ -156,6 +156,7 @@ const ListaClientes = () => {
             <th>Talla Inferior</th>
             <th>Especialidad</th> {/* 👈 cambiado de Equipo a Especialidad */}
             <th>Responsable</th>
+        <th>Contacto Responsable</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -178,7 +179,9 @@ const ListaClientes = () => {
                 <td>{cliente.tallaTrenSuperior || "No especificado"}</td>
                 <td>{cliente.tallaTrenInferior || "No especificado"}</td>
                 <td>{cliente.especialidad || "No asignada"}</td> {/* 👈 corregido */}
+                       
                 <td>{cliente.nombreResponsable || "No especificado"}</td>
+                                <td>{cliente.numeroContactoResponsable || "No especificado"}</td>
                 <td>
                   <Link to={`/clientes/editar/${cliente._id}`}>
                     <Button variant="warning" className="me-2">
@@ -196,7 +199,7 @@ const ListaClientes = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="17" className="text-center">
+              <td colSpan="18" className="text-center">
                 No hay clientes que coincidan con la búsqueda
               </td>
             </tr>
@@ -208,3 +211,4 @@ const ListaClientes = () => {
 };
 
 export default ListaClientes;
+
