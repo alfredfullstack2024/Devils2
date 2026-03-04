@@ -1,3 +1,4 @@
+// src/pages/CrearCliente.js
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Alert } from "react-bootstrap";
@@ -31,6 +32,8 @@ const CrearCliente = () => {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+
+  const tallas = ["S", "M", "L", "XL"];
 
   useEffect(() => {
     const fetchEspecialidades = async () => {
@@ -83,21 +86,6 @@ const CrearCliente = () => {
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError("Correo electrónico inválido.");
-      return;
-    }
-
-    if (!/^\d{10}$/.test(formData.telefono)) {
-      setError("El teléfono debe tener 10 dígitos numéricos.");
-      return;
-    }
-
-    if (!formData.direccion.trim()) {
-      setError("La dirección es obligatoria.");
-      return;
-    }
-
     if (!formData.numeroIdentificacion.trim()) {
       setError("El número de identificación es obligatorio.");
       return;
@@ -108,18 +96,13 @@ const CrearCliente = () => {
       return;
     }
 
-    if (!formData.edad || isNaN(formData.edad) || formData.edad <= 0) {
-      setError("La edad debe ser un número positivo.");
+    if (!formData.edad || isNaN(formData.edad)) {
+      setError("La edad es inválida.");
       return;
     }
 
     if (!formData.especialidad) {
       setError("La especialidad es obligatoria.");
-      return;
-    }
-
-    if (!user || !user.token) {
-      setError("Debes iniciar sesión para crear un cliente.");
       return;
     }
 
@@ -129,9 +112,9 @@ const CrearCliente = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       };
 
-      const response = await crearCliente(formData, config);
+      await crearCliente(formData, config);
 
-      setSuccess("Cliente creado con éxito!");
+      setSuccess("Cliente creado con éxito");
 
       setFormData({
         nombre: "",
@@ -157,16 +140,12 @@ const CrearCliente = () => {
 
     } catch (err) {
 
-      console.error(err);
-
       setError(
         "Error al crear el cliente: " +
-        (err.response?.data?.message || err.message || "Error desconocido")
+        (err.response?.data?.message || err.message)
       );
     }
   };
-
-  const tallas = ["S", "M", "L", "XL"];
 
   return (
 
@@ -186,8 +165,6 @@ const CrearCliente = () => {
             name="nombre"
             value={formData.nombre}
             onChange={handleChange}
-            placeholder="Ingresa el nombre"
-            required
           />
         </Form.Group>
 
@@ -198,32 +175,26 @@ const CrearCliente = () => {
             name="apellido"
             value={formData.apellido}
             onChange={handleChange}
-            placeholder="Ingresa el apellido"
-            required
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>Correo electrónico</Form.Label>
+          <Form.Label>Correo</Form.Label>
           <Form.Control
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Ingresa el correo"
-            required
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
           <Form.Label>Teléfono</Form.Label>
           <Form.Control
-            type="tel"
+            type="text"
             name="telefono"
             value={formData.telefono}
             onChange={handleChange}
-            placeholder="Ingresa el teléfono"
-            required
           />
         </Form.Group>
 
@@ -234,8 +205,6 @@ const CrearCliente = () => {
             name="direccion"
             value={formData.direccion}
             onChange={handleChange}
-            placeholder="Ingresa la dirección"
-            required
           />
         </Form.Group>
 
@@ -246,19 +215,16 @@ const CrearCliente = () => {
             name="numeroIdentificacion"
             value={formData.numeroIdentificacion}
             onChange={handleChange}
-            placeholder="Ingresa el número"
-            required
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>Fecha de Nacimiento</Form.Label>
+          <Form.Label>Fecha Nacimiento</Form.Label>
           <Form.Control
             type="date"
             name="fechaNacimiento"
             value={formData.fechaNacimiento}
             onChange={handleChange}
-            required
           />
         </Form.Group>
 
@@ -269,8 +235,69 @@ const CrearCliente = () => {
             name="edad"
             value={formData.edad}
             onChange={handleChange}
-            required
           />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Tipo Documento</Form.Label>
+          <Form.Select
+            name="tipoDocumento"
+            value={formData.tipoDocumento}
+            onChange={handleChange}
+          >
+            <option value="C.C">C.C</option>
+            <option value="T.I">T.I</option>
+            <option value="C.E">C.E</option>
+            <option value="PPT">PPT</option>
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>RH</Form.Label>
+          <Form.Control
+            type="text"
+            name="rh"
+            value={formData.rh}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>EPS</Form.Label>
+          <Form.Control
+            type="text"
+            name="eps"
+            value={formData.eps}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Talla Tren Superior</Form.Label>
+          <Form.Select
+            name="tallaTrenSuperior"
+            value={formData.tallaTrenSuperior}
+            onChange={handleChange}
+          >
+            <option value="">Selecciona talla</option>
+            {tallas.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Talla Tren Inferior</Form.Label>
+          <Form.Select
+            name="tallaTrenInferior"
+            value={formData.tallaTrenInferior}
+            onChange={handleChange}
+          >
+            <option value="">Selecciona talla</option>
+            {tallas.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </Form.Select>
         </Form.Group>
 
         <Form.Group className="mb-3">
@@ -280,37 +307,31 @@ const CrearCliente = () => {
             name="nombreResponsable"
             value={formData.nombreResponsable}
             onChange={handleChange}
-            placeholder="Ingresa el nombre del responsable"
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
           <Form.Label>Número Contacto Responsable</Form.Label>
           <Form.Control
-            type="tel"
+            type="text"
             name="numeroContactoResponsable"
             value={formData.numeroContactoResponsable}
             onChange={handleChange}
-            placeholder="Ingresa el número del responsable"
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
           <Form.Label>Especialidad</Form.Label>
-          <Form.Control
-            as="select"
+          <Form.Select
             name="especialidad"
             value={formData.especialidad}
             onChange={handleChange}
-            required
           >
-            <option value="">Selecciona una especialidad</option>
+            <option value="">Selecciona especialidad</option>
             {especialidades.map((esp, idx) => (
-              <option key={idx} value={esp}>
-                {esp}
-              </option>
+              <option key={idx} value={esp}>{esp}</option>
             ))}
-          </Form.Control>
+          </Form.Select>
         </Form.Group>
 
         <Form.Group className="mb-3">
