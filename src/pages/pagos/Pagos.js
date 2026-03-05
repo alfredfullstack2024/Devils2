@@ -332,10 +332,11 @@ const Pagos = () => {
            <div className="mb-3">
     <Button variant="primary" className="me-2" onClick={() => navigate("/pagos/crear")}>
         Crear pago
-    </Button>
-    <Button variant="success" className="me-2" onClick={irAPagosLigas}>
-        Pagos Ligas
-    </Button>
+    {false && (
+        <Button variant="success" className="me-2" onClick={irAPagosLigas}>
+            Pagos Ligas
+        </Button>
+    )}
     <Button variant="info" className="me-2" onClick={irAPagames}>
         Pagos Mes
     </Button>
@@ -426,6 +427,7 @@ const Pagos = () => {
 };
 
 export default Pagos;
+
 
 
 
