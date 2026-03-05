@@ -24,7 +24,7 @@ const Pagames = () => {
     // Estados Registro Rápido
     const [searchCliente, setSearchCliente] = useState("");
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-    const [planSeleccionado, setPlanSeleccionado] = useState("Plan Black");
+    const [planSeleccionado, setPlanSeleccionado] = useState("Mensualidad");
     const [valorManual, setValorManual] = useState("");
     const [mesAPagar, setMesAPagar] = useState("");
     const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState("Efectivo");
@@ -170,13 +170,13 @@ const Pagames = () => {
                         <datalist id="clientes-list">
                             {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
                         </datalist>
-
+{/*
                         <select style={selectStyle} value={planSeleccionado} onChange={e => setPlanSeleccionado(e.target.value)}>
                             <option value="Plan Black">Plan Black</option>
                             <option value="Plan White">Plan White</option>
                             <option value="Plan Gold">Plan Gold</option>
                         </select>
-
+*/}
                         <input type="number" placeholder="Valor $" style={{ ...inputStyle, width: "180px" }} value={valorManual} onChange={e => setValorManual(e.target.value)} />
 
                         <select style={selectStyle} value={mesAPagar} onChange={e => setMesAPagar(e.target.value)}>
@@ -233,7 +233,7 @@ const Pagames = () => {
                             <tr style={{ background: "#1e293b", color: "white" }}>
                                 <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10 }}>Jugadora</th>
                                 <th style={{ ...thStyle, background: "#334155" }}>Especialidad</th>
-                                <th style={{ ...thStyle, background: "#334155" }}>Plan</th>
+                                {/*<th style={{ ...thStyle, background: "#334155" }}>Plan</th>*/}
                                 {MESES_ANIO.map(m => <th key={m} style={thStyle}>{m.substring(0, 3)}</th>)}
                                 <th style={{ ...thStyle, background: "#172554" }}>Meses</th>
                                 <th style={{ ...thStyle, background: "#172554" }}>Total</th>
@@ -250,7 +250,7 @@ const Pagames = () => {
                                     <tr key={nombre} style={{ borderBottom: "1px solid #e2e8f0" }}>
                                         <td style={{ ...tdStyle, fontWeight: "bold", textAlign: "left", position: "sticky", left: 0, background: "white" }}>{nombre}</td>
                                         <td style={tdStyle}>{especialidad}</td>
-                                        <td style={tdStyle}>{pagosPersona[0]?.plan}</td>
+                                        {/*<td style={tdStyle}>{pagosPersona[0]?.plan}</td>*/}
                                         {MESES_ANIO.map(m => (
                                             <td key={m} style={{ ...tdStyle, color: mesesPagados.has(m) ? "#22c55e" : "#e2e8f0", fontSize: "1.5rem" }}>
                                                 {mesesPagados.has(m) ? "✔" : "○"}
