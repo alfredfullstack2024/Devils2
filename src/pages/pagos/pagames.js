@@ -33,7 +33,7 @@ const Pagames = () => {
     const [filtroNombre, setFiltroNombre] = useState("");
     const [filtroEspecialidad, setFiltroEspecialidad] = useState("TODAS");
     const [filtroTipoPago, setFiltroTipoPago] = useState("TODOS");
-    const [filtroPeriodo, setFiltroPeriodo] = useState("MES");
+    const [filtroPeriodo, setFiltroPeriodo] = useState("TODO EL AÑO");
 
     const backendURL = "https://backend-5zxh.onrender.com/api";
 
@@ -118,11 +118,17 @@ const Pagames = () => {
         if (filtroTipoPago !== "TODOS") {
             pagos = pagos.filter(p => p.tipoPago === filtroTipoPago);
         }
+        
+        // Filtro de periodo
+        if (filtroPeriodo !== "TODO EL AÑO") {
+            pagos = pagos.filter(p => p.mesesPagados.includes(filtroPeriodo));
+        }
 
         const total = pagos.reduce((acc, p) => acc + p.total, 0);
         return { pagos, total };
-    }, [pagosDelAnio, filtroNombre, filtroEspecialidad, filtroTipoPago]);
-
+        
+        // AQUÍ ESTABA EL ERROR: faltaba agregar filtroPeriodo al final
+    }, [pagosDelAnio, filtroNombre, filtroEspecialidad, filtroTipoPago, filtroPeriodo]);
     const nombresUnicosFiltrados = useMemo(() => {
         return [...new Set(datosFiltrados.pagos.map(p => p.nombre))];
     }, [datosFiltrados.pagos]);
@@ -207,12 +213,13 @@ const Pagames = () => {
                                 {TIPOS_PAGO.map(t => <option key={t} value={t}>{t}</option>)}
                             </select>
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column" }}>
-                            <label style={{ fontSize: "0.9rem", color: "#475569" }}>Periodo</label>
-                            <select value={filtroPeriodo} onChange={e => setFiltroPeriodo(e.target.value)} style={{ ...selectStyle, padding: "0.6rem" }}>
-                                <option value="MES">Mes Completo</option>
-                            </select>
-                        </div>
+                       <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ fontSize: "0.9rem", color: "#475569" }}>Periodo</label>
+    <select value={filtroPeriodo} onChange={e => setFiltroPeriodo(e.target.value)} style={{ ...selectStyle, padding: "0.6rem" }}>
+        <option value="TODO EL AÑO">Todo el año</option>
+        {MESES_ANIO.map(m => <option key={m} value={m}>{m}</option>)}
+    </select>
+</div>
                         <div style={{ background: "#064e3b", color: "white", padding: "1rem 2rem", borderRadius: "1rem", fontSize: "1.5rem", fontWeight: "bold", marginLeft: "auto" }}>
                             TOTAL FILTRADO: ${datosFiltrados.total.toLocaleString("es-CO")}
                         </div>
