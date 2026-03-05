@@ -35,7 +35,7 @@ const Pagames = () => {
     const [filtroTipoPago, setFiltroTipoPago] = useState("TODOS");
     const [filtroPeriodo, setFiltroPeriodo] = useState("TODO EL AÑO");
 
-    const backendURL = "https://backend-5zxh.onrender.com/api";
+    const backendURL = "https://devils-1.onrender.com/api";
 
     const cargarDatosIniciales = async () => {
         try {
