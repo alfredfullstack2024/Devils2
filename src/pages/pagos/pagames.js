@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
+import api from "../../api/axios";
 import { obtenerClientes } from "../../api/axios";
 
 // Configuración de Meses y Estilos base
@@ -35,12 +35,12 @@ const Pagames = () => {
     const [filtroTipoPago, setFiltroTipoPago] = useState("TODOS");
     const [filtroPeriodo, setFiltroPeriodo] = useState("MES");
 
-    const backendURL = "https://backend-5zxh.onrender.com/api";
+    
 
     const cargarDatosIniciales = async () => {
         try {
             const [aniosRes, clientesRes] = await Promise.all([
-                axios.get(`${backendURL}/paga-mes/anios`),
+                api.get("/paga-mes/anios")
                 obtenerClientes()
             ]);
             setAnios(aniosRes.data);
@@ -54,7 +54,7 @@ const Pagames = () => {
     const cargarPagos = async () => {
         if (!anioSeleccionado) return;
         try {
-            const res = await axios.get(`${backendURL}/paga-mes/pagos/${anioSeleccionado}`);
+            const res = await axios.get(`${backendURL}/;
             const pagosReales = res.data.filter(p => p.nombre !== "SYSTEM");
             
             // Enriquecer cada pago con la especialidad real del cliente desde la BD
@@ -74,7 +74,7 @@ const Pagames = () => {
     const crearAnio = async () => {
         if (!nuevoAnio.trim()) return alert("Escribe un año");
         try {
-            await axios.post(`${backendURL}/paga-mes/crear-anio`, { nombre: nuevoAnio.trim() });
+            await axios.post(`${backendURL}/paga-mes/crear-anio`;
             alert("Año creado");
             setNuevoAnio("");
             cargarDatosIniciales();
@@ -84,7 +84,7 @@ const Pagames = () => {
     const registrarPago = async () => {
         if (!clienteSeleccionado || !mesAPagar || !valorManual) return alert("Completa todos los campos");
         try {
-            await axios.post(`${backendURL}/paga-mes/pagos`, {
+            await api.post("/paga-mes/pagos", {
                 nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim().toUpperCase(),
                 anio: anioSeleccionado,
                 plan: planSeleccionado,
