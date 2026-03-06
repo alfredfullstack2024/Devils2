@@ -13,7 +13,7 @@ const getBaseUrl = () => {
 
 const api = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 50000, // Subimos a 50s para evitar el error de timeout de Render
+  timeout: 30000, // Subimos a 50s para evitar el error de timeout de Render
   headers: { "Content-Type": "application/json" },
 });
 api.interceptors.request.use(
@@ -108,6 +108,7 @@ export const login = (data) => api.post("/auth/login", data);
 export const registrarse = (data) => api.post("/auth/register", data);
 
 export default api;
+
 
 
 
