@@ -64,15 +64,21 @@ const ResumenGeneral = () => {
       });
 
       // 🔹 2. MENSUALIDADES (LA PARTE QUE TE FALTABA)
-      const resMensualidades = await api.get(`/pagos/mensualidades/${year}`);
+      const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
       const mensualidadesData = resMensualidades.data || [];
 
-      const mensualidadesMes = mensualidadesData.filter((m) => {
-  const fecha = new Date(m.fecha);
-  return (
-    fecha.getFullYear() === Number(year) &&
-    fecha.getMonth() + 1 === Number(month)
-  );
+     const mensualidadesMes = resMensualidades.data.filter((m) =>
+  m.mesesPagados.includes(
+    new Date(`${year}-${month}-01`).toLocaleString("es-ES", {
+      month: "long"
+    }).toLowerCase()
+  )
+);
+
+const totalMensualidades = mensualidadesMes.reduce(
+  (acc, m) => acc + (m.total || 0),
+  0
+);
 });
 
       const totalMensualidades = mensualidadesMes.reduce(
