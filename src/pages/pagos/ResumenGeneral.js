@@ -1,195 +1,189 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Row, Col, Form, Button, Spinner, Alert } from "react-bootstrap";
 import api from "../../api/axios";
 
 const ResumenGeneral = () => {
-    const todayISO = new Date().toISOString().split("T")[0];
+  const mesActual = new Date().toISOString().slice(0, 7);
+  const [mes, setMes] = useState(mesActual);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const [filtroTipo, setFiltroTipo] = useState("dia");
-    const [dia, setDia] = useState(todayISO);
-    const [mes, setMes] = useState("");
-    const [semana, setSemana] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+  const [data, setData] = useState({
+    ligas: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
+    mensualidades: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
+    productos: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
+    totalGeneral: 0,
+  });
 
-    const [data, setData] = useState({
-        pagos: 0,
-        ligas: 0,
-        pagosMes: 0,
-        total: 0,
-    });
+  const [fechaCierre, setFechaCierre] = useState(new Date().toISOString().split("T")[0]);
+  const [cierre, setCierre] = useState({
+    ligas: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
+    mensualidades: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
+    productos: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
+    totalDia: 0,
+  });
 
-    const obtenerRangoFechas = () => {
-        let startDate, endDate;
+  const [loadingCierre, setLoadingCierre] = useState(false);
 
-        if (filtroTipo === "dia" && dia) {
-            startDate = new Date(dia);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(dia);
-            endDate.setHours(23, 59, 59, 999);
-        }
+  const obtenerRangoFechas = () => {
+    const [year, month] = mes.split("-");
+    const startDate = `${year}-${month}-01T00:00:00.000Z`;
+    const ultimoDia = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${month}-${ultimoDia}T23:59:59.999Z`;
+    return { startDate, endDate };
+  };
 
-        if (filtroTipo === "mes" && mes) {
-            const [year, month] = mes.split("-");
-            startDate = new Date(year, month - 1, 1);
-            endDate = new Date(year, month, 0);
-            endDate.setHours(23, 59, 59, 999);
-        }
+  const cargarResumen = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const { startDate, endDate } = obtenerRangoFechas();
 
-        if (filtroTipo === "semana" && semana) {
-            const [year, week] = semana.split("-W");
-            const date = new Date(year, 0, 1);
-            const day = date.getDay();
-            const dayOffset = (day <= 4) ? -day + 1 : -day + 8;
-            date.setDate(date.getDate() + dayOffset + (week - 1) * 7);
+      const res = await api.get("/reportes/resumen-general", {
+        params: {
+          fechaInicio: startDate,
+          fechaFin: endDate,
+        },
+      });
 
-            startDate = new Date(date);
-            startDate.setHours(0, 0, 0, 0);
+      setData({
+        ligas: res.data?.ligas || data.ligas,
+        mensualidades: res.data?.mensualidades || data.mensualidades,
+        productos: res.data?.productos || data.productos,
+        totalGeneral: res.data?.totalGeneral || 0,
+      });
+    } catch (err) {
+      console.error("Error resumen general", err);
+      setError("Error al cargar el resumen general");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 6);
-            endDate.setHours(23, 59, 59, 999);
-        }
+  const cargarCierre = async () => {
+    try {
+      setLoadingCierre(true);
+      const res = await api.get("/reportes/cierre-diario", {
+        params: { fecha: fechaCierre },
+      });
+      setCierre(res.data);
+    } catch (err) {
+      console.error("Error cierre diario", err);
+    } finally {
+      setLoadingCierre(false);
+    }
+  };
 
-        return { startDate, endDate };
-    };
+  useEffect(() => {
+    cargarResumen();
+  }, []);
 
-    const cargarResumen = async () => {
-        try {
-            setLoading(true);
-            setError("");
+  const StatCard = ({ title, stats }) => (
+    <Card className="p-3 shadow-sm h-100">
+      <h5 className="text-center">{title}</h5>
+      <hr />
+      <div className="d-flex justify-content-between mb-2">
+        <strong>Total:</strong>
+        <strong>${(stats.total || 0).toLocaleString("es-CO")}</strong>
+      </div>
+      <div className="d-flex justify-content-between">
+        <span>Efectivo:</span>
+        <span>${(stats.efectivo || 0).toLocaleString("es-CO")}</span>
+      </div>
+      <div className="d-flex justify-content-between">
+        <span>Transferencia:</span>
+        <span>${(stats.transferencia || 0).toLocaleString("es-CO")}</span>
+      </div>
+      <div className="d-flex justify-content-between">
+        <span>Tarjeta:</span>
+        <span>${(stats.tarjeta || 0).toLocaleString("es-CO")}</span>
+      </div>
+    </Card>
+  );
 
-            const { startDate, endDate } = obtenerRangoFechas();
+  return (
+    <div className="container mt-4">
+      <h2 className="mb-4">Resumen General de Recaudo</h2>
+      {error && <Alert variant="danger">{error}</Alert>}
 
-            if (!startDate || !endDate) {
-                setError("Selecciona un filtro válido");
-                setLoading(false);
-                return;
-            }
+      <Card className="mb-4">
+        <Card.Body>
+          <Row className="align-items-end">
+            <Col md={3}>
+              <Form.Group>
+                <Form.Label>Mes</Form.Label>
+                <Form.Control type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Button variant="primary" className="w-100" onClick={cargarResumen} disabled={loading}>
+                {loading ? <Spinner size="sm" /> : "Consultar"}
+              </Button>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
 
-            const res = await api.get("/reportes/resumen-general", {
-                params: {
-                    fechaInicio: startDate.toISOString(),
-                    fechaFin: endDate.toISOString(),
-                },
-            });
-
-            setData(res.data);
-        } catch (e) {
-            console.error("Error resumen general", e);
-            setError("Error al cargar el resumen general");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="container mt-4">
-            <h2>Resumen General de Recaudo</h2>
-
-            {error && <Alert variant="danger">{error}</Alert>}
-
-            <Card className="mb-4">
-                <Card.Body>
-                    <Row className="align-items-end">
-                        <Col md={3}>
-                            <Form.Group>
-                                <Form.Label>Tipo de Filtro</Form.Label>
-                                <Form.Select
-                                    value={filtroTipo}
-                                    onChange={(e) => setFiltroTipo(e.target.value)}
-                                >
-                                    <option value="dia">Día</option>
-                                    <option value="semana">Semana</option>
-                                    <option value="mes">Mes</option>
-                                </Form.Select>
-                            </Form.Group>
-                        </Col>
-
-                        {filtroTipo === "dia" && (
-                            <Col md={3}>
-                                <Form.Group>
-                                    <Form.Label>Día</Form.Label>
-                                    <Form.Control
-                                        type="date"
-                                        value={dia}
-                                        onChange={(e) => setDia(e.target.value)}
-                                    />
-                                </Form.Group>
-                            </Col>
-                        )}
-
-                        {filtroTipo === "mes" && (
-                            <Col md={3}>
-                                <Form.Group>
-                                    <Form.Label>Mes</Form.Label>
-                                    <Form.Control
-                                        type="month"
-                                        value={mes}
-                                        onChange={(e) => setMes(e.target.value)}
-                                    />
-                                </Form.Group>
-                            </Col>
-                        )}
-
-                        {filtroTipo === "semana" && (
-                            <Col md={3}>
-                                <Form.Group>
-                                    <Form.Label>Semana</Form.Label>
-                                    <Form.Control
-                                        type="week"
-                                        value={semana}
-                                        onChange={(e) => setSemana(e.target.value)}
-                                    />
-                                </Form.Group>
-                            </Col>
-                        )}
-
-                        <Col md={3}>
-                            <Button
-                                variant="primary"
-                                className="w-100"
-                                onClick={cargarResumen}
-                            >
-                                Consultar
-                            </Button>
-                        </Col>
-                    </Row>
-                </Card.Body>
-            </Card>
-
-            {loading ? (
-                <Spinner animation="border" />
-            ) : (
-                <Row>
-                    <Col md={3}>
-                        <Card className="p-3 text-center">
-                            <h5>Pagos</h5>
-                            <h3>${data.pagos.toLocaleString("es-CO")}</h3>
-                        </Card>
-                    </Col>
-                    <Col md={3}>
-                        <Card className="p-3 text-center">
-                            <h5>Ligas</h5>
-                            <h3>${data.ligas.toLocaleString("es-CO")}</h3>
-                        </Card>
-                    </Col>
-                    <Col md={3}>
-                        <Card className="p-3 text-center">
-                            <h5>Pagos Mes</h5>
-                            <h3>${data.pagosMes.toLocaleString("es-CO")}</h3>
-                        </Card>
-                    </Col>
-                    <Col md={3}>
-                        <Card bg="dark" text="white" className="p-3 text-center">
-                            <h5>TOTAL</h5>
-                            <h2>${data.total.toLocaleString("es-CO")}</h2>
-                        </Card>
-                    </Col>
-                </Row>
-            )}
+      {loading ? (
+        <div className="text-center my-5">
+          <Spinner animation="border" variant="primary" />
         </div>
-    );
+      ) : (
+        <>
+          <Row className="mb-4">
+            <Col md={4}><StatCard title="Ligas" stats={data.ligas} /></Col>
+            <Col md={4}><StatCard title="Mensualidades" stats={data.mensualidades} /></Col>
+            <Col md={4}><StatCard title="Productos" stats={data.productos} /></Col>
+          </Row>
+
+          <Row className="mb-4">
+            <Col md={12}>
+              <Card bg="dark" text="white" className="p-4 text-center shadow">
+                <h4>TOTAL GENERAL</h4>
+                <h2>${(data.totalGeneral || 0).toLocaleString("es-CO")}</h2>
+              </Card>
+            </Col>
+          </Row>
+
+          <hr className="my-5" />
+          <h3 className="text-center mb-4">Cierre Diario</h3>
+
+          <Card className="mb-4">
+            <Card.Body>
+              <Row className="align-items-end">
+                <Col md={3}>
+                  <Form.Group>
+                    <Form.Label>Fecha cierre</Form.Label>
+                    <Form.Control type="date" value={fechaCierre} onChange={(e) => setFechaCierre(e.target.value)} />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Button variant="success" className="w-100" onClick={cargarCierre} disabled={loadingCierre}>
+                    {loadingCierre ? <Spinner size="sm" /> : "Calcular cierre"}
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+
+          <Row className="mb-4">
+            <Col md={4}><StatCard title="Ligas" stats={cierre.ligas} /></Col>
+            <Col md={4}><StatCard title="Mensualidades" stats={cierre.mensualidades} /></Col>
+            <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
+          </Row>
+
+          <Row>
+            <Col md={12}>
+              <Card bg="success" text="white" className="p-4 text-center shadow">
+                <h4>TOTAL DEL DIA</h4>
+                <h2>${(cierre.totalDia || 0).toLocaleString("es-CO")}</h2>
+              </Card>
+            </Col>
+          </Row>
+        </>
+      )}
+    </div>
+  );
 };
 
 export default ResumenGeneral;
