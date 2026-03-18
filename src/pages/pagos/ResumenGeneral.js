@@ -79,7 +79,7 @@ const totalMensualidades = mensualidadesMes.reduce(
   (acc, m) => acc + (m.total || 0),
   0
 );
-});
+
 
       const totalMensualidades = mensualidadesMes.reduce(
         (acc, m) => acc + (m.monto || 0),
