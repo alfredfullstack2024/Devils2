@@ -11,7 +11,7 @@ const formatCurrencySafe = (amount) => {
 };
 
 const Pagos = () => {
-    const todayISO = new Date().toISOString().split("T")[0];
+    const todayISO = new Date().toLocaleDateString("en-CA");
     const currentYear = new Date().getFullYear();
 
     const [pagos, setPagos] = useState([]);
@@ -74,10 +74,9 @@ const Pagos = () => {
                 params.fechaInicio = startDate.toISOString();
                 params.fechaFin = endDate.toISOString();
             } else if (filtroTipo === "dia" && dia) {
-                const startDate = new Date(dia);
-                startDate.setHours(0, 0, 0, 0);
-                const endDate = new Date(dia);
-                endDate.setHours(23, 59, 59, 999);
+                const [year, month, day] = dia.split("-");
+const startDate = new Date(year, month - 1, day, 0, 0, 0);
+const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
                 params.fechaInicio = startDate.toISOString();
                 params.fechaFin = endDate.toISOString();
             }
@@ -151,7 +150,7 @@ const Pagos = () => {
         }
     };
 
-    const formatFecha = (fecha) => new Date(fecha).toLocaleDateString("es-ES");
+    const formatFecha = (fecha) => new Date(fecha).toLocaleDateString("es-CO");
 
     const abrirResumen = async () => {
         try {
@@ -317,7 +316,7 @@ const Pagos = () => {
                     </Form>
 
                     <Alert variant="info" className="mt-3 text-center">
-                        Información del día -- {new Date().toLocaleDateString("es-ES")} para ver más información use los filtros
+                        Información del día -- {new Date().toLocaleDateString("es-CO")} para ver más información use los filtros
                     </Alert>
 
                     <div className="mt-4 p-3 bg-success text-white rounded text-center">
