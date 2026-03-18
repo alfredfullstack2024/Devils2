@@ -4,6 +4,7 @@ import api from "../../api/axios";
 
 const ResumenGeneral = () => {
   const mesActual = new Date().toISOString().slice(0, 7);
+
   const [mes, setMes] = useState(mesActual);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -15,7 +16,10 @@ const ResumenGeneral = () => {
     totalGeneral: 0,
   });
 
-  const [fechaCierre, setFechaCierre] = useState(new Date().toISOString().split("T")[0]);
+  const [fechaCierre, setFechaCierre] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
   const [cierre, setCierre] = useState({
     ligas: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
     mensualidades: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
@@ -25,50 +29,106 @@ const ResumenGeneral = () => {
 
   const [loadingCierre, setLoadingCierre] = useState(false);
 
-  const obtenerRangoFechas = () => {
-    const [year, month] = mes.split("-");
-    const startDate = `${year}-${month}-01T00:00:00.000Z`;
-    const ultimoDia = new Date(year, month, 0).getDate();
-    const endDate = `${year}-${month}-${ultimoDia}T23:59:59.999Z`;
-    return { startDate, endDate };
-  };
+  // 🔹 Función para calcular totales
+  const calcular = (lista) => ({
+    total: lista.reduce((acc, p) => acc + (p.monto || 0), 0),
+    efectivo: lista
+      .filter((p) => p.metodoPago === "Efectivo")
+      .reduce((acc, p) => acc + (p.monto || 0), 0),
+    transferencia: lista
+      .filter((p) => p.metodoPago === "Transferencia")
+      .reduce((acc, p) => acc + (p.monto || 0), 0),
+    tarjeta: lista
+      .filter((p) => p.metodoPago === "Tarjeta")
+      .reduce((acc, p) => acc + (p.monto || 0), 0),
+  });
 
+  // 🔹 RESUMEN GENERAL (MES)
   const cargarResumen = async () => {
     try {
       setLoading(true);
       setError("");
-      const { startDate, endDate } = obtenerRangoFechas();
 
-      const res = await api.get("/reportes/resumen-general", {
-        params: {
-          fechaInicio: startDate,
-          fechaFin: endDate,
-        },
+      const res = await api.get("/pagos");
+      let pagos = res.data.pagos || [];
+
+      const [year, month] = mes.split("-");
+
+      const pagosMes = pagos.filter((p) => {
+        const fecha = new Date(p.fecha);
+        return (
+          fecha.getFullYear() === Number(year) &&
+          fecha.getMonth() + 1 === Number(month)
+        );
       });
+
+      const ligas = pagosMes.filter((p) =>
+        (p.productoManual || "").toLowerCase().includes("liga")
+      );
+
+      const mensualidades = pagosMes.filter((p) =>
+        (p.productoManual || "").toLowerCase().includes("mensual")
+      );
+
+      const productos = pagosMes.filter(
+        (p) =>
+          !(
+            (p.productoManual || "").toLowerCase().includes("liga") ||
+            (p.productoManual || "").toLowerCase().includes("mensual")
+          )
+      );
 
       setData({
-        ligas: res.data?.ligas || data.ligas,
-        mensualidades: res.data?.mensualidades || data.mensualidades,
-        productos: res.data?.productos || data.productos,
-        totalGeneral: res.data?.totalGeneral || 0,
+        ligas: calcular(ligas),
+        mensualidades: calcular(mensualidades),
+        productos: calcular(productos),
+        totalGeneral: pagosMes.reduce((acc, p) => acc + (p.monto || 0), 0),
       });
     } catch (err) {
-      console.error("Error resumen general", err);
-      setError("Error al cargar el resumen general");
+      console.error(err);
+      setError("Error al calcular resumen");
     } finally {
       setLoading(false);
     }
   };
 
+  // 🔹 CIERRE DIARIO
   const cargarCierre = async () => {
     try {
       setLoadingCierre(true);
-      const res = await api.get("/reportes/cierre-diario", {
-        params: { fecha: fechaCierre },
+
+      const res = await api.get("/pagos");
+      let pagos = res.data.pagos || [];
+
+      const pagosDia = pagos.filter((p) => {
+        const fecha = new Date(p.fecha).toISOString().split("T")[0];
+        return fecha === fechaCierre;
       });
-      setCierre(res.data);
+
+      const ligas = pagosDia.filter((p) =>
+        (p.productoManual || "").toLowerCase().includes("liga")
+      );
+
+      const mensualidades = pagosDia.filter((p) =>
+        (p.productoManual || "").toLowerCase().includes("mensual")
+      );
+
+      const productos = pagosDia.filter(
+        (p) =>
+          !(
+            (p.productoManual || "").toLowerCase().includes("liga") ||
+            (p.productoManual || "").toLowerCase().includes("mensual")
+          )
+      );
+
+      setCierre({
+        ligas: calcular(ligas),
+        mensualidades: calcular(mensualidades),
+        productos: calcular(productos),
+        totalDia: pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0),
+      });
     } catch (err) {
-      console.error("Error cierre diario", err);
+      console.error(err);
     } finally {
       setLoadingCierre(false);
     }
@@ -112,11 +172,20 @@ const ResumenGeneral = () => {
             <Col md={3}>
               <Form.Group>
                 <Form.Label>Mes</Form.Label>
-                <Form.Control type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+                <Form.Control
+                  type="month"
+                  value={mes}
+                  onChange={(e) => setMes(e.target.value)}
+                />
               </Form.Group>
             </Col>
             <Col md={3}>
-              <Button variant="primary" className="w-100" onClick={cargarResumen} disabled={loading}>
+              <Button
+                variant="primary"
+                className="w-100"
+                onClick={cargarResumen}
+                disabled={loading}
+              >
                 {loading ? <Spinner size="sm" /> : "Consultar"}
               </Button>
             </Col>
@@ -126,7 +195,7 @@ const ResumenGeneral = () => {
 
       {loading ? (
         <div className="text-center my-5">
-          <Spinner animation="border" variant="primary" />
+          <Spinner animation="border" />
         </div>
       ) : (
         <>
@@ -146,19 +215,25 @@ const ResumenGeneral = () => {
           </Row>
 
           <hr className="my-5" />
+
           <h3 className="text-center mb-4">Cierre Diario</h3>
 
           <Card className="mb-4">
             <Card.Body>
               <Row className="align-items-end">
                 <Col md={3}>
-                  <Form.Group>
-                    <Form.Label>Fecha cierre</Form.Label>
-                    <Form.Control type="date" value={fechaCierre} onChange={(e) => setFechaCierre(e.target.value)} />
-                  </Form.Group>
+                  <Form.Control
+                    type="date"
+                    value={fechaCierre}
+                    onChange={(e) => setFechaCierre(e.target.value)}
+                  />
                 </Col>
                 <Col md={3}>
-                  <Button variant="success" className="w-100" onClick={cargarCierre} disabled={loadingCierre}>
+                  <Button
+                    variant="success"
+                    className="w-100"
+                    onClick={cargarCierre}
+                  >
                     {loadingCierre ? <Spinner size="sm" /> : "Calcular cierre"}
                   </Button>
                 </Col>
@@ -172,14 +247,10 @@ const ResumenGeneral = () => {
             <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
           </Row>
 
-          <Row>
-            <Col md={12}>
-              <Card bg="success" text="white" className="p-4 text-center shadow">
-                <h4>TOTAL DEL DIA</h4>
-                <h2>${(cierre.totalDia || 0).toLocaleString("es-CO")}</h2>
-              </Card>
-            </Col>
-          </Row>
+          <Card bg="success" text="white" className="p-4 text-center shadow">
+            <h4>TOTAL DEL DIA</h4>
+            <h2>${(cierre.totalDia || 0).toLocaleString("es-CO")}</h2>
+          </Card>
         </>
       )}
     </div>
