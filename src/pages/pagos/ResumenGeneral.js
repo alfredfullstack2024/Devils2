@@ -67,9 +67,13 @@ const ResumenGeneral = () => {
       const resMensualidades = await api.get(`/pagos/mensualidades/${year}`);
       const mensualidadesData = resMensualidades.data || [];
 
-      const mensualidadesMes = mensualidadesData.filter(
-        (m) => Number(m.mes) === Number(month)
-      );
+      const mensualidadesMes = mensualidadesData.filter((m) => {
+  const fecha = new Date(m.fecha);
+  return (
+    fecha.getFullYear() === Number(year) &&
+    fecha.getMonth() + 1 === Number(month)
+  );
+});
 
       const totalMensualidades = mensualidadesMes.reduce(
         (acc, m) => acc + (m.monto || 0),
@@ -128,10 +132,10 @@ const ResumenGeneral = () => {
 
       const mensualidadesData = resMensualidades.data || [];
 
-      const mensualidadesDia = mensualidadesData.filter(
-        (m) => m.fecha === fechaCierre
-      );
-
+     const mensualidadesDia = mensualidadesData.filter((m) => {
+  const fecha = new Date(m.fecha).toISOString().split("T")[0];
+  return fecha === fechaCierre;
+});
       const totalMensualidades = mensualidadesDia.reduce(
         (acc, m) => acc + (m.monto || 0),
         0
