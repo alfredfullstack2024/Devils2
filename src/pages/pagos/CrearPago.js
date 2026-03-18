@@ -44,7 +44,7 @@ const CrearPago = () => {
         setClientes(clientesResponse.data);
         setProductos(productosResponse.data);
 
-        const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toLocaleDateString("en-CA");
         setFormData((prev) => ({ ...prev, fecha: today }));
       } catch (err) {
         console.error(err);
