@@ -43,7 +43,25 @@ const ResumenGeneral = () => {
       .reduce((acc, p) => acc + (p.monto || 0), 0),
   });
 
-  // 🔹 RESUMEN GENERAL (MES)
+  // 🔹 Clasificador inteligente
+  const clasificar = (p) => {
+    const texto = (p.productoManual || "").toLowerCase();
+
+    if (texto.includes("liga")) return "ligas";
+
+    if (
+      texto.includes("mensual") ||
+      texto.includes("mensualidad") ||
+      texto.includes("mes") ||
+      texto.includes("cuota")
+    ) {
+      return "mensualidades";
+    }
+
+    return "productos";
+  };
+
+  // 🔹 RESUMEN GENERAL
   const cargarResumen = async () => {
     try {
       setLoading(true);
@@ -62,20 +80,12 @@ const ResumenGeneral = () => {
         );
       });
 
-      const ligas = pagosMes.filter((p) =>
-        (p.productoManual || "").toLowerCase().includes("liga")
+      const ligas = pagosMes.filter((p) => clasificar(p) === "ligas");
+      const mensualidades = pagosMes.filter(
+        (p) => clasificar(p) === "mensualidades"
       );
-
-      const mensualidades = pagosMes.filter((p) =>
-        (p.productoManual || "").toLowerCase().includes("mensual")
-      );
-
       const productos = pagosMes.filter(
-        (p) =>
-          !(
-            (p.productoManual || "").toLowerCase().includes("liga") ||
-            (p.productoManual || "").toLowerCase().includes("mensual")
-          )
+        (p) => clasificar(p) === "productos"
       );
 
       setData({
@@ -105,20 +115,12 @@ const ResumenGeneral = () => {
         return fecha === fechaCierre;
       });
 
-      const ligas = pagosDia.filter((p) =>
-        (p.productoManual || "").toLowerCase().includes("liga")
+      const ligas = pagosDia.filter((p) => clasificar(p) === "ligas");
+      const mensualidades = pagosDia.filter(
+        (p) => clasificar(p) === "mensualidades"
       );
-
-      const mensualidades = pagosDia.filter((p) =>
-        (p.productoManual || "").toLowerCase().includes("mensual")
-      );
-
       const productos = pagosDia.filter(
-        (p) =>
-          !(
-            (p.productoManual || "").toLowerCase().includes("liga") ||
-            (p.productoManual || "").toLowerCase().includes("mensual")
-          )
+        (p) => clasificar(p) === "productos"
       );
 
       setCierre({
@@ -170,22 +172,14 @@ const ResumenGeneral = () => {
         <Card.Body>
           <Row className="align-items-end">
             <Col md={3}>
-              <Form.Group>
-                <Form.Label>Mes</Form.Label>
-                <Form.Control
-                  type="month"
-                  value={mes}
-                  onChange={(e) => setMes(e.target.value)}
-                />
-              </Form.Group>
+              <Form.Control
+                type="month"
+                value={mes}
+                onChange={(e) => setMes(e.target.value)}
+              />
             </Col>
             <Col md={3}>
-              <Button
-                variant="primary"
-                className="w-100"
-                onClick={cargarResumen}
-                disabled={loading}
-              >
+              <Button onClick={cargarResumen}>
                 {loading ? <Spinner size="sm" /> : "Consultar"}
               </Button>
             </Col>
@@ -193,66 +187,46 @@ const ResumenGeneral = () => {
         </Card.Body>
       </Card>
 
-      {loading ? (
-        <div className="text-center my-5">
-          <Spinner animation="border" />
-        </div>
-      ) : (
-        <>
-          <Row className="mb-4">
-            <Col md={4}><StatCard title="Ligas" stats={data.ligas} /></Col>
-            <Col md={4}><StatCard title="Mensualidades" stats={data.mensualidades} /></Col>
-            <Col md={4}><StatCard title="Productos" stats={data.productos} /></Col>
-          </Row>
+      <Row className="mb-4">
+        <Col md={4}><StatCard title="Ligas" stats={data.ligas} /></Col>
+        <Col md={4}><StatCard title="Mensualidades" stats={data.mensualidades} /></Col>
+        <Col md={4}><StatCard title="Productos" stats={data.productos} /></Col>
+      </Row>
 
-          <Row className="mb-4">
-            <Col md={12}>
-              <Card bg="dark" text="white" className="p-4 text-center shadow">
-                <h4>TOTAL GENERAL</h4>
-                <h2>${(data.totalGeneral || 0).toLocaleString("es-CO")}</h2>
-              </Card>
-            </Col>
-          </Row>
+      <Card className="p-4 text-center mb-4">
+        <h4>TOTAL GENERAL</h4>
+        <h2>${data.totalGeneral.toLocaleString("es-CO")}</h2>
+      </Card>
 
-          <hr className="my-5" />
+      <hr />
 
-          <h3 className="text-center mb-4">Cierre Diario</h3>
+      <h3 className="text-center">Cierre Diario</h3>
 
-          <Card className="mb-4">
-            <Card.Body>
-              <Row className="align-items-end">
-                <Col md={3}>
-                  <Form.Control
-                    type="date"
-                    value={fechaCierre}
-                    onChange={(e) => setFechaCierre(e.target.value)}
-                  />
-                </Col>
-                <Col md={3}>
-                  <Button
-                    variant="success"
-                    className="w-100"
-                    onClick={cargarCierre}
-                  >
-                    {loadingCierre ? <Spinner size="sm" /> : "Calcular cierre"}
-                  </Button>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
+      <Row className="mb-3">
+        <Col md={3}>
+          <Form.Control
+            type="date"
+            value={fechaCierre}
+            onChange={(e) => setFechaCierre(e.target.value)}
+          />
+        </Col>
+        <Col md={3}>
+          <Button onClick={cargarCierre}>
+            {loadingCierre ? <Spinner size="sm" /> : "Calcular"}
+          </Button>
+        </Col>
+      </Row>
 
-          <Row className="mb-4">
-            <Col md={4}><StatCard title="Ligas" stats={cierre.ligas} /></Col>
-            <Col md={4}><StatCard title="Mensualidades" stats={cierre.mensualidades} /></Col>
-            <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
-          </Row>
+      <Row className="mb-4">
+        <Col md={4}><StatCard title="Ligas" stats={cierre.ligas} /></Col>
+        <Col md={4}><StatCard title="Mensualidades" stats={cierre.mensualidades} /></Col>
+        <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
+      </Row>
 
-          <Card bg="success" text="white" className="p-4 text-center shadow">
-            <h4>TOTAL DEL DIA</h4>
-            <h2>${(cierre.totalDia || 0).toLocaleString("es-CO")}</h2>
-          </Card>
-        </>
-      )}
+      <Card className="p-4 text-center">
+        <h4>TOTAL DEL DIA</h4>
+        <h2>${cierre.totalDia.toLocaleString("es-CO")}</h2>
+      </Card>
     </div>
   );
 };
