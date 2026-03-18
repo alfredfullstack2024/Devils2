@@ -29,7 +29,7 @@ const ResumenGeneral = () => {
 
   const [loadingCierre, setLoadingCierre] = useState(false);
 
-  // 🔹 Función para calcular totales
+  // 🔹 función para pagos normales
   const calcular = (lista) => ({
     total: lista.reduce((acc, p) => acc + (p.monto || 0), 0),
     efectivo: lista
@@ -43,34 +43,17 @@ const ResumenGeneral = () => {
       .reduce((acc, p) => acc + (p.monto || 0), 0),
   });
 
-  // 🔹 Clasificador inteligente
-  const clasificar = (p) => {
-    const texto = (p.productoManual || "").toLowerCase();
-
-    if (texto.includes("liga")) return "ligas";
-
-    if (
-      texto.includes("mensual") ||
-      texto.includes("mensualidad") ||
-      texto.includes("mes") ||
-      texto.includes("cuota")
-    ) {
-      return "mensualidades";
-    }
-
-    return "productos";
-  };
-
   // 🔹 RESUMEN GENERAL
   const cargarResumen = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await api.get("/pagos");
-      let pagos = res.data.pagos || [];
-
       const [year, month] = mes.split("-");
+
+      // 🔹 1. PAGOS NORMALES
+      const resPagos = await api.get("/pagos");
+      const pagos = resPagos.data.pagos || [];
 
       const pagosMes = pagos.filter((p) => {
         const fecha = new Date(p.fecha);
@@ -80,19 +63,43 @@ const ResumenGeneral = () => {
         );
       });
 
-      const ligas = pagosMes.filter((p) => clasificar(p) === "ligas");
-      const mensualidades = pagosMes.filter(
-        (p) => clasificar(p) === "mensualidades"
+      // 🔹 2. MENSUALIDADES (LA PARTE QUE TE FALTABA)
+      const resMensualidades = await api.get(`/pagos/mensualidades/${year}`);
+      const mensualidadesData = resMensualidades.data || [];
+
+      const mensualidadesMes = mensualidadesData.filter(
+        (m) => Number(m.mes) === Number(month)
       );
+
+      const totalMensualidades = mensualidadesMes.reduce(
+        (acc, m) => acc + (m.monto || 0),
+        0
+      );
+
+      // 🔹 3. PRODUCTOS (todo lo que no sea liga)
       const productos = pagosMes.filter(
-        (p) => clasificar(p) === "productos"
+        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
+      );
+
+      const ligas = pagosMes.filter((p) =>
+        (p.productoManual || "").toLowerCase().includes("liga")
       );
 
       setData({
         ligas: calcular(ligas),
-        mensualidades: calcular(mensualidades),
+
+        mensualidades: {
+          total: totalMensualidades,
+          efectivo: totalMensualidades,
+          transferencia: 0,
+          tarjeta: 0,
+        },
+
         productos: calcular(productos),
-        totalGeneral: pagosMes.reduce((acc, p) => acc + (p.monto || 0), 0),
+
+        totalGeneral:
+          pagosMes.reduce((acc, p) => acc + (p.monto || 0), 0) +
+          totalMensualidades,
       });
     } catch (err) {
       console.error(err);
@@ -107,27 +114,52 @@ const ResumenGeneral = () => {
     try {
       setLoadingCierre(true);
 
-      const res = await api.get("/pagos");
-      let pagos = res.data.pagos || [];
+      const resPagos = await api.get("/pagos");
+      const pagos = resPagos.data.pagos || [];
 
       const pagosDia = pagos.filter((p) => {
         const fecha = new Date(p.fecha).toISOString().split("T")[0];
         return fecha === fechaCierre;
       });
 
-      const ligas = pagosDia.filter((p) => clasificar(p) === "ligas");
-      const mensualidades = pagosDia.filter(
-        (p) => clasificar(p) === "mensualidades"
+      const resMensualidades = await api.get(
+        `/pagos/mensualidades/${fechaCierre.split("-")[0]}`
       );
+
+      const mensualidadesData = resMensualidades.data || [];
+
+      const mensualidadesDia = mensualidadesData.filter(
+        (m) => m.fecha === fechaCierre
+      );
+
+      const totalMensualidades = mensualidadesDia.reduce(
+        (acc, m) => acc + (m.monto || 0),
+        0
+      );
+
       const productos = pagosDia.filter(
-        (p) => clasificar(p) === "productos"
+        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
+      );
+
+      const ligas = pagosDia.filter((p) =>
+        (p.productoManual || "").toLowerCase().includes("liga")
       );
 
       setCierre({
         ligas: calcular(ligas),
-        mensualidades: calcular(mensualidades),
+
+        mensualidades: {
+          total: totalMensualidades,
+          efectivo: totalMensualidades,
+          transferencia: 0,
+          tarjeta: 0,
+        },
+
         productos: calcular(productos),
-        totalDia: pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0),
+
+        totalDia:
+          pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0) +
+          totalMensualidades,
       });
     } catch (err) {
       console.error(err);
@@ -168,24 +200,20 @@ const ResumenGeneral = () => {
       <h2 className="mb-4">Resumen General de Recaudo</h2>
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Card className="mb-4">
-        <Card.Body>
-          <Row className="align-items-end">
-            <Col md={3}>
-              <Form.Control
-                type="month"
-                value={mes}
-                onChange={(e) => setMes(e.target.value)}
-              />
-            </Col>
-            <Col md={3}>
-              <Button onClick={cargarResumen}>
-                {loading ? <Spinner size="sm" /> : "Consultar"}
-              </Button>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+      <Row className="mb-4">
+        <Col md={3}>
+          <Form.Control
+            type="month"
+            value={mes}
+            onChange={(e) => setMes(e.target.value)}
+          />
+        </Col>
+        <Col md={3}>
+          <Button onClick={cargarResumen}>
+            {loading ? <Spinner size="sm" /> : "Consultar"}
+          </Button>
+        </Col>
+      </Row>
 
       <Row className="mb-4">
         <Col md={4}><StatCard title="Ligas" stats={data.ligas} /></Col>
