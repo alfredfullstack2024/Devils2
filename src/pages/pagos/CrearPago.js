@@ -22,10 +22,9 @@ const CrearPago = () => {
 
   // Configuración del tiquete
   const tiqueteConfig = {
-    nombreEstablecimiento: "CLUB DEPORTIVO ICONIC ALL STARS",
-    direccion: "CALLE 2 B No. 69D-58 BOGOTÁ",
-    telefonos: "3176696551",
-    nit: "000000000-0",
+    nombreEstablecimiento: "CLUB DE PORRISMO DEVILS",
+    direccion: "CALLE 72 No. 72-43 BOGOTÁ",
+    
   };
 
   // Control del número de tiquete
@@ -277,16 +276,30 @@ const CrearPago = () => {
                 <p style={{ textAlign: "center" }}>
                   Tel: {tiqueteConfig.telefonos} | NIT: {tiqueteConfig.nit}
                 </p>
-                <p>Fecha: {new Date().toLocaleDateString("es-CO")}</p>
+                <p>
+  Fecha:{" "}
+  {new Date(formData.fecha).toLocaleDateString("es-CO")}
+</p>
                 <p>Recibo #: {ticketNumber}</p>
                 <p>
                   Cliente:{" "}
-                  {clientes.find((c) => c._id === formData.cliente)?.nombre ||
-                    "No especificado"}
+                 Cliente:{" "}
+{(() => {
+  const cliente = clientes.find((c) => c._id === formData.cliente);
+  return cliente
+    ? `${cliente.nombre} ${cliente.apellido}`
+    : "No especificado";
+})()}
                 </p>
-                <h4>Mensualidad Gym 2025</h4>
-                <p>Inicio: {formData.fecha}</p>
-                <p>Final: {fechaFinal.toLocaleDateString("es-CO")}</p>
+                <h4>
+  {productos.find((p) => p._id === formData.producto)?.nombre ||
+    "Pago"}
+</h4>
+                <p>
+  Inicio:{" "}
+  {new Date(formData.fecha).toLocaleDateString("es-CO")}
+</p>
+                
                 <p>
                   Pago:{" "}
                   {formData.monto.toLocaleString("es-CO", {
@@ -294,7 +307,7 @@ const CrearPago = () => {
                     currency: "COP",
                   })}
                 </p>
-                <p>Saldo: $0</p>
+                
                 <p>Método: {formData.metodoPago}</p>
                 <p style={{ fontSize: "8px" }}>
                   Mensualidad intransferible, no congelable, sin devolución de
