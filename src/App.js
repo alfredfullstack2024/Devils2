@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import DashboardLayout from "./layouts/DashboardLayout";
 import PrivateRoute from "./components/PrivateRoute";
+import PagoRapido from "./pages/pagos/PagoRapido";
 
 // Páginas Públicas
 import Login from "./pages/Login";
@@ -152,6 +153,10 @@ const App = () => {
           <Route path="/pagos/ligas" element={<RoleBasedRoute element={<PagosLigas />} allowedRoles={["recepcionista","admin"]} />} />
           <Route path="/pagos/pagames" element={<RoleBasedRoute element={<Pagames />} allowedRoles={["recepcionista","admin"]} />} />
           <Route path="/pagos/resumen-general" element={<RoleBasedRoute element={<ResumenGeneral />} allowedRoles={["admin"]} />} />
+<Route 
+  path="/pagos/pago-rapido" 
+  element={<RoleBasedRoute element={<PagoRapido />} allowedRoles={["recepcionista","admin"]} />} 
+/>
 
           {/* Clases */}
           <Route path="/clases" element={<RoleBasedRoute element={<ListaClases />} allowedRoles={["recepcionista","admin"]} />} />
