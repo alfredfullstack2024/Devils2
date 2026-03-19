@@ -51,7 +51,7 @@ const ResumenGeneral = () => {
 
       const [year, month] = mes.split("-");
 
-      // 🔹 1. PAGOS NORMALES
+      // 🔹 PAGOS NORMALES
       const resPagos = await api.get("/pagos");
       const pagos = resPagos.data.pagos || [];
 
@@ -63,36 +63,32 @@ const ResumenGeneral = () => {
         );
       });
 
-      // 🔹 2. MENSUALIDADES (LA PARTE QUE TE FALTABA)
+      // 🔹 MENSUALIDADES (DESDE paga-mes)
       const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
       const mensualidadesData = resMensualidades.data || [];
 
-     const mensualidadesMes = resMensualidades.data.filter((m) =>
-  m.mesesPagados.includes(
-    new Date(`${year}-${month}-01`).toLocaleString("es-ES", {
-      month: "long"
-    }).toLowerCase()
-  )
-);
+      const nombreMes = new Date(`${year}-${month}-01`)
+        .toLocaleString("es-ES", { month: "long" })
+        .toLowerCase();
 
-const totalMensualidades = mensualidadesMes.reduce(
-  (acc, m) => acc + (m.total || 0),
-  0
-);
-
+      const mensualidadesMes = mensualidadesData.filter((m) =>
+        (m.mesesPagados || []).includes(
+          nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
+        )
+      );
 
       const totalMensualidades = mensualidadesMes.reduce(
-        (acc, m) => acc + (m.monto || 0),
+        (acc, m) => acc + (m.total || 0),
         0
       );
 
-      // 🔹 3. PRODUCTOS (todo lo que no sea liga)
-      const productos = pagosMes.filter(
-        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
-      );
-
+      // 🔹 PRODUCTOS y LIGAS
       const ligas = pagosMes.filter((p) =>
         (p.productoManual || "").toLowerCase().includes("liga")
+      );
+
+      const productos = pagosMes.filter(
+        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
       );
 
       setData({
@@ -132,27 +128,26 @@ const totalMensualidades = mensualidadesMes.reduce(
         return fecha === fechaCierre;
       });
 
-      const resMensualidades = await api.get(
-        `/pagos/mensualidades/${fechaCierre.split("-")[0]}`
-      );
+      const year = fechaCierre.split("-")[0];
 
+      const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
       const mensualidadesData = resMensualidades.data || [];
 
-     const mensualidadesDia = mensualidadesData.filter((m) => {
-  const fecha = new Date(m.fecha).toISOString().split("T")[0];
-  return fecha === fechaCierre;
-});
-      const totalMensualidades = mensualidadesDia.reduce(
-        (acc, m) => acc + (m.monto || 0),
-        0
-      );
+      const mensualidadesDia = mensualidadesData.filter((m) => {
+        return m.fecha === fechaCierre;
+      });
 
-      const productos = pagosDia.filter(
-        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
+      const totalMensualidades = mensualidadesDia.reduce(
+        (acc, m) => acc + (m.total || 0),
+        0
       );
 
       const ligas = pagosDia.filter((p) =>
         (p.productoManual || "").toLowerCase().includes("liga")
+      );
+
+      const productos = pagosDia.filter(
+        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
       );
 
       setCierre({
