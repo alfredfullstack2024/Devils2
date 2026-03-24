@@ -1,7 +1,10 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { obtenerClientes } from "../../api/axios";
+const obtenerClientes = async () => {
+    const res = await axios.get(`${backendURL}/clientes`);
+    return res.data;
+};
 // redeploy
 // ===========================================
 // ⭐ NUEVA FUNCIÓN AUXILIAR: Obtener mes actual
@@ -62,7 +65,7 @@ const [comentarioPago, setComentarioPago] = useState("");
         return ["TODAS", ...Array.from(specs).sort()];
     }, [clientes]);
 
-    const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
+    const backendURL = process.env.REACT_APP_API_URL || "https://devils-1.onrender.com/api";
 
     // ====== CARGA INICIAL COMPLETA ======
    // ====== PEGA ESTO ======
@@ -77,7 +80,7 @@ useEffect(() => {
 
             const mesesData = mesesRes.data;
             setMeses(mesesData);
-            setClientes(clientesRes.data);
+            setClientes(clientesRes);
             const valorConfig = configRes.data.valorDiario || 8000;
 setValorDiario(valorConfig);
 setValorDiarioTemp(valorConfig);
