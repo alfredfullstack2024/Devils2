@@ -1,9 +1,8 @@
-// src/pages/pagos/PagosLigas.js
 
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { obtenerClientes } from "../../api/axios";
-
+// redeploy
 // ===========================================
 // ⭐ NUEVA FUNCIÓN AUXILIAR: Obtener mes actual
 // ===========================================
@@ -29,12 +28,16 @@ const TIPOS_PAGO = ["TODOS", "Efectivo", "Nequi"];
 const PagosLigas = () => {
     const [meses, setMeses] = useState([]);
     const [mesSeleccionado, setMesSeleccionado] = useState("");
+    const [valorManual, setValorManual] = useState("");
     const [nuevoMes, setNuevoMes] = useState("");
     const [valorDiario, setValorDiario] = useState(8000);
+const [valorDiarioTemp, setValorDiarioTemp] = useState(8000);
+const [guardandoValor, setGuardandoValor] = useState(false);
     const [clientes, setClientes] = useState([]);
     const [searchCliente, setSearchCliente] = useState("");
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
     const [diaSeleccionado, setDiaSeleccionado] = useState("");
+    const [diasSeleccionados, setDiasSeleccionados] = useState([]);
     const [esDiaDiferenteAHoy, setEsDiaDiferenteAHoy] = useState(false);
 const [comentarioPago, setComentarioPago] = useState("");
     // 🆕 NUEVO: Estado para el registro rápido
@@ -61,45 +64,49 @@ const [comentarioPago, setComentarioPago] = useState("");
 
     const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
 
-    // CARGAR VALOR DIARIO DESDE BACKEND + MESES + CLIENTES
-    useEffect(() => {
-        const cargarInicial = async () => {
-            try {
-                const [mesesRes, clientesRes, configRes] = await Promise.all([
-                    axios.get(`${backendURL}/pagos-ligas/meses`),
-                    obtenerClientes(),
-                    axios.get(`${backendURL}/pagos-ligas/valor-diario`).catch(() => ({ data: { valorDiario: 8000 } })),
-                ]);
+    // ====== CARGA INICIAL COMPLETA ======
+   // ====== PEGA ESTO ======
+useEffect(() => {
+    const cargarDatosIniciales = async () => {
+        try {
+            const [mesesRes, clientesRes, configRes] = await Promise.all([
+                axios.get(`${backendURL}/pagos-ligas/meses`),
+                obtenerClientes(),
+                axios.get(`${backendURL}/pagos-ligas/configuracion`).catch(() => ({ data: { valorDiario: 8000 } })),
+            ]);
+
+            const mesesData = mesesRes.data;
+            setMeses(mesesData);
+            setClientes(clientesRes.data);
+            const valorConfig = configRes.data.valorDiario || 8000;
+setValorDiario(valorConfig);
+setValorDiarioTemp(valorConfig);
+
+            if (mesesData.length > 0) {
+                // 1. Obtenemos el nombre exacto del mes actual (ej: "Febrero 2026")
+                const nombreMesActual = obtenerNombreMesActual();
                 
-                const mesesData = mesesRes.data;
-                const nombreMesActual = obtenerNombreMesActual(); // Obtener el nombre del mes actual
+                // 2. Buscamos si ese mes ya existe en la base de datos
+                const mesActualEnBD = mesesData.find(m => 
+                    m.nombre.trim().toLowerCase() === nombreMesActual.toLowerCase()
+                );
 
-                setMeses(mesesData);
-                setClientes(clientesRes.data);
-                setValorDiario(configRes.data.valorDiario || 8000);
-
-                // ===========================================
-                // ⭐ LÓGICA MODIFICADA
-                // ===========================================
-                if (mesesData.length > 0) {
-                    const mesActualExiste = mesesData.find(m => m.nombre === nombreMesActual);
-                    
-                    if (mesActualExiste) {
-                        // 1. Si existe un mes con el nombre actual (ej: "Diciembre 2025"), SELECCIONARLO.
-                        setMesSeleccionado(nombreMesActual);
-                    } else if (mesesData.length > 0) {
-                        // 2. Si no existe, seleccionar el ÚLTIMO creado (o el primero de la lista si no hay un orden claro del backend), como estaba antes, como fallback.
-                        // Asumo que mesesData[0] es el último/más reciente si no se encuentra el mes actual.
-                        setMesSeleccionado(mesesData[0].nombre);
-                    }
+                if (mesActualEnBD) {
+                    // Si existe Febrero 2026, lo ponemos de primero
+                    setMesSeleccionado(mesActualEnBD.nombre);
+                } else {
+                    // Si aún no han creado el mes actual, ponemos el ÚLTIMO creado
+                    // (que suele ser el más reciente en la lista)
+                    setMesSeleccionado(mesesData[mesesData.length - 1].nombre);
                 }
-            } catch (error) {
-                console.error("Error inicial", error);
             }
-        };
-        cargarInicial();
-    }, []);
+        } catch (error) {
+            console.error("Error en carga inicial:", error);
+        }
+    };
 
+    cargarDatosIniciales();
+}, [backendURL]);
    
                 // CARGAR PAGOS Y CALCULAR TOTAL (TOTAL GENERAL)
 useEffect(() => {
@@ -116,19 +123,17 @@ useEffect(() => {
             let total = 0;
 
             const pagosEnriquecidos = pagosReales.map(pago => {
-                const cliente = clientes.find(c =>
-                    `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
-                );
+    const cliente = clientes.find(c =>
+        `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
+    );
 
-                const especialidad = cliente?.especialidad || "Sin Especialidad";
-                const tipoPago = pago.tipoPago || "N/A";
+    const especialidad = cliente?.especialidad || "Sin Especialidad";
+    const tipoPago = pago.tipoPago || "N/A";
 
-                if (Array.isArray(pago.diasPagados)) {
-                    total += pago.diasPagados.length * valorDiario;
-                }
+    total += Number(pago.total || 0);
 
-                return { ...pago, especialidad, tipoPago };
-            });
+    return { ...pago, especialidad, tipoPago };
+});
 
             setPagosDelMes(pagosEnriquecidos);
             setTotalRecaudado(total);
@@ -145,49 +150,64 @@ useEffect(() => {
 
     // REGISTRAR PAGO (Lógica actualizada para enviar tipoPago)
     const registrarPagoDia = async () => {
-    if (!clienteSeleccionado) return alert("Selecciona una niña");
-    if (!diaSeleccionado || diaSeleccionado < 1 || diaSeleccionado > 31) return alert("Día inválido");
-    if (!mesSeleccionado) return alert("Selecciona un mes");
-    if (!tipoPagoSeleccionado) return alert("Selecciona el tipo de pago");
+   if (!clienteSeleccionado) return alert("Selecciona una niña");
+if (!mesSeleccionado) return alert("Selecciona un mes");
+if (diasSeleccionados.length === 0) return alert("Selecciona al menos un día");
 
-    const hoy = new Date().getDate();
+try {
 
-    
+    const totalFinal = valorManual !== "" ? Number(valorManual) : (diasSeleccionados.length * valorDiario);
+const hoy = new Date().getDate();
 
-    try {
-        await axios.post(`${backendURL}/pagos-ligas/pagos`, {
-            nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim(),
-            mes: mesSeleccionado,
-            diasAsistidos: 1,
-            total: valorDiario,
-            diasPagados: [parseInt(diaSeleccionado)],
-            tipoPago: tipoPagoSeleccionado,
-            comentario: Number(diaSeleccionado) !== hoy ? comentarioPago.trim() : "",
-        });
+const diasConTipo = diasSeleccionados.map(dia => {
+  let tipo = "HOY";
 
-       alert(`Día ${diaSeleccionado} registrado correctamente`);
+  if (dia < hoy) tipo = "ATRASADO";
+  if (dia > hoy) tipo = "ADELANTADO";
 
-        // --- NUEVO: ESTO REFRESCARÁ LA TABLA DE INMEDIATO ---
-        const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
-        const todosPagos = res.data || [];
-        const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
-        const pagosEnriquecidos = pagosReales.map(pago => {
-            const cliente = clientes.find(c => `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase());
-            return { ...pago, especialidad: cliente?.especialidad || "Sin Especialidad", tipoPago: pago.tipoPago || "N/A" };
-        });
-        setPagosDelMes(pagosEnriquecidos);
-        // ----------------------------------------------------
+  return {
+    dia: dia,
+    tipo: tipo
+  };
+});
+    await axios.post(`${backendURL}/pagos-ligas/pagos`, {
+        nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim(),
+        mes: mesSeleccionado,
+        diasAsistidos: diasSeleccionados.length,
+        total: totalFinal,
+        diasPagados: diasConTipo,
+        tipoPago: tipoPagoSeleccionado,
+        comentario: ""
+    });
 
-        setSearchCliente("");
-        setClienteSeleccionado(null);
-        setDiaSeleccionado("");
-        setComentarioPago("");
-        setEsDiaDiferenteAHoy(false);
+    alert(`Pago registrado correctamente`);
 
-    } catch (error) {
-        console.error(error);
-        alert("Error al registrar pago");
-    }
+    const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
+    const todosPagos = res.data || [];
+    const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
+
+    const pagosEnriquecidos = pagosReales.map(pago => {
+        const cliente = clientes.find(c =>
+            `${c.nombre} ${c.apellido}`.trim().toLowerCase() === pago.nombre.trim().toLowerCase()
+        );
+
+        return {
+            ...pago,
+            especialidad: cliente?.especialidad || "Sin Especialidad",
+            tipoPago: pago.tipoPago || "N/A"
+        };
+    });
+
+    setPagosDelMes(pagosEnriquecidos);
+
+    setSearchCliente("");
+    setClienteSeleccionado(null);
+    setDiasSeleccionados([]);
+
+} catch (error) {
+    console.error(error);
+    alert("Error al registrar pago");
+}
 };
 
 
@@ -219,6 +239,13 @@ useEffect(() => {
     const pagosFiltrados = useMemo(() => {
         let pagos = pagosDelMes;
         let total = 0;
+        // si aún no hay datos cargados
+if (pagos.length === 0) {
+    return {
+        pagosFiltradosPorEspecialidad: [],
+        totalFiltrado: 0
+    };
+}
 
         // ⭐ 1. Filtrar por Nombre
         if (filtroNombre.trim()) {
@@ -237,50 +264,67 @@ useEffect(() => {
         }
 
         // 4. Filtrar por Período
-        if (filtroPeriodo === "DIA" && filtroDia) {
-            const diaNum = parseInt(filtroDia, 10);
+       if (filtroPeriodo === "DIA" && filtroDia) {
 
-            const jugadoresConDiaPagado = new Set();
-            pagos.forEach(pago => {
-                if (pago.diasPagados.includes(diaNum)) {
-                    jugadoresConDiaPagado.add(pago.nombre.trim());
-                }
-            });
+const diaNum = parseInt(filtroDia, 10);
 
+const jugadoresConDiaPagado = new Set();
+
+pagos.forEach(pago => {
+
+(pago.diasPagados || []).forEach(d => {
+
+const dia = typeof d === "number" ? d : d.dia;
+
+if (dia === diaNum) {
+jugadoresConDiaPagado.add(pago.nombre.trim());
+}
+
+});
+
+});
             // El total es el número de jugadores que pagaron ESE día (considerando todos los filtros anteriores)
             total = jugadoresConDiaPagado.size * valorDiario;
         }
-        else if (filtroPeriodo === "SEMANA" && filtroSemana) {
-            const semanaNum = parseInt(filtroSemana, 10);
+       else if (filtroPeriodo === "SEMANA" && filtroSemana) {
 
-            let diasSemana = [];
-            if (semanaNum === 1) diasSemana = [1, 2, 3, 4, 5, 6, 7];
-            else if (semanaNum === 2) diasSemana = [8, 9, 10, 11, 12, 13, 14];
-            else if (semanaNum === 3) diasSemana = [15, 16, 17, 18, 19, 20, 21];
-            else if (semanaNum === 4) diasSemana = [22, 23, 24, 25, 26, 27, 28];
-            else if (semanaNum === 5) diasSemana = [29, 30, 31];
+const semanaNum = parseInt(filtroSemana, 10);
 
-            const diasPagadosEnSemana = new Set();
-            // Contar la cantidad de pares únicos (jugador-día) que cumplen el filtro
-            pagos.forEach(pago => {
-                pago.diasPagados.forEach(dia => {
-                    if (diasSemana.includes(dia)) {
-                        diasPagadosEnSemana.add(`${pago.nombre.trim()}-${dia}`);
-                    }
-                });
-            });
+let diasSemana = [];
 
-            total = diasPagadosEnSemana.size * valorDiario;
-        }
-        else { // MES (Por defecto o si no hay filtro de día/semana)
-            // Calcular el total de todos los pagos que ya están filtrados por nombre, especialidad y tipoPago
-            let totalDias = 0;
-            pagos.forEach(pago => {
-                totalDias += pago.diasPagados?.length || 0;
-            }
-            );
-            total = totalDias * valorDiario;
-        }
+if (semanaNum === 1) diasSemana = [1,2,3,4,5,6,7];
+else if (semanaNum === 2) diasSemana = [8,9,10,11,12,13,14];
+else if (semanaNum === 3) diasSemana = [15,16,17,18,19,20,21];
+else if (semanaNum === 4) diasSemana = [22,23,24,25,26,27,28];
+else if (semanaNum === 5) diasSemana = [29,30,31];
+
+let totalDiasSemana = 0;
+
+pagos.forEach(pago => {
+
+(pago.diasPagados || []).forEach(d => {
+
+let dia = null;
+
+if (typeof d === "number") dia = d;
+else if (typeof d === "object") dia = d.dia;
+
+if (diasSemana.includes(dia)) {
+totalDiasSemana++;
+}
+
+});
+
+});
+
+total = totalDiasSemana * valorDiario;
+
+}
+else { // MES
+total = pagos.reduce((acc, pago) => {
+return acc + (Number(pago.total) || 0);
+},0);
+}
 
         // Devolvemos los pagos (filtrados por nombre, especialidad y tipoPago) y el total calculado.
         return {
@@ -309,14 +353,39 @@ useEffect(() => {
     };
 
     // Función para obtener los días pagados, ahora usando solo los pagos filtrados
-    const getDiasPagadosFiltrados = (nombre) => {
-        // En el caso de que se filtre por Tipo de Pago, solo contamos los días registrados con ESE tipo.
-        const pagos = pagosFiltrados.pagosFiltradosPorEspecialidad.filter(p => p.nombre.trim() === nombre.trim());
-        const dias = new Set();
-        pagos.forEach(p => (p.diasPagados || []).forEach(d => dias.add(d)));
-        return Array.from(dias).sort((a, b) => a - b);
-    };
+ const getDiasPagadosFiltrados = (nombre) => {
 
+const pagos = pagosDelMes.filter(
+p => p.nombre.trim() === nombre.trim()
+);
+
+const dias = [];
+
+pagos.forEach(p => {
+
+(p.diasPagados || []).forEach(d => {
+
+let dia = null;
+
+if (typeof d === "number") {
+dia = d;
+}
+
+else if (typeof d === "object") {
+dia = d.dia;
+}
+
+if (dia !== null) {
+dias.push(dia);
+}
+
+});
+
+});
+
+return dias;
+
+};
     return (
         <div style={{ padding: "2rem", background: "#f8fafc", minHeight: "100vh" }}>
             <div style={{ maxWidth: "2200px", margin: "0 auto", background: "white", borderRadius: "1.5rem", padding: "2.5rem", boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}>
@@ -333,12 +402,51 @@ useEffect(() => {
                             {meses.map(m => <option key={m._id} value={m.nombre}>{m.nombre}</option>)}
                         </select>
                         <input
-                            type="number"
-                            value={valorDiario}
-                            onChange={(e) => setValorDiario(Number(e.target.value))}
-                            style={{ ...inputStyle, width: "140px" }}
-                            placeholder="Valor diario"
-                        />
+    type="number"
+    value={valorDiarioTemp}
+    onChange={(e) => setValorDiarioTemp(Number(e.target.value))}
+    style={{ ...inputStyle, width: "140px" }}
+    placeholder="Valor diario"
+/>
+
+<button
+    onClick={async () => {
+        if (valorDiarioTemp <= 0) {
+            alert("Valor inválido");
+            return;
+        }
+
+        const confirmar = window.confirm(
+            `¿Estás seguro de cambiar el valor diario de $${valorDiario.toLocaleString("es-CO")} a $${valorDiarioTemp.toLocaleString("es-CO")}?\n\nEste cambio afectará solo los nuevos registros.`
+        );
+
+        if (!confirmar) return;
+
+        try {
+            setGuardandoValor(true);
+
+            await axios.put(`${backendURL}/pagos-ligas/configuracion`, {
+                valorDiario: valorDiarioTemp,
+            });
+
+            setValorDiario(valorDiarioTemp);
+
+            alert("Valor diario actualizado correctamente");
+        } catch (error) {
+            alert("Error al actualizar valor diario");
+        } finally {
+            setGuardandoValor(false);
+        }
+    }}
+    style={{
+        ...btnPrimary,
+        opacity: guardandoValor ? 0.6 : 1,
+        cursor: guardandoValor ? "not-allowed" : "pointer",
+    }}
+    disabled={guardandoValor}
+>
+    Guardar Valor
+</button>
                     </div>
                     <div style={{ background: "#172554", color: "white", padding: "1.5rem 4rem", borderRadius: "1.5rem", fontSize: "2.5rem", fontWeight: "bold" }}>
                         TOTAL RECAUDADO (MES): ${totalRecaudado.toLocaleString("es-CO")}
@@ -481,22 +589,65 @@ useEffect(() => {
                             </select>
                         </div>
 
-                        <input
-  type="number"
-  min="1"
-  max="31"
-  placeholder="Día"
-  value={diaSeleccionado}
-  onChange={(e) => {
-    const dia = e.target.value;
-    setDiaSeleccionado(dia);
+                       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+  <label style={{ fontWeight: "bold" }}>Seleccionar Días</label>
+  <div style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(7, 40px)",
+    gap: "6px"
+  }}>
+    {[...Array(31)].map((_, i) => {
 
-    const hoy = new Date().getDate();
-    setEsDiaDiferenteAHoy(Number(dia) !== hoy);
-    if (Number(dia) === hoy) setComentarioPago("");
-  }}
-  style={{ ...inputStyle, width: "100px" }}
-/>
+const dia = i + 1;
+
+const cantidad = diasSeleccionados.filter(d => d === dia).length;
+
+return (
+<div
+key={dia}
+onClick={() => {
+
+setDiasSeleccionados([...diasSeleccionados, dia]);
+
+}}
+style={{
+width: "40px",
+height: "40px",
+display: "flex",
+alignItems: "center",
+justifyContent: "center",
+borderRadius: "6px",
+cursor: "pointer",
+fontWeight: "bold",
+background: cantidad > 0 ? "#22c55e" : "#e2e8f0",
+color: cantidad > 0 ? "white" : "#1e293b"
+}}
+>
+
+{cantidad > 1 ? `${dia}(${cantidad})` : dia}
+
+</div>
+);
+})}  </div>
+
+  <div style={{ marginTop: "0.5rem", fontWeight: "bold" }}>
+    Clases seleccionadas: {diasSeleccionados.length}
+  </div>
+
+ <div style={{ marginTop: "10px" }}>
+  <label style={{ fontSize: "12px", fontWeight: "bold", display: "block", color: "#333" }}>Valor manual (Opcional):</label>
+  <input 
+    type="number" 
+    value={valorManual} 
+    onChange={(e) => setValorManual(e.target.value)}
+    placeholder="Ej: 5000"
+    style={{ border: "2px solid #000", borderRadius: "4px", padding: "8px", width: "120px", marginTop: "5px" }}
+  />
+</div>
+<div style={{ fontWeight: "bold", marginTop: "10px" }}>
+  Total a pagar: ${valorManual !== "" ? Number(valorManual).toLocaleString("es-CO") : (diasSeleccionados.length * valorDiario).toLocaleString("es-CO")}
+</div>
+</div>
 
 
                         <button onClick={registrarPagoDia} style={btnSuccess}>
@@ -505,8 +656,28 @@ useEffect(() => {
                     </div>
                 </div>
                 {mesSeleccionado && (
-                    <div style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 15px 35px rgba(0,0,0,0.15)" }}>
-                        <table style={{ width: "100%", minWidth: "2800px", borderCollapse: "collapse" }}>
+<>
+    <div 
+        id="scroll-superior"
+        style={{ overflowX: 'auto', overflowY: 'hidden', width: '100%' }}
+        onScroll={(e) => {
+            const abajo = document.getElementById('contenedor-tabla');
+            if (abajo) abajo.scrollLeft = e.target.scrollLeft;
+        }}
+    >
+        <div style={{ width: "2800px", height: "1px" }}></div>
+    </div>
+
+    <div 
+        id="contenedor-tabla"
+        style={{ overflowX: "auto", borderRadius: "1.5rem", boxShadow: "0 15px 35px rgba(0,0,0,0.15)" }}
+        onScroll={(e) => {
+            const arriba = document.getElementById('scroll-superior');
+            if (arriba) arriba.scrollLeft = e.target.scrollLeft;
+        }}
+    >
+                  
+                       <table style={{ width: "100%", minWidth: "2800px", borderCollapse: "collapse" }}>
                             <thead>
                                 <tr style={{ background: "#1e293b", color: "white" }}>
                                     <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10, width: "200px" }}>Jugadora</th>
@@ -529,9 +700,13 @@ useEffect(() => {
                                 ) : (
                                     jugadorasFiltradas.map(nombre => {
                                         const dias = getDiasPagadosFiltrados(nombre);
-                                        const total = dias.length * valorDiario;
-                                        const especialidad = getEspecialidadJugadora(nombre);
-                                        const tipoPago = getTipoPagoJugadora(nombre);
+                                        const pagoReal = pagosDelMes.find(p => p.nombre.trim() === nombre.trim());
+const total = pagosDelMes
+    .filter(p => p.nombre.trim() === nombre.trim())
+    .reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+
+const especialidad = getEspecialidadJugadora(nombre);
+const tipoPago = getTipoPagoJugadora(nombre);
                                         return (
                                             <tr key={nombre}>
                                                 <td style={{ ...tdStyle, fontWeight: "bold", background: "#f8fafc", position: "sticky", left: 0, zIndex: 9, textAlign: "left" }}>
@@ -543,32 +718,66 @@ useEffect(() => {
                                                 <td style={{ ...tdStyle, background: "#f1f5f9", color: tipoPago === 'Nequi' ? '#ea580c' : '#16a34a' }}>
                                                     {tipoPago}
                                                 </td>
-                                               {[...Array(31)].map((_, i) => {
-    const diaActual = i + 1;
-    const hoy = new Date().getDate(); 
+                                              {[...Array(31)].map((_, i) => {
 
-    const registroDeEsteDia = pagosDelMes.find(p => 
-        p.nombre.trim() === nombre.trim() && 
-        p.diasPagados.includes(diaActual)
-    );
+const diaActual = i + 1;
 
-    // Si el día de la celda es hoy sale X verde, si es otro día sale círculo azul
-    const esHoy = diaActual === hoy;
+const pagosJugador = pagosDelMes.filter(
+p => p.nombre.trim() === nombre.trim()
+);
 
-    return (
-        <td key={diaActual} style={{ textAlign: "center", padding: "0.5rem 0", minWidth: "60px", border: "1px solid #e2e8f0" }}>
-            {registroDeEsteDia && (
-                <div style={{ 
-                    fontSize: esHoy ? "1.8rem" : "1.4rem", 
-                    fontWeight: "bold",
-                    lineHeight: "1",
-                    color: esHoy ? "#22c55e" : "#3b82f6" 
-                }}>
-                    {esHoy ? "X" : "●"}
-                </div>
-            )}
-        </td>
-    );
+let iconos = [];
+
+pagosJugador.forEach(p => {
+
+(p.diasPagados || []).forEach(d => {
+
+const dia = typeof d === "number" ? d : d.dia;
+const tipo = typeof d === "object" ? d.tipo : "ATRASADO";
+
+if (dia === diaActual) {
+iconos.push({ tipo });
+}
+
+});
+
+});
+
+return (
+<td
+key={diaActual}
+style={{
+textAlign: "center",
+padding: "0.5rem 0",
+minWidth: "60px",
+border: "1px solid #e2e8f0"
+}}
+>
+
+{iconos.map((infoDia, index) => (
+
+<div
+key={index}
+style={{
+fontSize: "1.4rem",
+fontWeight: "bold",
+lineHeight: "1",
+color:
+infoDia.tipo === "HOY"
+? "#22c55e"
+: infoDia.tipo === "ATRASADO"
+? "#ef4444"
+: "#3b82f6"
+}}
+>
+{infoDia.tipo === "HOY" ? "X" : "●"}
+</div>
+
+))}
+
+</td>
+);
+
 })}
                                                 <td style={{ ...tdStyle, background: "#ecfeff", fontWeight: "bold", fontSize: "1.3rem", color: "#0891b2" }}>
                                                     {dias.length}
@@ -580,10 +789,13 @@ useEffect(() => {
                                         );
                                     })
                                 )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                           </tbody>
+</table>
+
+    </div>
+</>
+)}
+
             </div>
         </div>
     );
