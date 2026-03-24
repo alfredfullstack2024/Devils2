@@ -44,44 +44,31 @@ const ResumenGeneral = () => {
   });
 
   // 🔹 RESUMEN GENERAL
-  const cargarResumen = async () => {
-    try {
-      setLoading(true);
-      setError("");
+const cargarResumen = async () => {
+  try {
+    setLoading(true);
+    setError("");
 
-      const [year, month] = mes.split("-");
+    const [year, month] = mes.split("-");
 
-      // 🔹 PAGOS NORMALES
-      const resPagos = await api.get("/pagos");
-      const pagos = resPagos.data.pagos || [];
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
 
-      const pagosMes = pagos.filter((p) => {
-        const fecha = new Date(p.fecha);
-        return (
-          fecha.getFullYear() === Number(year) &&
-          fecha.getMonth() + 1 === Number(month)
-        );
-      });
+    const res = await api.get("/reportes/resumen-general", {
+      params: {
+        fechaInicio: startDate,
+        fechaFin: endDate
+      }
+    });
 
-      // 🔹 MENSUALIDADES (DESDE paga-mes)
-      const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
-      const mensualidadesData = resMensualidades.data || [];
+    setData(res.data);
 
-      const nombreMes = new Date(`${year}-${month}-01`)
-        .toLocaleString("es-ES", { month: "long" })
-        .toLowerCase();
-
-      const mensualidadesMes = mensualidadesData.filter((m) =>
-        (m.mesesPagados || []).includes(
-          nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
-        )
-      );
-
-      const totalMensualidades = mensualidadesMes.reduce(
-        (acc, m) => acc + (m.total || 0),
-        0
-      );
-
+  } catch (err) {
+    setError("Error al cargar resumen");
+  } finally {
+    setLoading(false);
+  }
+};
       // 🔹 PRODUCTOS y LIGAS
       const ligas = pagosMes.filter((p) =>
         (p.productoManual || "").toLowerCase().includes("liga")
