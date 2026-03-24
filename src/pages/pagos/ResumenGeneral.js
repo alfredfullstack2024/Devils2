@@ -69,38 +69,7 @@ const cargarResumen = async () => {
     setLoading(false);
   }
 };
-      // 🔹 PRODUCTOS y LIGAS
-      const ligas = pagosMes.filter((p) =>
-        (p.productoManual || "").toLowerCase().includes("liga")
-      );
-
-      const productos = pagosMes.filter(
-        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
-      );
-
-      setData({
-        ligas: calcular(ligas),
-
-        mensualidades: {
-          total: totalMensualidades,
-          efectivo: totalMensualidades,
-          transferencia: 0,
-          tarjeta: 0,
-        },
-
-        productos: calcular(productos),
-
-        totalGeneral:
-          pagosMes.reduce((acc, p) => acc + (p.monto || 0), 0) +
-          totalMensualidades,
-      });
-    } catch (err) {
-      console.error(err);
-      setError("Error al calcular resumen");
-    } finally {
-      setLoading(false);
-    }
-  };
+     
 
   // 🔹 CIERRE DIARIO
   const cargarCierre = async () => {
