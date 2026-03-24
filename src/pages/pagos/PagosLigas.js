@@ -5,7 +5,7 @@ import axios from "axios";
 const backendURL = process.env.REACT_APP_API_URL || "https://devils-1.onrender.com/api";
 
 const obtenerClientes = async () => {
-    const res = await axios.get(`${backendURL}/clientes`);
+    const res = await axios.get(`${backendURL}clientes`);
     return res.data;
 };// redeploy
 // ===========================================
