@@ -95,12 +95,12 @@ const cargarResumen = async () => {
       const year = fechaCierre.split("-")[0];
 
       const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
-      const mensualidadesData = resMensualidades.data || [];
+      const mensualidadesData = resMensualidades.data.pagos || resMensualidades.data || [];
 
      const mensualidadesDia = mensualidadesData.filter((m) => {
-  if (!m.fecha) return false;
+  if (!m.fecha && !m.createdAt) return false;
 
-  const fecha = new Date(m.fecha);
+  const fecha = new Date(m.fecha || m.createdAt);
 
   if (isNaN(fecha)) return false;
 
@@ -118,11 +118,15 @@ const cargarResumen = async () => {
       );
 
       const ligas = pagosDia.filter((p) =>
-        (p.productoManual || "").toLowerCase().includes("liga")
-      );
+  (p.productoManual || p.producto?.nombre || "")
+    .toLowerCase()
+    .includes("liga")
+);
 
       const productos = pagosDia.filter(
-        (p) => !(p.productoManual || "").toLowerCase().includes("liga")
+        (p) => !(p.productoManual || p.producto?.nombre || "")
+  .toLowerCase()
+  .includes("liga")
       );
 
      const calcularMensualidades = (lista) => ({
