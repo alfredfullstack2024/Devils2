@@ -164,11 +164,9 @@ const CrearPago = () => {
                   const valor = e.target.value;
                   setSearchCliente(valor);
 
-                  const seleccionado = clientes.find(
-                    (c) =>
-                      `${c.nombre} ${c.apellido}`.toLowerCase() ===
-                      valor.toLowerCase()
-                  );
+                  const seleccionado = clientes.find((c) =>
+  `${c.nombre} ${c.apellido}`.toLowerCase().includes(valor.toLowerCase())
+);
 
                   if (seleccionado) {
                     setFormData((prev) => ({
