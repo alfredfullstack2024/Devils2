@@ -1,27 +1,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-
-// 1. Limpiamos la URL para que NUNCA termine en / y evitar el error 404
-const baseRaw = process.env.REACT_APP_API_URL || "https://devils-1.onrender.com/api";
-const backendURL = baseRaw.endsWith('/') ? baseRaw.slice(0, -1) : baseRaw;
-
-// 2. INTERCEPTOR: Esto le pone el Token a TODAS tus peticiones automáticamente
-// Así no tienes que modificar las 800 líneas de abajo.
-axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token"); // Asegúrate que en tu login lo guardes como "token"
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
-// 3. Corregimos la ruta agregando la / que faltaba
-const obtenerClientes = async () => {
-    const res = await axios.get(`${backendURL}/clientes`);
-    return res.data;
-};
-
+import { obtenerClientes } from "../../api/axios";
+// redeploy
 // ===========================================
 // ⭐ NUEVA FUNCIÓN AUXILIAR: Obtener mes actual
 // ===========================================
@@ -30,7 +11,7 @@ const obtenerNombreMesActual = () => {
     const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     const nombreMes = meses[date.getMonth()];
     const anio = date.getFullYear();
-    return `${nombreMes} ${anio}`;
+    return `${nombreMes} ${anio}`; // Ej: "Diciembre 2025"
 };
 
 // Estilos (dejados igual para no alterar la apariencia)
@@ -81,7 +62,7 @@ const [comentarioPago, setComentarioPago] = useState("");
         return ["TODAS", ...Array.from(specs).sort()];
     }, [clientes]);
 
-    
+    const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
 
     // ====== CARGA INICIAL COMPLETA ======
    // ====== PEGA ESTO ======
@@ -96,7 +77,7 @@ useEffect(() => {
 
             const mesesData = mesesRes.data;
             setMeses(mesesData);
-            setClientes(clientesRes);
+            setClientes(clientesRes.data);
             const valorConfig = configRes.data.valorDiario || 8000;
 setValorDiario(valorConfig);
 setValorDiarioTemp(valorConfig);
