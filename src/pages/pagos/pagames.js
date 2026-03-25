@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import api from "../../api/axios";
+
 import api, { obtenerClientes } from "../../api/axios";
 
 // Configuración de Meses y Estilos base
