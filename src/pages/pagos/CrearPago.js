@@ -48,8 +48,10 @@ const CrearPago = () => {
         const today = new Date().toLocaleDateString("en-CA");
         setFormData((prev) => ({ ...prev, fecha: today }));
       } catch (err) {
-        console.error(err);
-        setError("Error al cargar datos. Verifica la conexión o sesión.");
+  console.error("ERROR COMPLETO:", err);
+  console.error("RESPONSE:", err.response);
+
+  setError("Error al cargar datos. Verifica la conexión o sesión.");
         if (err.message.includes("Sesión expirada")) {
           navigate("/login");
         }
