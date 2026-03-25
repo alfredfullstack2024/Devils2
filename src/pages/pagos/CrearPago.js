@@ -41,7 +41,8 @@ const CrearPago = () => {
           obtenerClientes(),
           obtenerProductos(),
         ]);
-        setClientes(clientesResponse.data || []);
+        console.log("CLIENTES RESPONSE:", clientesResponse.data);
+        setClientes(clientesResponse.data.clientes || clientesResponse.data || []);
         setProductos(productosResponse.data);
 
         const today = new Date().toLocaleDateString("en-CA");
