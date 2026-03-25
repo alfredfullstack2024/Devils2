@@ -80,7 +80,12 @@ const cargarResumen = async () => {
       const pagos = resPagos.data.pagos || [];
 
       const pagosDia = pagos.filter((p) => {
-        const fecha = new Date(p.fecha).toISOString().split("T")[0];
+        const fecha = new Date(p.fecha);
+const fechaLocal = fecha.getFullYear() + "-" +
+  String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
+  String(fecha.getDate()).padStart(2, "0");
+
+return fechaLocal === fechaCierre;
         return fecha === fechaCierre;
       });
 
@@ -90,8 +95,9 @@ const cargarResumen = async () => {
       const mensualidadesData = resMensualidades.data || [];
 
       const mensualidadesDia = mensualidadesData.filter((m) => {
-        return m.fecha === fechaCierre;
-      });
+  const fecha = new Date(m.fecha).toISOString().split("T")[0];
+  return fecha === fechaCierre;
+});
 
       const totalMensualidades = mensualidadesDia.reduce(
         (acc, m) => acc + (m.total || 0),
@@ -109,18 +115,24 @@ const cargarResumen = async () => {
       setCierre({
         ligas: calcular(ligas),
 
-        mensualidades: {
-          total: totalMensualidades,
-          efectivo: totalMensualidades,
-          transferencia: 0,
-          tarjeta: 0,
-        },
+        const calcularMensualidades = (lista) => ({
+  total: lista.reduce((acc, m) => acc + (m.total || 0), 0),
+  efectivo: lista
+    .filter((m) => m.metodoPago === "Efectivo")
+    .reduce((acc, m) => acc + (m.total || 0), 0),
+  transferencia: lista
+    .filter((m) => m.metodoPago === "Transferencia")
+    .reduce((acc, m) => acc + (m.total || 0), 0),
+  tarjeta: lista
+    .filter((m) => m.metodoPago === "Tarjeta")
+    .reduce((acc, m) => acc + (m.total || 0), 0),
+});
 
         productos: calcular(productos),
 
-        totalDia:
-          pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0) +
-          totalMensualidades,
+       const totalPagos = pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0);
+
+totalDia: totalPagos + calcularMensualidades(mensualidadesDia).total,
       });
     } catch (err) {
       console.error(err);
