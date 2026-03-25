@@ -45,7 +45,7 @@ const cargarCierre = async () => {
       const ligasData = resLigas.data || [];
 
       ligasDia = ligasData.filter((l) => {
-        const fecha = new Date(l.createdAt);
+        const fecha = new Date(l.createdAt || l._id);
         if (isNaN(fecha)) return false;
 
         const fechaLocal =
