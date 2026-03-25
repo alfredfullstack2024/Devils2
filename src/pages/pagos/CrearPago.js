@@ -41,9 +41,9 @@ const CrearPago = () => {
           obtenerClientes(),
           obtenerProductos(),
         ]);
-        console.log("CLIENTES RESPONSE:", clientesResponse.data);
+        console.log("CLIENTES RESPONSE:", clientesResponse);
         if (clientesResponse && clientesResponse.data) {
-  setClientes(clientesResponse.data.clientes || clientesResponse.data || []);
+  setClientes(clientesResponse.clientes || clientesResponse || []);
 } else {
   setClientes([]);
 }
