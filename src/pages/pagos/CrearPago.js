@@ -42,11 +42,7 @@ const CrearPago = () => {
           obtenerProductos(),
         ]);
         console.log("CLIENTES RESPONSE:", clientesResponse);
-        if (clientesResponse && clientesResponse.data) {
-  setClientes(clientesResponse.clientes || clientesResponse || []);
-} else {
-  setClientes([]);
-}
+        setClientes(clientesResponse || []);
         setProductos(productosResponse.data);
 
         const today = new Date().toLocaleDateString("en-CA");
