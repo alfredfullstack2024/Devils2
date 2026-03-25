@@ -175,7 +175,10 @@ const diasConTipo = diasSeleccionados.map(dia => {
         mes: mesSeleccionado,
         diasAsistidos: diasSeleccionados.length,
         total: totalFinal,
-        diasPagados: diasConTipo,
+        diasPagados: diasConTipo.map(d => ({
+  dia: d.dia,
+  tipo: d.tipo
+}))
         tipoPago: tipoPagoSeleccionado,
         comentario: ""
     });
