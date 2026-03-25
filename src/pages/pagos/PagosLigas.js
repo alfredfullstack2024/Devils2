@@ -62,7 +62,7 @@ const [comentarioPago, setComentarioPago] = useState("");
         return ["TODAS", ...Array.from(specs).sort()];
     }, [clientes]);
 
-    const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
+    
 
     // ====== CARGA INICIAL COMPLETA ======
    // ====== PEGA ESTO ======
