@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
+import api from "../../api/axios";
 import { obtenerClientes } from "../../api/axios";
 
 // Configuración de Meses y Estilos base
@@ -44,7 +44,7 @@ const Pagames = () => {
                 obtenerClientes()
             ]);
             setAnios(aniosRes.data);
-            setClientes(clientesRes.data);
+            setClientes(clientesRes || []);
             if (aniosRes.data.length > 0 && !anioSeleccionado) {
                 setAnioSeleccionado(aniosRes.data[0].nombre);
             }
@@ -55,7 +55,7 @@ const Pagames = () => {
         if (!anioSeleccionado) return;
         try {
             const res = await axios.get(`${backendURL}/paga-mes/pagos/${anioSeleccionado}`);
-            const pagosReales = res.data.filter(p => p.nombre !== "SYSTEM");
+            const pagosReales = (res.data || []).filter(p => p.nombre !== "SYSTEM");
             
             // Enriquecer cada pago con la especialidad real del cliente desde la BD
             const pagosEnriquecidos = pagosReales.map(pago => {
@@ -121,7 +121,7 @@ const Pagames = () => {
         
         // Filtro de periodo
         if (filtroPeriodo !== "TODO EL AÑO") {
-            pagos = pagos.filter(p => p.mesesPagados.includes(filtroPeriodo));
+            pagos = pagos.filter(p => (p.mesesPagados || []).includes(filtroPeriodo));
         }
 
         const total = pagos.reduce((acc, p) => acc + p.total, 0);
@@ -146,7 +146,7 @@ const Pagames = () => {
                         <button onClick={crearAnio} style={btnPrimary}>Crear Año</button>
                         <select value={anioSeleccionado} onChange={(e) => setAnioSeleccionado(e.target.value)} style={selectStyle}>
                             <option value="">Seleccionar año</option>
-                            {anios.map(a => <option key={a._id} value={a.nombre}>{a.nombre}</option>)}
+                            {(anios || []).map(a => <option key={a._id} value={a.nombre}>{a.nombre}</option>)}
                         </select>
                     </div>
                     <div style={{ background: "#172554", color: "white", padding: "1rem 3rem", borderRadius: "1.5rem", fontSize: "2rem", fontWeight: "bold" }}>
@@ -168,7 +168,7 @@ const Pagames = () => {
                             list="clientes-list" style={{ ...inputStyle, width: "350px" }}
                         />
                         <datalist id="clientes-list">
-                            {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
+                            {(clientes || []).map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
                         </datalist>
 {/*
                         <select style={selectStyle} value={planSeleccionado} onChange={e => setPlanSeleccionado(e.target.value)}>
