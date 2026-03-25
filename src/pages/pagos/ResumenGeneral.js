@@ -80,23 +80,36 @@ const cargarResumen = async () => {
       const pagos = resPagos.data.pagos || [];
 
       const pagosDia = pagos.filter((p) => {
-        const fecha = new Date(p.fecha);
-const fechaLocal = fecha.getFullYear() + "-" +
-  String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
-  String(fecha.getDate()).padStart(2, "0");
+  const fecha = new Date(p.fecha);
 
+  if (isNaN(fecha)) return false;
 
-        return fecha === fechaCierre;
-      });
+  const fechaLocal =
+    fecha.getFullYear() + "-" +
+    String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
+    String(fecha.getDate()).padStart(2, "0");
+
+  return fechaLocal === fechaCierre;
+});
 
       const year = fechaCierre.split("-")[0];
 
       const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
       const mensualidadesData = resMensualidades.data || [];
 
-      const mensualidadesDia = mensualidadesData.filter((m) => {
-  const fecha = new Date(m.fecha).toISOString().split("T")[0];
-  return fecha === fechaCierre;
+     const mensualidadesDia = mensualidadesData.filter((m) => {
+  if (!m.fecha) return false;
+
+  const fecha = new Date(m.fecha);
+
+  if (isNaN(fecha)) return false;
+
+  const fechaLocal =
+    fecha.getFullYear() + "-" +
+    String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
+    String(fecha.getDate()).padStart(2, "0");
+
+  return fechaLocal === fechaCierre;
 });
 
       const totalMensualidades = mensualidadesDia.reduce(
