@@ -41,7 +41,7 @@ const CrearPago = () => {
           obtenerClientes(),
           obtenerProductos(),
         ]);
-        setClientes(clientesResponse.data);
+        setClientes(clientesResponse.data.clientes || []);
         setProductos(productosResponse.data);
 
         const today = new Date().toLocaleDateString("en-CA");
@@ -175,7 +175,7 @@ const CrearPago = () => {
                 list="clientes-list"
               />
               <datalist id="clientes-list">
-                {clientes.map((cliente) => (
+                {(clientes || []).map((cliente) => (
                   <option
                     key={cliente._id}
                     value={`${cliente.nombre} ${cliente.apellido}`}
