@@ -117,11 +117,15 @@ const cargarResumen = async () => {
         0
       );
 
-      const ligas = pagosDia.filter((p) =>
-  (p.productoManual || p.producto?.nombre || "")
-    .toLowerCase()
-    .includes("liga")
-);
+      const ligas = pagosDia.filter((p) => {
+  const nombre = (
+    p.productoManual ||
+    p.producto?.nombre ||
+    ""
+  ).toLowerCase().trim();
+
+  return nombre.includes("liga");
+});
 
       const productos = pagosDia.filter(
         (p) => !(p.productoManual || p.producto?.nombre || "")
