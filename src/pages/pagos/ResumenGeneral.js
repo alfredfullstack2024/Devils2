@@ -85,7 +85,7 @@ const fechaLocal = fecha.getFullYear() + "-" +
   String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
   String(fecha.getDate()).padStart(2, "0");
 
-return fechaLocal === fechaCierre;
+
         return fecha === fechaCierre;
       });
 
@@ -112,10 +112,7 @@ return fechaLocal === fechaCierre;
         (p) => !(p.productoManual || "").toLowerCase().includes("liga")
       );
 
-      setCierre({
-        ligas: calcular(ligas),
-
-        const calcularMensualidades = (lista) => ({
+     const calcularMensualidades = (lista) => ({
   total: lista.reduce((acc, m) => acc + (m.total || 0), 0),
   efectivo: lista
     .filter((m) => m.metodoPago === "Efectivo")
@@ -128,12 +125,14 @@ return fechaLocal === fechaCierre;
     .reduce((acc, m) => acc + (m.total || 0), 0),
 });
 
-        productos: calcular(productos),
+const totalPagos = pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0);
 
-       const totalPagos = pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0);
-
-totalDia: totalPagos + calcularMensualidades(mensualidadesDia).total,
-      });
+setCierre({
+  ligas: calcular(ligas),
+  mensualidades: calcularMensualidades(mensualidadesDia),
+  productos: calcular(productos),
+  totalDia: totalPagos + calcularMensualidades(mensualidadesDia).total,
+});
     } catch (err) {
       console.error(err);
     } finally {
