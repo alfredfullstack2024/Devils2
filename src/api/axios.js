@@ -37,7 +37,10 @@ api.interceptors.response.use(
 );
 
 /* --- Funciones Exportadas --- */
-export const obtenerClientes = (config) => api.get("/clientes", config);
+export const obtenerClientes = async (config) => {
+  const res = await api.get("/clientes", config);
+  return res.data;
+};
 export const consultarClientePorCedula = (n, config) => api.get(`/clientes/consultar/${n}`, config);
 export const obtenerClientePorId = (id, config) => api.get(`/clientes/${id}`, config);
 export const crearCliente = (data, config) => api.post("/clientes", data, config);
