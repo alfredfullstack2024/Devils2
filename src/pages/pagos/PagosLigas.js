@@ -106,7 +106,7 @@ setValorDiarioTemp(valorConfig);
     };
 
     cargarDatosIniciales();
-}, [backendURL]);
+}, []);
    
                 // CARGAR PAGOS Y CALCULAR TOTAL (TOTAL GENERAL)
 useEffect(() => {
@@ -175,11 +175,11 @@ const diasConTipo = diasSeleccionados.map(dia => {
         mes: mesSeleccionado,
         diasAsistidos: diasSeleccionados.length,
         total: totalFinal,
-        diasPagados: diasConTipo.map(d => ({
+       diasPagados: diasConTipo.map(d => ({
   dia: d.dia,
   tipo: d.tipo
-}))
-        tipoPago: tipoPagoSeleccionado,
+})),
+tipoPago: tipoPagoSeleccionado,
         comentario: ""
     });
 
