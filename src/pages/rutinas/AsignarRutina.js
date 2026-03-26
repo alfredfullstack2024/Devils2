@@ -227,10 +227,9 @@ console.log("RESPUESTA CLIENTES:", clientesRes);
               >
                 <option value="">Seleccione un cliente</option>
                 {clientes.map((cliente) => (
-                  <option key={cliente._id} value={cliente._id}>
-                    {cliente.nombre} {cliente.apellido || ""} -{" "}
-                    {cliente.numeroIdentificacion}
-                  </option>
+                 <option key={cliente._id} value={cliente._id}>
+  {JSON.stringify(cliente)}
+</option>
                 ))}
               </Form.Select>
             </Form.Group>
