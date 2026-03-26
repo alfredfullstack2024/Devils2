@@ -29,47 +29,43 @@ const ResumenGeneral = () => {
 
   const [loadingCierre, setLoadingCierre] = useState(false);
 
-  // 🔹 función para pagos normales
-  const calcular = (lista) => ({
-    total: lista.reduce((acc, p) => acc + (p.monto || 0), 0),
+  // 🔹 Función robusta para calcular totales (Ligas y Productos)
+  // Maneja tanto .monto como .total, y reconoce Nequi como transferencia
+  const calcularPagosGenericos = (lista) => ({
+    total: lista.reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
     efectivo: lista
-      .filter((p) => p.metodoPago === "Efectivo")
-      .reduce((acc, p) => acc + (p.monto || 0), 0),
+      .filter((p) => (p.metodoPago || p.tipoPago) === "Efectivo")
+      .reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
     transferencia: lista
-      .filter((p) => p.metodoPago === "Transferencia")
-      .reduce((acc, p) => acc + (p.monto || 0), 0),
+      .filter((p) => 
+        (p.metodoPago || p.tipoPago) === "Transferencia" || 
+        (p.metodoPago || p.tipoPago) === "Nequi"
+      )
+      .reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
     tarjeta: lista
-      .filter((p) => p.metodoPago === "Tarjeta")
-      .reduce((acc, p) => acc + (p.monto || 0), 0),
+      .filter((p) => (p.metodoPago || p.tipoPago) === "Tarjeta")
+      .reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
   });
 
-  // 🔹 RESUMEN GENERAL
-const cargarResumen = async () => {
-  try {
-    setLoading(true);
-    setError("");
+  // 🔹 RESUMEN GENERAL (Mensual)
+  const cargarResumen = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const [year, month] = mes.split("-");
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0);
 
-    const [year, month] = mes.split("-");
-
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-
-    const res = await api.get("/reportes/resumen-general", {
-      params: {
-        fechaInicio: startDate,
-        fechaFin: endDate
-      }
-    });
-
-    setData(res.data);
-
-  } catch (err) {
-    setError("Error al cargar resumen");
-  } finally {
-    setLoading(false);
-  }
-};
-     
+      const res = await api.get("/reportes/resumen-general", {
+        params: { fechaInicio: startDate, fechaFin: endDate }
+      });
+      setData(res.data);
+    } catch (err) {
+      setError("Error al cargar resumen");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 🔹 CIERRE DIARIO
   const cargarCierre = async () => {
@@ -79,77 +75,68 @@ const cargarResumen = async () => {
       const resPagos = await api.get("/pagos");
       const pagos = resPagos.data.pagos || [];
 
+      // Filtrar pagos por la fecha seleccionada
       const pagosDia = pagos.filter((p) => {
-  const fecha = new Date(p.fecha);
-
-  if (isNaN(fecha)) return false;
-
-  const fechaLocal =
-    fecha.getFullYear() + "-" +
-    String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
-    String(fecha.getDate()).padStart(2, "0");
-
-  return fechaLocal === fechaCierre;
-});
+        const fecha = new Date(p.fecha);
+        if (isNaN(fecha)) return false;
+        const fechaLocal =
+          fecha.getFullYear() + "-" +
+          String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
+          String(fecha.getDate()).padStart(2, "0");
+        return fechaLocal === fechaCierre;
+      });
 
       const year = fechaCierre.split("-")[0];
-
       const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
       const mensualidadesData = resMensualidades.data.pagos || resMensualidades.data || [];
 
-     const mensualidadesDia = mensualidadesData.filter((m) => {
-  if (!m.fecha && !m.createdAt) return false;
+      const mensualidadesDia = mensualidadesData.filter((m) => {
+        if (!m.fecha && !m.createdAt) return false;
+        const fecha = new Date(m.fecha || m.createdAt);
+        if (isNaN(fecha)) return false;
+        const fechaLocal =
+          fecha.getFullYear() + "-" +
+          String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
+          String(fecha.getDate()).padStart(2, "0");
+        return fechaLocal === fechaCierre;
+      });
 
-  const fecha = new Date(m.fecha || m.createdAt);
+      // --- LÓGICA DE FILTRADO CORREGIDA PARA LIGAS ---
+      const ligas = pagosDia.filter((p) => {
+        const porEquipo = (p.equipo || "").toLowerCase().includes("liga");
+        const porNombreProd = (p.productoManual || p.producto?.nombre || "").toLowerCase().includes("liga");
+        return porEquipo || porNombreProd;
+      });
 
-  if (isNaN(fecha)) return false;
+      const productos = pagosDia.filter((p) => {
+        const porEquipo = (p.equipo || "").toLowerCase().includes("liga");
+        const porNombreProd = (p.productoManual || p.producto?.nombre || "").toLowerCase().includes("liga");
+        return !porEquipo && !porNombreProd;
+      });
 
-  const fechaLocal =
-    fecha.getFullYear() + "-" +
-    String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
-    String(fecha.getDate()).padStart(2, "0");
+      const calcularMensualidades = (lista) => ({
+        total: lista.reduce((acc, m) => acc + (m.total || 0), 0),
+        efectivo: lista
+          .filter((m) => m.metodoPago === "Efectivo")
+          .reduce((acc, m) => acc + (m.total || 0), 0),
+        transferencia: lista
+          .filter((m) => m.metodoPago === "Transferencia")
+          .reduce((acc, m) => acc + (m.total || 0), 0),
+        tarjeta: lista
+          .filter((m) => m.metodoPago === "Tarjeta")
+          .reduce((acc, m) => acc + (m.total || 0), 0),
+      });
 
-  return fechaLocal === fechaCierre;
-});
+      const resLigas = calcularPagosGenericos(ligas);
+      const resMensualidades = calcularMensualidades(mensualidadesDia);
+      const resProductos = calcularPagosGenericos(productos);
 
-      const totalMensualidades = mensualidadesDia.reduce(
-        (acc, m) => acc + (m.total || 0),
-        0
-      );
-
-      const ligas = pagosDia.filter((p) =>
-  (p.productoManual || p.producto?.nombre || "")
-    .toLowerCase()
-    .includes("liga")
-);
-
-      const productos = pagosDia.filter(
-        (p) => !(p.productoManual || p.producto?.nombre || "")
-  .toLowerCase()
-  .includes("liga")
-      );
-
-     const calcularMensualidades = (lista) => ({
-  total: lista.reduce((acc, m) => acc + (m.total || 0), 0),
-  efectivo: lista
-    .filter((m) => m.metodoPago === "Efectivo")
-    .reduce((acc, m) => acc + (m.total || 0), 0),
-  transferencia: lista
-    .filter((m) => m.metodoPago === "Transferencia")
-    .reduce((acc, m) => acc + (m.total || 0), 0),
-  tarjeta: lista
-    .filter((m) => m.metodoPago === "Tarjeta")
-    .reduce((acc, m) => acc + (m.total || 0), 0),
-});
-
-const totalPagos = pagosDia.reduce((acc, p) => acc + (p.monto || 0), 0);
-
-setCierre({
-  ligas: calcular(ligas),
-  mensualidades: calcularMensualidades(mensualidadesDia),
-  productos: calcular(productos),
-  totalDia: totalPagos + calcularMensualidades(mensualidadesDia).total,
-});
+      setCierre({
+        ligas: resLigas,
+        mensualidades: resMensualidades,
+        productos: resProductos,
+        totalDia: resLigas.total + resMensualidades.total + resProductos.total,
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -199,7 +186,7 @@ setCierre({
         </Col>
         <Col md={3}>
           <Button onClick={cargarResumen}>
-            {loading ? <Spinner size="sm" /> : "Consultar"}
+            {loading ? <Spinner size="sm" /> : "Consultar Mensual"}
           </Button>
         </Col>
       </Row>
@@ -211,7 +198,7 @@ setCierre({
       </Row>
 
       <Card className="p-4 text-center mb-4">
-        <h4>TOTAL GENERAL</h4>
+        <h4>TOTAL GENERAL (MES)</h4>
         <h2>${data.totalGeneral.toLocaleString("es-CO")}</h2>
       </Card>
 
@@ -228,8 +215,8 @@ setCierre({
           />
         </Col>
         <Col md={3}>
-          <Button onClick={cargarCierre}>
-            {loadingCierre ? <Spinner size="sm" /> : "Calcular"}
+          <Button onClick={cargarCierre} variant="success">
+            {loadingCierre ? <Spinner size="sm" /> : "Calcular Día"}
           </Button>
         </Col>
       </Row>
@@ -240,9 +227,9 @@ setCierre({
         <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
       </Row>
 
-      <Card className="p-4 text-center">
+      <Card className="p-4 text-center" style={{ background: "#e0f2fe" }}>
         <h4>TOTAL DEL DIA</h4>
-        <h2>${cierre.totalDia.toLocaleString("es-CO")}</h2>
+        <h2 className="text-primary">${cierre.totalDia.toLocaleString("es-CO")}</h2>
       </Card>
     </div>
   );
