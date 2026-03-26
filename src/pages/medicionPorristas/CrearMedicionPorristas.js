@@ -59,23 +59,27 @@ const CrearMedicionPorristas = () => {
     }
   }, [navigate]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [clientesResponse, entrenadoresResponse, medicionesResponse] = await Promise.all([
-        obtenerClientes(),
-        obtenerEntrenadores(),
-        obtenerMedicionesPorristas()
-      ]);
-      setClientes(clientesResponse.data);
-      setEntrenadores(entrenadoresResponse.data);
-      setMediciones(medicionesResponse.data);
-    } catch (err) {
-      setError("Error al cargar datos: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // BUSCA ESTA FUNCIÓN Y DÉJALA ASÍ:
+const fetchData = async () => {
+  setLoading(true);
+  try {
+    const [clientesResponse, entrenadoresResponse, medicionesResponse] = await Promise.all([
+      obtenerClientes(),
+      obtenerEntrenadores(),
+      obtenerMedicionesPorristas()
+    ]);
+
+    // CAMBIO: Quitamos el .data en los tres
+    setClientes(Array.isArray(clientesResponse) ? clientesResponse : []);
+    setEntrenadores(Array.isArray(entrenadoresResponse) ? entrenadoresResponse : []);
+    setMediciones(Array.isArray(medicionesResponse) ? medicionesResponse : []);
+    
+  } catch (err) {
+    setError("Error al cargar datos: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchData();
@@ -183,9 +187,13 @@ const CrearMedicionPorristas = () => {
     });
   };
 
-  const especialidadesPorEntrenador = Array.isArray(entrenadores.find(e => e._id === formData.entrenadorId)?.especialidad) ? entrenadores.find(e => e._id === formData.entrenadorId)?.especialidad : [entrenadores.find(e => e._id === formData.entrenadorId)?.especialidad || "Sin especialidad"];
-  console.log("Especialidades disponibles:", especialidadesPorEntrenador);
+  const especialidadesPorEntrenador = useMemo(() => {
+  const entrenadorEncontrado = entrenadores.find(e => e._id === formData.entrenadorId);
+  if (!entrenadorEncontrado) return [];
 
+  const esp = entrenadorEncontrado.especialidad;
+  return Array.isArray(esp) ? esp : [esp || "Sin especialidad"];
+}, [entrenadores, formData.entrenadorId]);
   const clientesFiltrados = useMemo(() => {
     return clientes.filter(cliente =>
       (cliente.nombre + " " + cliente.apellido).toLowerCase().includes(busqueda.toLowerCase())
@@ -234,11 +242,11 @@ const CrearMedicionPorristas = () => {
               required
             >
               <option value="">Seleccione un cliente</option>
-              {clientesFiltrados.map((cliente) => (
-                <option key={cliente._id} value={cliente._id}>
-                  {cliente.nombre + " " + cliente.apellido}
-                </option>
-              ))}
+             {clientesFiltrados.map((cliente) => (
+  <option key={cliente._id} value={cliente._id}>
+    {(cliente.nombre || "Sin nombre")} {(cliente.apellido || "")}
+  </option>
+))}
             </Form.Select>
           </Form.Group>
 
