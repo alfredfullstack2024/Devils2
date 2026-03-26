@@ -37,7 +37,7 @@ const ComposicionCorporal = () => {
     const fetchClientes = async () => {
       try {
         const response = await obtenerClientes();
-        setClientes(Array.isArray(response.data) ? response.data : []);
+        setClientes(Array.isArray(response) ? response : []);
       } catch (err) {
         setError("Error al cargar los clientes: " + err.message);
       }
