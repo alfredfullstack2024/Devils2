@@ -69,10 +69,15 @@ const fetchData = async () => {
       obtenerMedicionesPorristas()
     ]);
 
-    // CAMBIO: Quitamos el .data en los tres
-    setClientes(Array.isArray(clientesResponse) ? clientesResponse : []);
-    setEntrenadores(Array.isArray(entrenadoresResponse) ? entrenadoresResponse : []);
-    setMediciones(Array.isArray(medicionesResponse) ? medicionesResponse : []);
+    
+    // Intentamos sacar los datos de .data, si no existen, usamos la respuesta directa
+const dataClientes = clientesResponse.data || clientesResponse;
+const dataEntrenadores = entrenadoresResponse.data || entrenadoresResponse;
+const dataMediciones = medicionesResponse.data || medicionesResponse;
+
+setClientes(Array.isArray(dataClientes) ? dataClientes : []);
+setEntrenadores(Array.isArray(dataEntrenadores) ? dataEntrenadores : []);
+setMediciones(Array.isArray(dataMediciones) ? dataMediciones : []);
     
   } catch (err) {
     setError("Error al cargar datos: " + err.message);
@@ -253,18 +258,22 @@ const fetchData = async () => {
           <Form.Group className="mb-3">
             <Form.Label>Entrenador</Form.Label>
             <Form.Select
-              name="entrenadorId"
-              value={formData.entrenadorId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Seleccione un entrenador</option>
-              {entrenadores.map((entrenador) => (
-                <option key={entrenador._id} value={entrenador._id}>
-                  {entrenador.nombre + " " + entrenador.apellido}
-                </option>
-              ))}
-            </Form.Select>
+  name="entrenadorId"
+  value={formData.entrenadorId}
+  onChange={handleChange}
+  required
+>
+  <option value="">Seleccione un entrenador</option>
+  {entrenadores && entrenadores.length > 0 ? (
+    entrenadores.map((entrenador) => (
+      <option key={entrenador._id} value={entrenador._id}>
+        {entrenador.nombre} {entrenador.apellido}
+      </option>
+    ))
+  ) : (
+    <option disabled>Cargando entrenadores...</option>
+  )}
+</Form.Select>
           </Form.Group>
 
           <Form.Group className="mb-3">
