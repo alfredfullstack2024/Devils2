@@ -4,7 +4,6 @@ import api from "../../api/axios";
 
 const ResumenGeneral = () => {
   const mesActual = new Date().toISOString().slice(0, 7);
-
   const [mes, setMes] = useState(mesActual);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,10 +15,7 @@ const ResumenGeneral = () => {
     totalGeneral: 0,
   });
 
-  const [fechaCierre, setFechaCierre] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-
+  const [fechaCierre, setFechaCierre] = useState(new Date().toISOString().split("T")[0]);
   const [cierre, setCierre] = useState({
     ligas: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
     mensualidades: { total: 0, efectivo: 0, transferencia: 0, tarjeta: 0 },
@@ -29,115 +25,50 @@ const ResumenGeneral = () => {
 
   const [loadingCierre, setLoadingCierre] = useState(false);
 
-  // 🔹 Función para calcular totales de Ligas y Productos
-  const calcularPagosGenericos = (lista) => ({
-    total: lista.reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
-    efectivo: lista
-      .filter((p) => (p.metodoPago || p.tipoPago) === "Efectivo")
-      .reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
-    transferencia: lista
-      .filter((p) => 
-        (p.metodoPago || p.tipoPago) === "Transferencia" || 
-        (p.metodoPago || p.tipoPago) === "Nequi"
-      )
-      .reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
-    tarjeta: lista
-      .filter((p) => (p.metodoPago || p.tipoPago) === "Tarjeta")
-      .reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
-  });
+  const obtenerRangoFechas = () => {
+    const [year, month] = mes.split("-");
+    const startDate = `${year}-${month}-01T00:00:00.000Z`;
+    const ultimoDia = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${month}-${ultimoDia}T23:59:59.999Z`;
+    return { startDate, endDate };
+  };
 
-  // 🔹 RESUMEN MENSUAL
   const cargarResumen = async () => {
     try {
       setLoading(true);
       setError("");
-      const [year, month] = mes.split("-");
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0);
+      const { startDate, endDate } = obtenerRangoFechas();
 
       const res = await api.get("/reportes/resumen-general", {
-        params: { fechaInicio: startDate, fechaFin: endDate }
+        params: {
+          fechaInicio: startDate,
+          fechaFin: endDate,
+        },
       });
-      setData(res.data);
+
+      setData({
+        ligas: res.data?.ligas || data.ligas,
+        mensualidades: res.data?.mensualidades || data.mensualidades,
+        productos: res.data?.productos || data.productos,
+        totalGeneral: res.data?.totalGeneral || 0,
+      });
     } catch (err) {
-      setError("Error al cargar resumen mensual");
+      console.error("Error resumen general", err);
+      setError("Error al cargar el resumen general");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 CIERRE DIARIO
   const cargarCierre = async () => {
     try {
       setLoadingCierre(true);
-
-      const resPagos = await api.get("/pagos");
-      const pagos = resPagos.data.pagos || [];
-
-      const pagosDia = pagos.filter((p) => {
-        const fecha = new Date(p.fecha);
-        if (isNaN(fecha)) return false;
-        const fechaLocal =
-          fecha.getFullYear() + "-" +
-          String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
-          String(fecha.getDate()).padStart(2, "0");
-        return fechaLocal === fechaCierre;
+      const res = await api.get("/reportes/cierre-diario", {
+        params: { fecha: fechaCierre },
       });
-
-      const year = fechaCierre.split("-")[0];
-      const resM = await api.get(`/paga-mes/pagos/${year}`);
-      const mensualidadesData = resM.data.pagos || resM.data || [];
-
-      const mensualidadesDia = mensualidadesData.filter((m) => {
-        if (!m.fecha && !m.createdAt) return false;
-        const fecha = new Date(m.fecha || m.createdAt);
-        if (isNaN(fecha)) return false;
-        const fechaLocal =
-          fecha.getFullYear() + "-" +
-          String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
-          String(fecha.getDate()).padStart(2, "0");
-        return fechaLocal === fechaCierre;
-      });
-
-      // Filtrado por equipo "Ligas" o nombre de producto
-      const ligas = pagosDia.filter((p) => {
-        const porEquipo = (p.equipo || "").toLowerCase().includes("liga");
-        const porNombreProd = (p.productoManual || p.producto?.nombre || "").toLowerCase().includes("liga");
-        return porEquipo || porNombreProd;
-      });
-
-      const productos = pagosDia.filter((p) => {
-        const porEquipo = (p.equipo || "").toLowerCase().includes("liga");
-        const porNombreProd = (p.productoManual || p.producto?.nombre || "").toLowerCase().includes("liga");
-        return !porEquipo && !porNombreProd;
-      });
-
-      const calcularMensualidades = (lista) => ({
-        total: lista.reduce((acc, m) => acc + (m.total || 0), 0),
-        efectivo: lista
-          .filter((m) => m.metodoPago === "Efectivo")
-          .reduce((acc, m) => acc + (m.total || 0), 0),
-        transferencia: lista
-          .filter((m) => m.metodoPago === "Transferencia")
-          .reduce((acc, m) => acc + (m.total || 0), 0),
-        tarjeta: lista
-          .filter((m) => m.metodoPago === "Tarjeta")
-          .reduce((acc, m) => acc + (m.total || 0), 0),
-      });
-
-      // Variables finales con nombres únicos para evitar errores de duplicado
-      const statsLigas = calcularPagosGenericos(ligas);
-      const statsMensualidades = calcularMensualidades(mensualidadesDia);
-      const statsProductos = calcularPagosGenericos(productos);
-
-      setCierre({
-        ligas: statsLigas,
-        mensualidades: statsMensualidades,
-        productos: statsProductos,
-        totalDia: statsLigas.total + statsMensualidades.total + statsProductos.total,
-      });
+      setCierre(res.data);
     } catch (err) {
-      console.error("Error en cierre diario:", err);
+      console.error("Error cierre diario", err);
     } finally {
       setLoadingCierre(false);
     }
@@ -175,61 +106,82 @@ const ResumenGeneral = () => {
       <h2 className="mb-4">Resumen General de Recaudo</h2>
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Row className="mb-4">
-        <Col md={3}>
-          <Form.Control
-            type="month"
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-          />
-        </Col>
-        <Col md={3}>
-          <Button onClick={cargarResumen}>
-            {loading ? <Spinner size="sm" /> : "Consultar Mensual"}
-          </Button>
-        </Col>
-      </Row>
-
-      <Row className="mb-4">
-        <Col md={4}><StatCard title="Ligas" stats={data.ligas} /></Col>
-        <Col md={4}><StatCard title="Mensualidades" stats={data.mensualidades} /></Col>
-        <Col md={4}><StatCard title="Productos" stats={data.productos} /></Col>
-      </Row>
-
-      <Card className="p-4 text-center mb-4 bg-light">
-        <h4>TOTAL GENERAL (MES)</h4>
-        <h2 className="text-dark">${data.totalGeneral.toLocaleString("es-CO")}</h2>
+      <Card className="mb-4">
+        <Card.Body>
+          <Row className="align-items-end">
+            <Col md={3}>
+              <Form.Group>
+                <Form.Label>Mes</Form.Label>
+                <Form.Control type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Button variant="primary" className="w-100" onClick={cargarResumen} disabled={loading}>
+                {loading ? <Spinner size="sm" /> : "Consultar"}
+              </Button>
+            </Col>
+          </Row>
+        </Card.Body>
       </Card>
 
-      <hr />
+      {loading ? (
+        <div className="text-center my-5">
+          <Spinner animation="border" variant="primary" />
+        </div>
+      ) : (
+        <>
+          <Row className="mb-4">
+            <Col md={4}><StatCard title="Ligas" stats={data.ligas} /></Col>
+            <Col md={4}><StatCard title="Mensualidades" stats={data.mensualidades} /></Col>
+            <Col md={4}><StatCard title="Productos" stats={data.productos} /></Col>
+          </Row>
 
-      <h3 className="text-center">Cierre Diario</h3>
+          <Row className="mb-4">
+            <Col md={12}>
+              <Card bg="dark" text="white" className="p-4 text-center shadow">
+                <h4>TOTAL GENERAL</h4>
+                <h2>${(data.totalGeneral || 0).toLocaleString("es-CO")}</h2>
+              </Card>
+            </Col>
+          </Row>
 
-      <Row className="mb-3">
-        <Col md={3}>
-          <Form.Control
-            type="date"
-            value={fechaCierre}
-            onChange={(e) => setFechaCierre(e.target.value)}
-          />
-        </Col>
-        <Col md={3}>
-          <Button onClick={cargarCierre} variant="success">
-            {loadingCierre ? <Spinner size="sm" /> : "Calcular Día"}
-          </Button>
-        </Col>
-      </Row>
+          <hr className="my-5" />
+          <h3 className="text-center mb-4">Cierre Diario</h3>
 
-      <Row className="mb-4">
-        <Col md={4}><StatCard title="Ligas" stats={cierre.ligas} /></Col>
-        <Col md={4}><StatCard title="Mensualidades" stats={cierre.mensualidades} /></Col>
-        <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
-      </Row>
+          <Card className="mb-4">
+            <Card.Body>
+              <Row className="align-items-end">
+                <Col md={3}>
+                  <Form.Group>
+                    <Form.Label>Fecha cierre</Form.Label>
+                    <Form.Control type="date" value={fechaCierre} onChange={(e) => setFechaCierre(e.target.value)} />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Button variant="success" className="w-100" onClick={cargarCierre} disabled={loadingCierre}>
+                    {loadingCierre ? <Spinner size="sm" /> : "Calcular cierre"}
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
 
-      <Card className="p-4 text-center" style={{ background: "#e0f2fe", border: "none" }}>
-        <h4>TOTAL DEL DÍA</h4>
-        <h2 className="text-primary">${cierre.totalDia.toLocaleString("es-CO")}</h2>
-      </Card>
+          <Row className="mb-4">
+            <Col md={4}><StatCard title="Ligas" stats={cierre.ligas} /></Col>
+            <Col md={4}><StatCard title="Mensualidades" stats={cierre.mensualidades} /></Col>
+            <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
+          </Row>
+
+          <Row>
+            <Col md={12}>
+              <Card bg="success" text="white" className="p-4 text-center shadow">
+                <h4>TOTAL DEL DIA</h4>
+                <h2>${(cierre.totalDia || 0).toLocaleString("es-CO")}</h2>
+              </Card>
+            </Col>
+          </Row>
+        </>
+      )}
     </div>
   );
 };
