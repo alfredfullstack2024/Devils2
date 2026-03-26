@@ -42,26 +42,42 @@ const AsignarRutina = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const [clientesRes, rutinasRes] = await Promise.all([
-          obtenerClientes(config),
-          obtenerRutinas(config),
-        ]);
-        console.log("Clientes cargados:", clientesRes.data);
-        setClientes(clientesRes.data);
-        setRutinas(rutinasRes.data);
-      } catch (err) {
-        console.error("Error al cargar datos:", err);
-        setError(
-          "Error al cargar datos: " +
-            (err.response?.data?.message || err.message)
-        );
-      } finally {
-        setLoading(false);
-      }
+    useEffect(() => {
+  if (!user || !user.token) return;
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      const [clientesRes, rutinasRes] = await Promise.all([
+        obtenerClientes(config),
+        obtenerRutinas(config),
+      ]);
+
+      console.log("Clientes cargados:", clientesRes.data);
+
+      setClientes(clientesRes.data || []);
+      setRutinas(rutinasRes.data || []);
+    } catch (err) {
+      console.error("Error al cargar datos:", err);
+
+      setError(
+        "Error al cargar datos: " +
+          (err.response?.data?.message || err.message)
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [user]);
     };
     if (user && user.token) fetchData();
   }, [user]);
