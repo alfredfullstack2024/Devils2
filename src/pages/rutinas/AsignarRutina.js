@@ -59,7 +59,7 @@ useEffect(() => {
         obtenerRutinas(config),
       ]);
 
-      setClientes(clientesRes.data || []);
+      setClientes(clientesRes.data.clientes || []);
       setRutinas(rutinasRes.data || []);
     } catch (err) {
       console.error("Error al cargar datos:", err);
