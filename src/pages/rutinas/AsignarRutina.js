@@ -41,8 +41,7 @@ const AsignarRutina = () => {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    useEffect(() => {
+useEffect(() => {
   if (!user || !user.token) return;
 
   const fetchData = async () => {
@@ -60,13 +59,10 @@ const AsignarRutina = () => {
         obtenerRutinas(config),
       ]);
 
-      console.log("Clientes cargados:", clientesRes.data);
-
       setClientes(clientesRes.data || []);
       setRutinas(rutinasRes.data || []);
     } catch (err) {
       console.error("Error al cargar datos:", err);
-
       setError(
         "Error al cargar datos: " +
           (err.response?.data?.message || err.message)
@@ -78,59 +74,54 @@ const AsignarRutina = () => {
 
   fetchData();
 }, [user]);
-    };
-    if (user && user.token) fetchData();
-  }, [user]);
 
   const fetchAsignaciones = useCallback(async () => {
-    try {
-      setLoading(true);
-      const cliente = clientes.find((c) => c._id === formData.clienteId);
-      console.log("Cliente seleccionado:", cliente);
-      if (cliente && cliente.numeroIdentificacion) {
-        const numeroIdentificacion = cliente.numeroIdentificacion
-          .toString()
-          .trim();
-        console.log(
-          "Consultando asignaciones para numeroIdentificacion:",
-          numeroIdentificacion
-        );
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const response = await consultarRutinaPorNumeroIdentificacion(
-          numeroIdentificacion,
-          config
-        );
-        console.log(
-          "Respuesta de fetchAsignaciones (data):",
-          JSON.stringify(response.data, null, 2)
-        );
-        const asignacionesData = Array.isArray(response.data)
-          ? response.data
-          : [];
-        console.log("Asignaciones procesadas:", asignacionesData);
-        setAsignaciones(asignacionesData);
-      } else {
-        console.log(
-          "Cliente no encontrado o sin numeroIdentificacion:",
-          formData.clienteId
-        );
-        setAsignaciones([]);
-        setError(
-          "El cliente seleccionado no tiene un número de identificación válido."
-        );
-      }
-    } catch (err) {
-      console.error("Error al cargar asignaciones:", err.response?.data || err);
-      setError(
-        "Error al cargar asignaciones: " +
-          (err.response?.data?.message || err.message)
-      );
-      setAsignaciones([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [clientes, formData.clienteId, user.token]); // Dependencias de fetchAsignaciones
+  // 🔥 ESTA LÍNEA VA AQUÍ
+  if (!user || !user.token) return;
 
+  try {
+    setLoading(true);
+
+    const cliente = clientes.find((c) => c._id === formData.clienteId);
+
+    if (cliente && cliente.numeroIdentificacion) {
+      const numeroIdentificacion = cliente.numeroIdentificacion
+        .toString()
+        .trim();
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      const response = await consultarRutinaPorNumeroIdentificacion(
+        numeroIdentificacion,
+        config
+      );
+
+      const asignacionesData = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      setAsignaciones(asignacionesData);
+    } else {
+      setAsignaciones([]);
+      setError(
+        "El cliente seleccionado no tiene un número de identificación válido."
+      );
+    }
+  } catch (err) {
+    console.error("Error al cargar asignaciones:", err);
+    setError(
+      "Error al cargar asignaciones: " +
+        (err.response?.data?.message || err.message)
+    );
+    setAsignaciones([]);
+  } finally {
+    setLoading(false);
+  }
+}, [clientes, formData.clienteId, user]);
   useEffect(() => {
     if (formData.clienteId) fetchAsignaciones();
     else setAsignaciones([]);
