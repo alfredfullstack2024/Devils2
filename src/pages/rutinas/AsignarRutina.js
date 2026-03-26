@@ -58,7 +58,7 @@ useEffect(() => {
         obtenerClientes(config),
         obtenerRutinas(config),
       ]);
-
+console.log("RESPUESTA CLIENTES:", clientesRes);
       setClientes(
   Array.isArray(clientesRes.data)
     ? clientesRes.data
