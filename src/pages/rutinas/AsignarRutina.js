@@ -59,8 +59,8 @@ useEffect(() => {
         obtenerRutinas(config),
       ]);
 console.log("RESPUESTA CLIENTES:", clientesRes);
-      setClientes(clientesRes.data);;
-      setRutinas(rutinasRes.data || []);
+      setClientes(clientesRes); // clientesRes ya trae el array por el return res.data de axios.js
+setRutinas(rutinasRes.data || rutinasRes);
     } catch (err) {
       console.error("Error al cargar datos:", err);
       setError(
