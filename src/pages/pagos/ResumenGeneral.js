@@ -29,8 +29,7 @@ const ResumenGeneral = () => {
 
   const [loadingCierre, setLoadingCierre] = useState(false);
 
-  // 🔹 Función robusta para calcular totales (Ligas y Productos)
-  // Maneja tanto .monto como .total, y reconoce Nequi como transferencia
+  // 🔹 Función para calcular totales de Ligas y Productos
   const calcularPagosGenericos = (lista) => ({
     total: lista.reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
     efectivo: lista
@@ -47,7 +46,7 @@ const ResumenGeneral = () => {
       .reduce((acc, p) => acc + (p.monto || p.total || 0), 0),
   });
 
-  // 🔹 RESUMEN GENERAL (Mensual)
+  // 🔹 RESUMEN MENSUAL
   const cargarResumen = async () => {
     try {
       setLoading(true);
@@ -61,7 +60,7 @@ const ResumenGeneral = () => {
       });
       setData(res.data);
     } catch (err) {
-      setError("Error al cargar resumen");
+      setError("Error al cargar resumen mensual");
     } finally {
       setLoading(false);
     }
@@ -75,7 +74,6 @@ const ResumenGeneral = () => {
       const resPagos = await api.get("/pagos");
       const pagos = resPagos.data.pagos || [];
 
-      // Filtrar pagos por la fecha seleccionada
       const pagosDia = pagos.filter((p) => {
         const fecha = new Date(p.fecha);
         if (isNaN(fecha)) return false;
@@ -87,8 +85,8 @@ const ResumenGeneral = () => {
       });
 
       const year = fechaCierre.split("-")[0];
-      const resMensualidades = await api.get(`/paga-mes/pagos/${year}`);
-      const mensualidadesData = resMensualidades.data.pagos || resMensualidades.data || [];
+      const resM = await api.get(`/paga-mes/pagos/${year}`);
+      const mensualidadesData = resM.data.pagos || resM.data || [];
 
       const mensualidadesDia = mensualidadesData.filter((m) => {
         if (!m.fecha && !m.createdAt) return false;
@@ -101,7 +99,7 @@ const ResumenGeneral = () => {
         return fechaLocal === fechaCierre;
       });
 
-      // --- LÓGICA DE FILTRADO CORREGIDA PARA LIGAS ---
+      // Filtrado por equipo "Ligas" o nombre de producto
       const ligas = pagosDia.filter((p) => {
         const porEquipo = (p.equipo || "").toLowerCase().includes("liga");
         const porNombreProd = (p.productoManual || p.producto?.nombre || "").toLowerCase().includes("liga");
@@ -127,18 +125,19 @@ const ResumenGeneral = () => {
           .reduce((acc, m) => acc + (m.total || 0), 0),
       });
 
-      const resLigas = calcularPagosGenericos(ligas);
-      const resMensualidades = calcularMensualidades(mensualidadesDia);
-      const resProductos = calcularPagosGenericos(productos);
+      // Variables finales con nombres únicos para evitar errores de duplicado
+      const statsLigas = calcularPagosGenericos(ligas);
+      const statsMensualidades = calcularMensualidades(mensualidadesDia);
+      const statsProductos = calcularPagosGenericos(productos);
 
       setCierre({
-        ligas: resLigas,
-        mensualidades: resMensualidades,
-        productos: resProductos,
-        totalDia: resLigas.total + resMensualidades.total + resProductos.total,
+        ligas: statsLigas,
+        mensualidades: statsMensualidades,
+        productos: statsProductos,
+        totalDia: statsLigas.total + statsMensualidades.total + statsProductos.total,
       });
     } catch (err) {
-      console.error(err);
+      console.error("Error en cierre diario:", err);
     } finally {
       setLoadingCierre(false);
     }
@@ -197,9 +196,9 @@ const ResumenGeneral = () => {
         <Col md={4}><StatCard title="Productos" stats={data.productos} /></Col>
       </Row>
 
-      <Card className="p-4 text-center mb-4">
+      <Card className="p-4 text-center mb-4 bg-light">
         <h4>TOTAL GENERAL (MES)</h4>
-        <h2>${data.totalGeneral.toLocaleString("es-CO")}</h2>
+        <h2 className="text-dark">${data.totalGeneral.toLocaleString("es-CO")}</h2>
       </Card>
 
       <hr />
@@ -227,8 +226,8 @@ const ResumenGeneral = () => {
         <Col md={4}><StatCard title="Productos" stats={cierre.productos} /></Col>
       </Row>
 
-      <Card className="p-4 text-center" style={{ background: "#e0f2fe" }}>
-        <h4>TOTAL DEL DIA</h4>
+      <Card className="p-4 text-center" style={{ background: "#e0f2fe", border: "none" }}>
+        <h4>TOTAL DEL DÍA</h4>
         <h2 className="text-primary">${cierre.totalDia.toLocaleString("es-CO")}</h2>
       </Card>
     </div>
