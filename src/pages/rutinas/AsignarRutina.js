@@ -59,11 +59,7 @@ useEffect(() => {
         obtenerRutinas(config),
       ]);
 console.log("RESPUESTA CLIENTES:", clientesRes);
-      setClientes(
-  Array.isArray(clientesRes.data)
-    ? clientesRes.data
-    : clientesRes.data?.clientes || []
-);
+      setClientes(clientesRes.data);;
       setRutinas(rutinasRes.data || []);
     } catch (err) {
       console.error("Error al cargar datos:", err);
@@ -228,7 +224,7 @@ console.log("RESPUESTA CLIENTES:", clientesRes);
                 <option value="">Seleccione un cliente</option>
                 {clientes.map((cliente) => (
                  <option key={cliente._id} value={cliente._id}>
-  {JSON.stringify(cliente)}
+  {cliente.nombre} {cliente.apellido || ""} - {cliente.numeroIdentificacion}
 </option>
                 ))}
               </Form.Select>
