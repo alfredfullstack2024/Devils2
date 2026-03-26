@@ -37,7 +37,7 @@ const ComposicionCorporal = () => {
     const fetchClientes = async () => {
       try {
         const response = await obtenerClientes();
-        setClientes(response.data);
+        setClientes(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
         setError("Error al cargar los clientes: " + err.message);
       }
@@ -147,7 +147,7 @@ const ComposicionCorporal = () => {
             required
           >
             <option value="">Seleccione un cliente</option>
-            {clientes.map((cliente) => (
+            {(clientes || []).map((cliente) => (
               <option key={cliente._id} value={cliente.numeroIdentificacion}>
                 {cliente.nombre} {cliente.apellido} (
                 {cliente.numeroIdentificacion})
