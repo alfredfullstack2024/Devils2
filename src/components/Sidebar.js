@@ -23,7 +23,7 @@ import { NavLink, useNavigate } from "react-router-dom";
            { label: "📦 Productos", path: "/productos" },
            { label: "🎟️ Membresías", path: "/membresias" },
            { label: "💵 Pagos", path: "/pagos" },
-              { label: "📋 Seguimiento Leads", path: "/seguimiento" },
+           { label: "📋 Seguimiento Leads", path: "/seguimiento" },
            { label: "📊 Contabilidad", path: "/contabilidad" },
            { label: "👥 Usuarios", path: "/usuarios" },
            { label: "🏋️♂️ Entrenadores", path: "/entrenadores" },
