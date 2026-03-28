@@ -59,6 +59,8 @@ import { NavLink, useNavigate } from "react-router-dom";
            ? [...menuItems.public]
            : [...menuItems[user.rol] || menuItems.entrenador, ...menuItems.public]
          : menuItems.public;
+          console.log("Rol:", user?.rol);
+console.log("Menu para ese rol:", menuItems[user?.rol]);
 
        console.log("Renderizando Sidebar... Items:", itemsToShow.map((item) => item.label));
 
