@@ -71,8 +71,9 @@ console.log("Menu para ese rol:", menuItems[user?.rol]);
        // Forzar re-renderizado cuando user cambie
        useEffect(() => {
          console.log("Sidebar re-renderizado debido a cambio en user");
+            alert("SIDEBAR NUEVO");
        }, [user]);
-
+          
        return (
          <div className="sidebar p-3 bg-dark text-white vh-100" key={user ? user.rol : "public"}>
            <div className="text-center mb-4">
