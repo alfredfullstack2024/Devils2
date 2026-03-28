@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext";
 import DashboardLayout from "./layouts/DashboardLayout";
 import PrivateRoute from "./components/PrivateRoute";
 import PagoRapido from "./pages/pagos/PagoRapido";
+import SeguimientoLeads from "./pages/seguimiento/SeguimientoLeads";
 
 // Páginas Públicas
 import Login from "./pages/Login";
@@ -43,6 +44,8 @@ import ReportePagosPorEquipo from "./pages/pagos/ReportePagosPorEquipo";
 import PagosLigas from "./pages/pagos/PagosLigas";
 import Pagames from "./pages/pagos/pagames";
 import ResumenGeneral from "./pages/pagos/ResumenGeneral";
+
+
 
 // Contabilidad
 import Contabilidad from "./pages/contabilidad/Contabilidad";
@@ -129,6 +132,18 @@ const App = () => {
           <Route path="/clientes" element={<RoleBasedRoute element={<ListaClientes />} allowedRoles={["recepcionista","admin"]} />} />
           <Route path="/clientes/crear" element={<RoleBasedRoute element={<CrearCliente />} allowedRoles={["recepcionista","admin"]} />} />
           <Route path="/clientes/editar/:id" element={<RoleBasedRoute element={<EditarCliente />} allowedRoles={["recepcionista","admin"]} />} />
+
+
+/* 🔥 Seguimientos */
+<Route 
+  path="/seguimiento" 
+  element={
+    <RoleBasedRoute 
+      element={<SeguimientoLeads />} 
+      allowedRoles={["recepcionista","admin"]} 
+    />
+  } 
+/>
 
           {/* Membresías */}
           <Route path="/membresias" element={<RoleBasedRoute element={<Membresias />} allowedRoles={["recepcionista","admin"]} />} />
