@@ -40,6 +40,7 @@ const DashboardLayout = () => {
       { path: "/entrenadores", icon: <FaUsersCog />, label: "Entrenadores" },
       { path: "/productos", icon: <FaShoppingCart />, label: "Productos" },
       { path: "/pagos", icon: <FaMoneyBillWave />, label: "Pagos" },
+      { path: "/seguimiento", icon: <FaUsers />, label: "Seguimiento Leads" }
       { path: "/contabilidad", icon: <FaChartBar />, label: "Contabilidad" },
       { path: "/clases", icon: <FaDumbbell />, label: "Clases" },
       { path: "/rutinas/crear", icon: <FaDumbbell />, label: "Crear rutina" },
