@@ -42,8 +42,17 @@ const CrearPago = () => {
           obtenerClientes(),
           obtenerProductos(),
         ]);
-        setClientes(clientesResponse.data);
-        setProductos(productosResponse.data);
+        setClientes(
+  Array.isArray(clientesResponse.data)
+    ? clientesResponse.data
+    : clientesResponse.data?.clientes || []
+);
+
+setProductos(
+  Array.isArray(productosResponse.data)
+    ? productosResponse.data
+    : productosResponse.data?.productos || []
+);
 
         const today = new Date().toISOString().split("T")[0];
         setFormData((prev) => ({ ...prev, fecha: today }));
