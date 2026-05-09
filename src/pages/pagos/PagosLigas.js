@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
-import api from "../../api/axios";
+import axios from "axios";
 import { obtenerClientes } from "../../api/axios";
 // redeploy
 // ===========================================
@@ -62,7 +62,7 @@ const [comentarioPago, setComentarioPago] = useState("");
         return ["TODAS", ...Array.from(specs).sort()];
     }, [clientes]);
 
-    
+    const backendURL = process.env.REACT_APP_API_URL || "https://backend-5zxh.onrender.com/api";
 
     // ====== CARGA INICIAL COMPLETA ======
    // ====== PEGA ESTO ======
@@ -70,14 +70,14 @@ useEffect(() => {
     const cargarDatosIniciales = async () => {
         try {
             const [mesesRes, clientesRes, configRes] = await Promise.all([
-                api.get("/pagos-ligas/meses"),
+                axios.get(`${backendURL}/pagos-ligas/meses`),
                 obtenerClientes(),
-                api.get("/pagos-ligas/configuracion").catch(() => ({ data: { valorDiario: 8000 } })),
+                axios.get(`${backendURL}/pagos-ligas/configuracion`).catch(() => ({ data: { valorDiario: 8000 } })),
             ]);
 
             const mesesData = mesesRes.data;
             setMeses(mesesData);
-            setClientes(clientesRes || []);
+            setClientes(clientesRes.data);
             const valorConfig = configRes.data.valorDiario || 8000;
 setValorDiario(valorConfig);
 setValorDiarioTemp(valorConfig);
@@ -106,7 +106,7 @@ setValorDiarioTemp(valorConfig);
     };
 
     cargarDatosIniciales();
-}, []);
+}, [backendURL]);
    
                 // CARGAR PAGOS Y CALCULAR TOTAL (TOTAL GENERAL)
 useEffect(() => {
@@ -114,7 +114,7 @@ useEffect(() => {
 
     const cargarPagos = async () => {
         try {
-            const res = await api.get(`/pagos-ligas/pagos/${mesSeleccionado}`);
+            const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
             const todosPagos = res.data || [];
             const pagosReales = todosPagos.filter(
                 p => p.nombre !== "SYSTEM" && p.nombre.trim() !== ""
@@ -170,22 +170,19 @@ const diasConTipo = diasSeleccionados.map(dia => {
     tipo: tipo
   };
 });
-    await api.post("/pagos-ligas/pagos", {
+    await axios.post(`${backendURL}/pagos-ligas/pagos`, {
         nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim(),
         mes: mesSeleccionado,
         diasAsistidos: diasSeleccionados.length,
         total: totalFinal,
-       diasPagados: diasConTipo.map(d => ({
-  dia: d.dia,
-  tipo: d.tipo
-})),
-tipoPago: tipoPagoSeleccionado,
+        diasPagados: diasConTipo,
+        tipoPago: tipoPagoSeleccionado,
         comentario: ""
     });
 
     alert(`Pago registrado correctamente`);
 
-    const res = await api.get(`/pagos-ligas/pagos/${mesSeleccionado}`);
+    const res = await axios.get(`${backendURL}/pagos-ligas/pagos/${mesSeleccionado}`);
     const todosPagos = res.data || [];
     const pagosReales = todosPagos.filter(p => p.nombre !== "SYSTEM" && p.nombre.trim() !== "");
 
@@ -220,10 +217,10 @@ tipoPago: tipoPagoSeleccionado,
     const crearMes = async () => {
         if (!nuevoMes.trim()) return alert("Escribe el nombre del mes");
         try {
-            await api.post("/pagos-ligas/crear-mes", { nombre: nuevoMes });
+            await axios.post(`${backendURL}/pagos-ligas/crear-mes`, { nombre: nuevoMes });
             alert("Mes creado");
             setNuevoMes("");
-            const res = await api.get("/pagos-ligas/meses");
+            const res = await axios.get(`${backendURL}/pagos-ligas/meses`);
             const mesesData = res.data;
             setMeses(mesesData);
 
@@ -428,7 +425,7 @@ return dias;
         try {
             setGuardandoValor(true);
 
-            await api.put("/pagos-ligas/configuracion", {
+            await axios.put(`${backendURL}/pagos-ligas/configuracion`, {
                 valorDiario: valorDiarioTemp,
             });
 
