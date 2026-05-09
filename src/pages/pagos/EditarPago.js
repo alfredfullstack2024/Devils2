@@ -358,4 +358,3 @@ const EditarPago = () => {
 };
 
 export default EditarPago;
-
