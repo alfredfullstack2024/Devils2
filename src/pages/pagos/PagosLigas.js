@@ -77,7 +77,7 @@ useEffect(() => {
 
             const mesesData = mesesRes.data;
             setMeses(mesesData);
-            setClientes(clientesRes.data);
+            setClientes(clientesRes);
             const valorConfig = configRes.data.valorDiario || 8000;
 setValorDiario(valorConfig);
 setValorDiarioTemp(valorConfig);
