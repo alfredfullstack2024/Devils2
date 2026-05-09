@@ -59,8 +59,21 @@ useEffect(() => {
         obtenerRutinas(config),
       ]);
 console.log("RESPUESTA CLIENTES:", clientesRes);
-      setClientes(clientesRes); // clientesRes ya trae el array por el return res.data de axios.js
-setRutinas(rutinasRes.data || rutinasRes);
+      setClientes(
+  Array.isArray(clientesRes.data)
+    ? clientesRes.data
+    : Array.isArray(clientesRes)
+    ? clientesRes
+    : []
+);
+
+setRutinas(
+  Array.isArray(rutinasRes.data)
+    ? rutinasRes.data
+    : Array.isArray(rutinasRes)
+    ? rutinasRes
+    : []
+);
     } catch (err) {
       console.error("Error al cargar datos:", err);
       setError(
@@ -241,7 +254,7 @@ setRutinas(rutinasRes.data || rutinasRes);
                 disabled={loading}
               >
                 <option value="">Seleccione una rutina</option>
-                {rutinas.map((rutina) => (
+                {(rutinas || []).map((rutina) => (
                   <option key={rutina._id} value={rutina._id}>
                     {rutina.nombreEjercicio} ({rutina.grupoMuscular})
                   </option>
