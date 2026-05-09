@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-
-import api, { obtenerClientes } from "../../api/axios";
+import axios from "axios";
+import { obtenerClientes } from "../../api/axios";
 
 // Configuración de Meses y Estilos base
 const MESES_ANIO = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -24,7 +24,7 @@ const Pagames = () => {
     // Estados Registro Rápido
     const [searchCliente, setSearchCliente] = useState("");
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-    const [planSeleccionado, setPlanSeleccionado] = useState("Mensualidad");
+    const [planSeleccionado, setPlanSeleccionado] = useState("Plan Black");
     const [valorManual, setValorManual] = useState("");
     const [mesAPagar, setMesAPagar] = useState("");
     const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState("Efectivo");
@@ -35,16 +35,16 @@ const Pagames = () => {
     const [filtroTipoPago, setFiltroTipoPago] = useState("TODOS");
     const [filtroPeriodo, setFiltroPeriodo] = useState("TODO EL AÑO");
 
-    const backendURL = "https://devils-1.onrender.com/api";
+    const backendURL = "https://backend-5zxh.onrender.com/api";
 
     const cargarDatosIniciales = async () => {
         try {
             const [aniosRes, clientesRes] = await Promise.all([
-                api.get(`${backendURL}/paga-mes/anios`),
+                axios.get(`${backendURL}/paga-mes/anios`),
                 obtenerClientes()
             ]);
             setAnios(aniosRes.data);
-            setClientes(clientesRes || []);
+            setClientes(clientesRes.data);
             if (aniosRes.data.length > 0 && !anioSeleccionado) {
                 setAnioSeleccionado(aniosRes.data[0].nombre);
             }
@@ -54,8 +54,8 @@ const Pagames = () => {
     const cargarPagos = async () => {
         if (!anioSeleccionado) return;
         try {
-            const res = await api.get(`${backendURL}/paga-mes/pagos/${anioSeleccionado}`);
-            const pagosReales = (res.data || []).filter(p => p.nombre !== "SYSTEM");
+            const res = await axios.get(`${backendURL}/paga-mes/pagos/${anioSeleccionado}`);
+            const pagosReales = res.data.filter(p => p.nombre !== "SYSTEM");
             
             // Enriquecer cada pago con la especialidad real del cliente desde la BD
             const pagosEnriquecidos = pagosReales.map(pago => {
@@ -74,7 +74,7 @@ const Pagames = () => {
     const crearAnio = async () => {
         if (!nuevoAnio.trim()) return alert("Escribe un año");
         try {
-            await api.post(`${backendURL}/paga-mes/crear-anio`, { nombre: nuevoAnio.trim() });
+            await axios.post(`${backendURL}/paga-mes/crear-anio`, { nombre: nuevoAnio.trim() });
             alert("Año creado");
             setNuevoAnio("");
             cargarDatosIniciales();
@@ -84,7 +84,7 @@ const Pagames = () => {
     const registrarPago = async () => {
         if (!clienteSeleccionado || !mesAPagar || !valorManual) return alert("Completa todos los campos");
         try {
-            await api.post(`${backendURL}/paga-mes/pagos`, {
+            await axios.post(`${backendURL}/paga-mes/pagos`, {
                 nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim().toUpperCase(),
                 anio: anioSeleccionado,
                 plan: planSeleccionado,
@@ -121,7 +121,7 @@ const Pagames = () => {
         
         // Filtro de periodo
         if (filtroPeriodo !== "TODO EL AÑO") {
-            pagos = pagos.filter(p => (p.mesesPagados || []).includes(filtroPeriodo));
+            pagos = pagos.filter(p => p.mesesPagados.includes(filtroPeriodo));
         }
 
         const total = pagos.reduce((acc, p) => acc + p.total, 0);
@@ -146,7 +146,7 @@ const Pagames = () => {
                         <button onClick={crearAnio} style={btnPrimary}>Crear Año</button>
                         <select value={anioSeleccionado} onChange={(e) => setAnioSeleccionado(e.target.value)} style={selectStyle}>
                             <option value="">Seleccionar año</option>
-                            {(anios || []).map(a => <option key={a._id} value={a.nombre}>{a.nombre}</option>)}
+                            {anios.map(a => <option key={a._id} value={a.nombre}>{a.nombre}</option>)}
                         </select>
                     </div>
                     <div style={{ background: "#172554", color: "white", padding: "1rem 3rem", borderRadius: "1.5rem", fontSize: "2rem", fontWeight: "bold" }}>
@@ -168,15 +168,15 @@ const Pagames = () => {
                             list="clientes-list" style={{ ...inputStyle, width: "350px" }}
                         />
                         <datalist id="clientes-list">
-                            {(clientes || []).map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
+                            {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
                         </datalist>
-{/*
+
                         <select style={selectStyle} value={planSeleccionado} onChange={e => setPlanSeleccionado(e.target.value)}>
                             <option value="Plan Black">Plan Black</option>
                             <option value="Plan White">Plan White</option>
                             <option value="Plan Gold">Plan Gold</option>
                         </select>
-*/}
+
                         <input type="number" placeholder="Valor $" style={{ ...inputStyle, width: "180px" }} value={valorManual} onChange={e => setValorManual(e.target.value)} />
 
                         <select style={selectStyle} value={mesAPagar} onChange={e => setMesAPagar(e.target.value)}>
@@ -233,7 +233,7 @@ const Pagames = () => {
                             <tr style={{ background: "#1e293b", color: "white" }}>
                                 <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10 }}>Jugadora</th>
                                 <th style={{ ...thStyle, background: "#334155" }}>Especialidad</th>
-                                {/*<th style={{ ...thStyle, background: "#334155" }}>Plan</th>*/}
+                                <th style={{ ...thStyle, background: "#334155" }}>Plan</th>
                                 {MESES_ANIO.map(m => <th key={m} style={thStyle}>{m.substring(0, 3)}</th>)}
                                 <th style={{ ...thStyle, background: "#172554" }}>Meses</th>
                                 <th style={{ ...thStyle, background: "#172554" }}>Total</th>
@@ -250,7 +250,7 @@ const Pagames = () => {
                                     <tr key={nombre} style={{ borderBottom: "1px solid #e2e8f0" }}>
                                         <td style={{ ...tdStyle, fontWeight: "bold", textAlign: "left", position: "sticky", left: 0, background: "white" }}>{nombre}</td>
                                         <td style={tdStyle}>{especialidad}</td>
-                                        {/*<td style={tdStyle}>{pagosPersona[0]?.plan}</td>*/}
+                                        <td style={tdStyle}>{pagosPersona[0]?.plan}</td>
                                         {MESES_ANIO.map(m => (
                                             <td key={m} style={{ ...tdStyle, color: mesesPagados.has(m) ? "#22c55e" : "#e2e8f0", fontSize: "1.5rem" }}>
                                                 {mesesPagados.has(m) ? "✔" : "○"}
