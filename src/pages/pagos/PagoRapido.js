@@ -118,7 +118,7 @@ const PagoRapido = () => {
             backgroundColor: "#fff",
             fontFamily: "monospace"
           }}>
-            <h5 className="text-center fw-bold">ICONIC ALL STARS</h5>
+            <h5 className="text-center fw-bold">DEVILS ALL STARS</h5>
             <p className="small mb-1 text-center">COMPROBANTE MANUAL</p>
             <hr />
             <p className="mb-1"><strong>Fecha:</strong> {formData.fecha}</p>
