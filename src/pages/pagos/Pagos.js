@@ -58,38 +58,13 @@ const Pagos = () => {
                 params.fechaFin = `${dia}T23:59:59`;
             }
 
-           const res = await api.get("/pagos");
+            const res = await api.get("/pagos", { params });
 
-let lista = res.data.pagos || [];
+            const lista = res.data.pagos || [];
 
-// 🔹 FILTRO POR FECHA EN FRONTEND
-if (filtroTipo === "anio" && anio) {
-    lista = lista.filter(p => {
-        const year = new Date(p.fecha).getFullYear();
-        return year === Number(anio);
-    });
-}
+            setPagos(lista);
+            setPagosFiltrados(lista);
 
-if (filtroTipo === "mes" && mes) {
-    const [year, month] = mes.split("-");
-    lista = lista.filter(p => {
-        const fecha = new Date(p.fecha);
-        return (
-            fecha.getFullYear() === Number(year) &&
-            (fecha.getMonth() + 1) === Number(month)
-        );
-    });
-}
-
-if (filtroTipo === "dia" && dia) {
-    lista = lista.filter(p => {
-        const fecha = new Date(p.fecha).toISOString().split("T")[0];
-        return fecha === dia;
-    });
-}
-
-setPagos(lista);
-setPagosFiltrados(lista);
         } catch (err) {
             setError("Error cargando pagos");
         } finally {
