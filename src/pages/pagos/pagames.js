@@ -23,7 +23,7 @@ const Pagames = () => {
     // Estados Registro Rápido
     const [searchCliente, setSearchCliente] = useState("");
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-    const [planSeleccionado, setPlanSeleccionado] = useState("Plan Black");
+    const [tipoMensualidad, setTipoMensualidad] = useState("Pago Normal");
     const [valorManual, setValorManual] = useState("");
     const [mesAPagar, setMesAPagar] = useState("");
     const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState("Efectivo");
@@ -86,7 +86,7 @@ const Pagames = () => {
             await api.post("/paga-mes/pagos", {
                 nombre: `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`.trim().toUpperCase(),
                 anio: anioSeleccionado,
-                plan: planSeleccionado,
+                plan: tipoMensualidad,
                 total: Number(valorManual),
                 mesesPagados: [mesAPagar],
                 tipoPago: tipoPagoSeleccionado
@@ -170,11 +170,15 @@ const Pagames = () => {
                             {clientes.map(c => <option key={c._id} value={`${c.nombre} ${c.apellido}`} />)}
                         </datalist>
 
-                        <select style={selectStyle} value={planSeleccionado} onChange={e => setPlanSeleccionado(e.target.value)}>
-                            <option value="Plan Black">Plan Black</option>
-                            <option value="Plan White">Plan White</option>
-                            <option value="Plan Gold">Plan Gold</option>
-                        </select>
+                       <select
+    style={selectStyle}
+    value={tipoMensualidad}
+    onChange={e => setTipoMensualidad(e.target.value)}
+>
+    <option value="Pago Normal">Pago Normal</option>
+    <option value="Pago del 5 al 10">Pago del 5 al 10</option>
+    <option value="Pago después del 10">Pago después del 10</option>
+</select>
 
                         <input type="number" placeholder="Valor $" style={{ ...inputStyle, width: "180px" }} value={valorManual} onChange={e => setValorManual(e.target.value)} />
 
@@ -232,7 +236,7 @@ const Pagames = () => {
                             <tr style={{ background: "#1e293b", color: "white" }}>
                                 <th style={{ ...thStyle, position: "sticky", left: 0, background: "#1e293b", zIndex: 10 }}>Jugadora</th>
                                 <th style={{ ...thStyle, background: "#334155" }}>Especialidad</th>
-                                <th style={{ ...thStyle, background: "#334155" }}>Plan</th>
+                                <th style={{ ...thStyle, background: "#334155" }}>Tipo Pago</th>
                                 {MESES_ANIO.map(m => <th key={m} style={thStyle}>{m.substring(0, 3)}</th>)}
                                 <th style={{ ...thStyle, background: "#172554" }}>Meses</th>
                                 <th style={{ ...thStyle, background: "#172554" }}>Total</th>
