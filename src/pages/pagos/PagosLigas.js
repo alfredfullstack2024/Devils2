@@ -108,7 +108,7 @@ setValorDiarioTemp(valorConfig);
     };
 
     cargarDatosIniciales();
-}, [backendURL]);
+}, []);
    
                 // CARGAR PAGOS Y CALCULAR TOTAL (TOTAL GENERAL)
 useEffect(() => {
