@@ -5,8 +5,8 @@ const getBaseUrl = () => {
   // Priorizamos SIEMPRE la variable de entorno de Vercel si existe
   if (envUrl) return envUrl;
 
-  const defaultDevUrl = "http://localhost:5000/api/";
-  const defaultProdUrl = "https://devils-1.onrender.com/api/";
+  const defaultDevUrl = "http://localhost:5000/api";
+  const defaultProdUrl = "https://devils-1.onrender.com/api";
   
   return process.env.NODE_ENV === "development" ? defaultDevUrl : defaultProdUrl;
 };
@@ -37,10 +37,7 @@ api.interceptors.response.use(
 );
 
 /* --- Funciones Exportadas --- */
-export const obtenerClientes = async (config) => {
-  const res = await api.get("/clientes", config);
-  return res.data;
-};
+export const obtenerClientes = (config) => api.get("/clientes", config);
 export const consultarClientePorCedula = (n, config) => api.get(`/clientes/consultar/${n}`, config);
 export const obtenerClientePorId = (id, config) => api.get(`/clientes/${id}`, config);
 export const crearCliente = (data, config) => api.post("/clientes", data, config);
