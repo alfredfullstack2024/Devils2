@@ -39,9 +39,9 @@ const Pagames = () => {
     const cargarDatosIniciales = async () => {
         try {
             const [aniosRes, clientesRes] = await Promise.all([
-                api.get("/paga-mes/anios")
-                obtenerClientes()
-            ]);
+    api.get("/paga-mes/anios"),
+    obtenerClientes()
+]);
             setAnios(aniosRes.data);
             setClientes(clientesRes.data);
             if (aniosRes.data.length > 0 && !anioSeleccionado) {
